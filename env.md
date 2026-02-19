@@ -1,6 +1,10 @@
 # create .env.local file in database folder directory
 # env contents of database folder:
 DATABASE_URL="postgresql://postgres.efdhhuibnmebekqkjjom:Demon-Vape123@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres"
+SUPABASE_URL="https://efdhhuibnmebekqkjjom.supabase.co"
+SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmZGhodWlibm1lYmVrcWtqam9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyNjcxNzksImV4cCI6MjA4Njg0MzE3OX0.Wg1cuKTKllemkyfD92dn5cv0XUwkG-NDbcUUe2J3HDw"
+SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmZGhodWlibm1lYmVrcWtqam9tIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTI2NzE3OSwiZXhwIjoyMDg2ODQzMTc5fQ.hhYUWOy1nuk7i4QB44zbSxX-uZeTgFSFx1-nMOW0VVU"
+
 
 # create .env.local file in api folder directory   
 # env contents of api folder
