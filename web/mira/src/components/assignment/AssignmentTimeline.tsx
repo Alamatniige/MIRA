@@ -1,3 +1,5 @@
+import { UserPlus, Check } from "lucide-react";
+
 interface Assignment {
   id: string;
   to: string;
@@ -9,35 +11,48 @@ interface AssignmentTimelineProps {
   assignments: Assignment[];
 }
 
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 export function AssignmentTimeline({ assignments }: AssignmentTimelineProps) {
   return (
-    <div className="relative space-y-0">
-      {assignments.map((a, i) => (
-        <div key={a.id} className="relative flex gap-6 pb-8 last:pb-0">
-          {i < assignments.length - 1 && (
-            <div className="absolute left-[11px] top-6 bottom-0 w-px bg-[var(--mira-gray-200)]" />
-          )}
-          <div className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-[var(--mira-teal)] bg-white">
-            <div className="h-2 w-2 rounded-full bg-[var(--mira-teal)]" />
+    <div className="divide-y divide-[var(--mira-gray-100)]">
+      {assignments.map((a) => (
+        <div
+          key={a.id}
+          className="flex items-center gap-4 px-6 py-3.5 transition-colors hover:bg-[var(--mira-gray-50)]/80"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--mira-gray-100)]">
+            <UserPlus className="h-4 w-4 text-[var(--mira-teal)]" />
           </div>
-          <div className="flex-1 pt-0.5">
-            <p className="font-medium text-[var(--mira-navy-light)]">
+          <div className="min-w-0 flex-1">
+            <p className="text-[14px] font-medium text-[var(--mira-navy-light)]">
               {a.id} → {a.to}
             </p>
-            <p className="text-sm text-[var(--mira-gray-500)]">
+            <p className="flex items-center gap-2 truncate text-[13px] text-[var(--mira-gray-600)]">
               {new Date(a.date).toLocaleDateString("en-US", {
                 weekday: "short",
-                year: "numeric",
                 month: "short",
                 day: "numeric",
               })}
               {a.acknowledged && (
-                <span className="ml-2 inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-xs text-emerald-700">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-[var(--mira-teal-muted)] px-2 py-0.5 text-[12px] font-medium text-[var(--mira-teal)]">
+                  <Check className="h-3 w-3" />
                   Acknowledged
                 </span>
               )}
             </p>
           </div>
+          <span className="shrink-0 text-[12px] text-[var(--mira-gray-500)]">
+            {formatDate(a.date)}
+          </span>
         </div>
       ))}
     </div>

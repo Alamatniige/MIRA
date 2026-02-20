@@ -1,4 +1,12 @@
-import { Search } from "lucide-react";
+import { Search, Filter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AssetFiltersProps {
   search: string;
@@ -19,37 +27,42 @@ export function AssetFilters({
 }: AssetFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--mira-gray-400)]" />
-        <input
+      <div className="relative min-w-[200px] flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--mira-gray-500)]" />
+        <Input
           type="search"
-          placeholder="Search assets..."
+          placeholder="Search by name or ID..."
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="h-10 w-56 rounded-lg border border-[var(--mira-gray-200)] bg-white pl-9 pr-4 text-sm focus:border-[var(--mira-teal)] focus:outline-none focus:ring-2 focus:ring-[var(--mira-teal)]/20"
+          className="h-11 w-full rounded-xl border-[var(--mira-gray-200)] bg-[var(--mira-white)] pl-9 text-[13px] text-[var(--mira-navy-light)] placeholder:text-[var(--mira-gray-500)] focus-visible:ring-[var(--mira-teal)]"
         />
       </div>
-      <select
-        value={statusFilter}
-        onChange={(e) => onStatusFilterChange(e.target.value)}
-        className="h-10 rounded-lg border border-[var(--mira-gray-200)] bg-white px-3 text-sm text-[var(--mira-gray-600)] focus:border-[var(--mira-teal)] focus:outline-none"
-      >
-        <option value="all">All statuses</option>
-        <option value="active">Active</option>
-        <option value="maintenance">Maintenance</option>
-        <option value="issue">Issue</option>
-        <option value="disposed">Disposed</option>
-      </select>
-      <select
-        value={deptFilter}
-        onChange={(e) => onDeptFilterChange(e.target.value)}
-        className="h-10 rounded-lg border border-[var(--mira-gray-200)] bg-white px-3 text-sm text-[var(--mira-gray-600)] focus:border-[var(--mira-teal)] focus:outline-none"
-      >
-        <option value="all">All departments</option>
-        <option value="it">IT</option>
-        <option value="hr">HR</option>
-        <option value="ops">Operations</option>
-      </select>
+      <div className="flex items-center gap-2">
+        <Filter className="hidden h-4 w-4 text-[var(--mira-gray-500)] sm:block" />
+        <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+          <SelectTrigger className="h-11 w-[160px] rounded-xl border-[var(--mira-gray-200)] bg-[var(--mira-white)] text-[13px] text-[var(--mira-navy-light)]">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="maintenance">Maintenance</SelectItem>
+            <SelectItem value="issue">Issue</SelectItem>
+            <SelectItem value="disposed">Disposed</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={deptFilter} onValueChange={onDeptFilterChange}>
+          <SelectTrigger className="h-11 w-[160px] rounded-xl border-[var(--mira-gray-200)] bg-[var(--mira-white)] text-[13px] text-[var(--mira-navy-light)]">
+            <SelectValue placeholder="All departments" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All departments</SelectItem>
+            <SelectItem value="it">IT</SelectItem>
+            <SelectItem value="hr">HR</SelectItem>
+            <SelectItem value="ops">Operations</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }

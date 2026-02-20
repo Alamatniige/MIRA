@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Package,
@@ -13,6 +14,7 @@ import {
   Settings,
 } from "lucide-react";
 import { StatCard } from "@/components/dashboard/SummaryCard";
+import { PageLoading } from "@/components/ui/PageLoading";
 
 const summaryCards = [
   { title: "Total Assets", value: "248", icon: Package, variant: "teal" as const },
@@ -55,6 +57,20 @@ const recentActivities = [
 ];
 
 export function DashboardPage() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data fetching
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <PageLoading message="Loading dashboard..." />;
+  }
+
   const total = pieData.reduce((s, d) => s + d.value, 0);
   let offset = 0;
   const segments = pieData.map((d) => {
@@ -191,7 +207,7 @@ export function DashboardPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <Link
             href="/assets?add=1"
-            className="group flex items-center gap-4 rounded-2xl border border-[var(--mira-gray-200)] bg-white p-4 transition-all duration-200 hover:border-[var(--mira-teal)]/40 hover:bg-[var(--mira-teal-muted)]/50 hover:shadow-[var(--shadow)]"
+            className="group flex items-center gap-4 rounded-2xl border border-[var(--mira-gray-200)] bg-[var(--mira-white)] p-4 transition-all duration-200 hover:border-[var(--mira-teal)]/40 hover:bg-[var(--mira-teal-muted)]/50 hover:shadow-[var(--shadow)]"
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--mira-teal-muted)] text-[var(--mira-teal)] transition-all duration-200 group-hover:bg-[var(--mira-teal)] group-hover:text-white group-hover:shadow-md">
               <Plus className="h-5 w-5" strokeWidth={2} />
@@ -207,7 +223,7 @@ export function DashboardPage() {
           </Link>
           <Link
             href="/assignment"
-            className="group flex items-center gap-4 rounded-2xl border border-[var(--mira-gray-200)] bg-white p-4 transition-all duration-200 hover:border-[var(--mira-teal)]/40 hover:bg-[var(--mira-teal-muted)]/50 hover:shadow-[var(--shadow)]"
+            className="group flex items-center gap-4 rounded-2xl border border-[var(--mira-gray-200)] bg-[var(--mira-white)] p-4 transition-all duration-200 hover:border-[var(--mira-teal)]/40 hover:bg-[var(--mira-teal-muted)]/50 hover:shadow-[var(--shadow)]"
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--mira-gray-100)] text-[var(--mira-navy-light)] transition-all duration-200 group-hover:bg-[var(--mira-teal)] group-hover:text-white group-hover:shadow-md">
               <UserPlus className="h-5 w-5" strokeWidth={2} />
@@ -223,7 +239,7 @@ export function DashboardPage() {
           </Link>
           <Link
             href="/reports"
-            className="group flex items-center gap-4 rounded-2xl border border-[var(--mira-gray-200)] bg-white p-4 transition-all duration-200 hover:border-[var(--mira-teal)]/40 hover:bg-[var(--mira-teal-muted)]/50 hover:shadow-[var(--shadow)]"
+            className="group flex items-center gap-4 rounded-2xl border border-[var(--mira-gray-200)] bg-[var(--mira-white)] p-4 transition-all duration-200 hover:border-[var(--mira-teal)]/40 hover:bg-[var(--mira-teal-muted)]/50 hover:shadow-[var(--shadow)]"
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--mira-gray-100)] text-[var(--mira-navy-light)] transition-all duration-200 group-hover:bg-[var(--mira-teal)] group-hover:text-white group-hover:shadow-md">
               <FileText className="h-5 w-5" strokeWidth={2} />
