@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode so theme toggle works */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f1f5f9;
   --foreground: #0f172a;
@@ -33,6 +36,31 @@
   --shadow-md: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
   --shadow-lg: 0 24px 48px -8px rgba(15, 23, 42, 0.12);
   --shadow-glow: 0 0 0 1px rgba(13, 148, 136, 0.08);
+}
+
+/* Dark mode – applied when <html class="dark"> */
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --mira-navy: #f1f5f9;
+  --mira-navy-light: #e2e8f0;
+  --mira-white: #1e293b;
+  --mira-gray-50: #0f172a;
+  --mira-gray-100: #1e293b;
+  --mira-gray-200: #334155;
+  --mira-gray-300: #475569;
+  --mira-gray-400: #64748b;
+  --mira-gray-500: #94a3b8;
+  --mira-gray-600: #cbd5e1;
+  --mira-gray-700: #e2e8f0;
+  --mira-teal: #2dd4bf;
+  --mira-teal-light: #5eead4;
+  --mira-teal-muted: #134e4a;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2), 0 2px 6px -2px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 12px 24px -4px rgba(0, 0, 0, 0.25), 0 4px 8px -2px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 24px 48px -8px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 0 1px rgba(45, 212, 191, 0.2);
 }
 
 @theme inline {
@@ -94,4 +122,32 @@ body {
 
 .mira-btn-secondary:hover {
   background: var(--mira-gray-50);
+}
+
+/* Custom animations for login page */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
 }

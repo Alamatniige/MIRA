@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AlertCircle, Package } from "lucide-react";
-import { StatusBadge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/StatusBadge";
 
 const myAssets = [
   {

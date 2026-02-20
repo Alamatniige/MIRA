@@ -2,7 +2,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { StatusBadge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/StatusBadge";
 import type { AssetStatus } from "@/types/asset.types";
 
 const mockAsset = {

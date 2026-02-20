@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Pencil, Eye, Trash2 } from "lucide-react";
-import { StatusBadge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/StatusBadge";
 import type { Asset } from "@/types/asset.types";
 
 interface AssetTableProps {

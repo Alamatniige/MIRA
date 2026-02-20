@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, MemoryRouter, Routes, Route } from "react-router-dom";
 import { RoleProvider } from "@/contexts/RoleContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./routes/Dashboard";
 import Assets from "./routes/Assets";
@@ -13,6 +14,7 @@ import Assignments from "./routes/Assignments";
 import QRScanner from "./routes/QRScanner";
 import Reports from "./routes/Reports";
 import NotFound from "./routes/NotFound";
+import { SettingsPage } from "./pages/settings/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +26,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <ThemeProvider>
         <RoleProvider>
           <Router>
             <Routes>
@@ -35,11 +38,13 @@ const App = () => {
                 <Route path="/assignments" element={<Assignments />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/qr-scanner" element={<QRScanner />} />
+                <Route path="/settings" element={<SettingsPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>
         </RoleProvider>
+      </ThemeProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

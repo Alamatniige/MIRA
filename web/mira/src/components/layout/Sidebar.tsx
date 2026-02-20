@@ -30,21 +30,21 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
 
   return (
     <aside 
-      className={`fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-teal-700/30 bg-[#0f766e] text-white shadow-xl transition-all duration-300 ${
+      className={`fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-teal-700/30 bg-[#0f766e] text-white shadow-xl transition-all duration-300 dark:bg-[var(--mira-gray-200)] dark:border-[var(--mira-gray-300)] ${
         isCollapsed ? "w-20" : "w-64"
       }`}
     >
       {/* Header */}
-      <div className={`flex h-16 items-center border-b border-white/20 backdrop-blur-sm transition-all duration-300 ${
+      <div className={`flex h-16 items-center border-b border-white/20 backdrop-blur-sm transition-all duration-300 dark:border-[var(--mira-gray-300)] ${
         isCollapsed ? "justify-center px-0" : "gap-3 px-5"
       }`}>
         <div 
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0d9488] font-bold text-white shadow-lg transition-transform hover:scale-105"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0d9488] font-bold text-white shadow-lg transition-transform hover:scale-105 dark:bg-[var(--mira-teal)]"
         >
           M
         </div>
         {!isCollapsed && (
-          <span className="font-bold tracking-tight text-lg">MIRA</span>
+          <span className="font-bold tracking-tight text-lg dark:text-[var(--foreground)]">MIRA</span>
         )}
       </div>
 
@@ -61,8 +61,8 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
                 isCollapsed ? "justify-center px-3 py-3" : "gap-3 px-3 py-3"
               } ${
                 isActive
-                  ? "bg-white/20 text-white shadow-lg backdrop-blur-sm"
-                  : "text-teal-50/90 hover:bg-white/10 hover:text-white hover:shadow-md"
+                  ? "bg-white/20 text-white shadow-lg backdrop-blur-sm dark:bg-white/15 dark:text-[var(--foreground)]"
+                  : "text-teal-50/90 hover:bg-white/10 hover:text-white hover:shadow-md dark:text-[var(--mira-gray-600)] dark:hover:bg-white/10 dark:hover:text-[var(--foreground)]"
               }`}
             >
               {/* Active indicator */}
@@ -91,7 +91,7 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-white/20 p-3 space-y-1 backdrop-blur-sm">
+      <div className="border-t border-white/20 p-3 space-y-1 backdrop-blur-sm dark:border-[var(--mira-gray-300)]">
         <Link
           href="/settings"
           title={isCollapsed ? "Settings" : undefined}
@@ -99,8 +99,8 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
             isCollapsed ? "justify-center px-3 py-3" : "gap-3 px-3 py-3"
           } ${
             pathname === "/settings" || pathname.startsWith("/settings/")
-              ? "bg-white/20 text-white shadow-lg backdrop-blur-sm"
-              : "text-teal-50/90 hover:bg-white/10 hover:text-white hover:shadow-md"
+              ? "bg-white/20 text-white shadow-lg backdrop-blur-sm dark:bg-white/15 dark:text-[var(--foreground)]"
+              : "text-teal-50/90 hover:bg-white/10 hover:text-white hover:shadow-md dark:text-[var(--mira-gray-600)] dark:hover:bg-white/10 dark:hover:text-[var(--foreground)]"
           }`}
         >
           {/* Active indicator */}
@@ -127,7 +127,7 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
         <Link
           href="/login"
           title={isCollapsed ? "Logout" : undefined}
-          className={`flex items-center rounded-xl transition-all duration-200 hover:bg-white/10 hover:text-white hover:shadow-md ${
+          className={`flex items-center rounded-xl transition-all duration-200 hover:bg-white/10 hover:text-white hover:shadow-md dark:text-[var(--mira-gray-600)] dark:hover:bg-white/10 dark:hover:text-[var(--foreground)] ${
             isCollapsed ? "justify-center px-3 py-3" : "gap-3 px-3 py-3"
           } text-sm font-medium text-teal-50/90`}
         >

@@ -7,7 +7,7 @@ export function Navbar() {
   const { role, toggleRole } = useRole();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/50 bg-white/80 backdrop-blur-xl px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-xl px-6">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="-ml-2" />
         <div className="hidden sm:block">

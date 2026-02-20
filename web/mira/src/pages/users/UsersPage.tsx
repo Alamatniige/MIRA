@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search, Plus, Mail, MoreVertical } from "lucide-react";
-import { StatusBadge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/StatusBadge";
 
 const mockUsers = [
   { id: "1", name: "Maria Santos", email: "maria.santos@company.com", role: "Admin", department: "IT", status: "active" as const },

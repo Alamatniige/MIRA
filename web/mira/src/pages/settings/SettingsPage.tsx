@@ -2,15 +2,20 @@
 
 import { useState } from "react";
 import {
-  Settings,
   Building2,
   Bell,
   Shield,
   Palette,
   Save,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
 
 export function SettingsPage() {
+  const { theme, setTheme } = useTheme();
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [notifyCritical, setNotifyCritical] = useState(true);
   const [sessionTimeout, setSessionTimeout] = useState("30");
@@ -139,18 +144,40 @@ export function SettingsPage() {
         </div>
       </div>
 
-      {/* Appearance (placeholder) */}
+      {/* Appearance */}
       <div className="mira-card overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-[var(--mira-gray-200)] px-6 py-4">
+        <div className="flex items-center gap-2 border-b border-[var(--mira-gray-200)] dark:border-border px-6 py-4">
           <Palette className="h-5 w-5 text-[var(--mira-teal)]" strokeWidth={1.75} />
-          <h2 className="text-base font-semibold text-[var(--mira-navy-light)]">
+          <h2 className="text-base font-semibold text-[var(--mira-navy-light)] dark:text-foreground">
             Appearance
           </h2>
         </div>
-        <div className="p-6">
-          <p className="text-sm text-[var(--mira-gray-500)]">
-            Theme and display options will be available in a future update.
+        <div className="p-6 space-y-4">
+          <p className="text-sm text-[var(--mira-gray-500)] dark:text-muted-foreground">
+            Choose how MIRA looks. Dark mode applies to the entire app including the sidebar and top bar.
           </p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: 'light' as const, label: 'Light', icon: Sun },
+              { value: 'dark' as const, label: 'Dark', icon: Moon },
+              { value: 'system' as const, label: 'System', icon: Monitor },
+            ].map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTheme(value)}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
+                  theme === value
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-background text-foreground hover:bg-muted',
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
