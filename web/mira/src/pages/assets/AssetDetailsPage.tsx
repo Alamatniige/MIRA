@@ -1,8 +1,10 @@
 "use client";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
+import { PageLoading } from "@/components/ui/PageLoading";
 import type { AssetStatus } from "@/types/asset.types";
 
 const mockAsset = {
@@ -18,9 +20,22 @@ const mockAsset = {
 };
 
 export function AssetDetailsPage() {
+  const [isLoading, setIsLoading] = useState(true);
   const params = useParams();
   const id = params?.id as string | undefined;
   const assetId = id ?? mockAsset.id;
+
+  useEffect(() => {
+    // Simulate data fetching
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [id]);
+
+  if (isLoading) {
+    return <PageLoading message="Loading asset details..." />;
+  }
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,8 @@
+"use client";
+import { useState, useEffect } from "react";
 import { Download, Calendar, Building2 } from "lucide-react";
 import { UtilizationBarChart } from "@/components/reports/UtilizationBarChart";
+import { PageLoading } from "@/components/ui/PageLoading";
 
 const utilizationData = [
   { label: "Laptops", value: 92, max: 100 },
@@ -16,6 +19,20 @@ const inventorySummary = [
 ];
 
 export function ReportsPage() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data fetching
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 750);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <PageLoading message="Loading reports..." />;
+  }
+
   return (
     <div className="space-y-8">
       <div className="mira-card flex flex-wrap items-center gap-4 p-6">

@@ -1,9 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { AssetModal } from "./AssetModal";
+import { AssetDetailsModal } from "./AssetDetailsModal";
 import { AssetTable } from "@/components/assets/AssetTable";
 import { AssetFilters } from "@/components/assets/AssetFilters";
+import { PageLoading } from "@/components/ui/PageLoading";
 import type { AssetStatus } from "@/types/asset.types";
 
 const mockAssets = [
@@ -50,11 +52,22 @@ const mockAssets = [
 ];
 
 export function AssetListPage() {
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [deptFilter, setDeptFilter] = useState<string>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<(typeof mockAssets)[0] | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [viewingAsset, setViewingAsset] = useState<(typeof mockAssets)[0] | null>(null);
+
+  useEffect(() => {
+    // Simulate data fetching
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filtered = mockAssets.filter((a) => {
     const matchSearch =
@@ -65,9 +78,35 @@ export function AssetListPage() {
     return matchSearch && matchStatus;
   });
 
+  if (isLoading) {
+    return <PageLoading message="Loading assets..." />;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-full space-y-10 pb-4">
+      {/* Filters — mira-card like dashboard sections */}
+      <div className="mira-card p-6">
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-[15px] font-semibold tracking-tight text-[var(--mira-navy-light)]">
+              Asset Management
+            </h2>
+            <p className="mt-0.5 text-[13px] text-[var(--mira-gray-500)]">
+              Manage and track all IT hardware assets
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setEditingAsset(null);
+              setModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 rounded-2xl border border-[var(--mira-gray-200)] bg-[var(--mira-white)] px-4 py-2.5 text-[14px] font-semibold text-[var(--mira-navy-light)] transition-all duration-200 hover:border-[var(--mira-teal)]/40 hover:bg-[var(--mira-teal-muted)]/50 hover:shadow-[var(--shadow)]"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            Add Asset
+          </button>
+        </div>
         <AssetFilters
           search={search}
           onSearchChange={setSearch}
@@ -76,24 +115,18 @@ export function AssetListPage() {
           deptFilter={deptFilter}
           onDeptFilterChange={setDeptFilter}
         />
-        <button
-          type="button"
-          onClick={() => {
-            setEditingAsset(null);
-            setModalOpen(true);
-          }}
-          className="mira-btn-primary inline-flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} />
-          Add Asset
-        </button>
       </div>
 
+      {/* Assets Table */}
       <AssetTable
         assets={filtered}
         onEdit={(asset) => {
           setEditingAsset(asset);
           setModalOpen(true);
+        }}
+        onViewDetails={(asset) => {
+          setViewingAsset(asset);
+          setDetailsModalOpen(true);
         }}
       />
 
@@ -101,6 +134,15 @@ export function AssetListPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         asset={editingAsset}
+      />
+
+      <AssetDetailsModal
+        open={detailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setViewingAsset(null);
+        }}
+        asset={viewingAsset}
       />
     </div>
   );

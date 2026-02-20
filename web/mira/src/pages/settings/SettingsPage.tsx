@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Building2,
   Bell,
@@ -13,35 +13,46 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
+import { PageLoading } from "@/components/ui/PageLoading";
 
 export function SettingsPage() {
+  const [isLoading, setIsLoading] = useState(true);
   const { theme, setTheme } = useTheme();
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [notifyCritical, setNotifyCritical] = useState(true);
   const [sessionTimeout, setSessionTimeout] = useState("30");
 
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <PageLoading message="Loading settings..." />;
+  }
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-semibold text-[var(--mira-navy-light)]">
+        <h1 className="text-xl font-semibold text-[var(--mira-navy-light)] dark:text-[var(--foreground)]">
           Settings
         </h1>
-        <p className="mt-1 text-sm text-[var(--mira-gray-500)]">
+        <p className="mt-1 text-sm text-[var(--mira-gray-500)] dark:text-[var(--mira-gray-400)]">
           System and preference settings
         </p>
       </div>
 
       {/* General */}
       <div className="mira-card overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-[var(--mira-gray-200)] px-6 py-4">
+        <div className="flex items-center gap-2 border-b border-[var(--mira-gray-200)] dark:border-[var(--mira-gray-200)] px-6 py-4">
           <Building2 className="h-5 w-5 text-[var(--mira-teal)]" strokeWidth={1.75} />
-          <h2 className="text-base font-semibold text-[var(--mira-navy-light)]">
+          <h2 className="text-base font-semibold text-[var(--mira-navy-light)] dark:text-[var(--foreground)]">
             General
           </h2>
         </div>
         <div className="space-y-5 p-6">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[var(--mira-gray-700)]">
+            <label className="mb-1.5 block text-sm font-medium text-[var(--mira-gray-700)] dark:text-[var(--mira-gray-400)]">
               Organization name
             </label>
             <input
@@ -51,7 +62,7 @@ export function SettingsPage() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[var(--mira-gray-700)]">
+            <label className="mb-1.5 block text-sm font-medium text-[var(--mira-gray-700)] dark:text-[var(--mira-gray-400)]">
               Timezone
             </label>
             <select className="mira-input w-full max-w-md">
@@ -62,7 +73,7 @@ export function SettingsPage() {
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[var(--mira-gray-700)]">
+            <label className="mb-1.5 block text-sm font-medium text-[var(--mira-gray-700)] dark:text-[var(--mira-gray-400)]">
               Date format
             </label>
             <select className="mira-input w-full max-w-md">
@@ -76,39 +87,39 @@ export function SettingsPage() {
 
       {/* Notifications */}
       <div className="mira-card overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-[var(--mira-gray-200)] px-6 py-4">
+        <div className="flex items-center gap-2 border-b border-[var(--mira-gray-200)] dark:border-[var(--mira-gray-200)] px-6 py-4">
           <Bell className="h-5 w-5 text-[var(--mira-teal)]" strokeWidth={1.75} />
-          <h2 className="text-base font-semibold text-[var(--mira-navy-light)]">
+          <h2 className="text-base font-semibold text-[var(--mira-navy-light)] dark:text-[var(--foreground)]">
             Notifications
           </h2>
         </div>
         <div className="space-y-5 p-6">
           <label className="flex cursor-pointer items-center justify-between gap-4">
-            <span className="text-sm font-medium text-[var(--mira-gray-700)]">
+            <span className="text-sm font-medium text-[var(--mira-gray-700)] dark:text-[var(--mira-gray-400)]">
               Email notifications
             </span>
             <input
               type="checkbox"
               checked={notifyEmail}
               onChange={(e) => setNotifyEmail(e.target.checked)}
-              className="h-4 w-4 rounded border-[var(--mira-gray-300)] text-[var(--mira-teal)] focus:ring-[var(--mira-teal)]"
+              className="h-4 w-4 rounded border-[var(--mira-gray-300)] text-[var(--mira-teal)] focus:ring-[var(--mira-teal)] dark:border-[var(--mira-gray-500)]"
             />
           </label>
-          <p className="text-xs text-[var(--mira-gray-500)]">
+          <p className="text-xs text-[var(--mira-gray-500)] dark:text-[var(--mira-gray-400)]">
             Receive weekly summaries and assignment updates by email.
           </p>
           <label className="flex cursor-pointer items-center justify-between gap-4">
-            <span className="text-sm font-medium text-[var(--mira-gray-700)]">
+            <span className="text-sm font-medium text-[var(--mira-gray-700)] dark:text-[var(--mira-gray-400)]">
               Critical alerts
             </span>
             <input
               type="checkbox"
               checked={notifyCritical}
               onChange={(e) => setNotifyCritical(e.target.checked)}
-              className="h-4 w-4 rounded border-[var(--mira-gray-300)] text-[var(--mira-teal)] focus:ring-[var(--mira-teal)]"
+              className="h-4 w-4 rounded border-[var(--mira-gray-300)] text-[var(--mira-teal)] focus:ring-[var(--mira-teal)] dark:border-[var(--mira-gray-500)]"
             />
           </label>
-          <p className="text-xs text-[var(--mira-gray-500)]">
+          <p className="text-xs text-[var(--mira-gray-500)] dark:text-[var(--mira-gray-400)]">
             Get notified immediately when an asset has a critical health issue.
           </p>
         </div>
@@ -116,15 +127,15 @@ export function SettingsPage() {
 
       {/* Security */}
       <div className="mira-card overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-[var(--mira-gray-200)] px-6 py-4">
+        <div className="flex items-center gap-2 border-b border-[var(--mira-gray-200)] dark:border-[var(--mira-gray-200)] px-6 py-4">
           <Shield className="h-5 w-5 text-[var(--mira-teal)]" strokeWidth={1.75} />
-          <h2 className="text-base font-semibold text-[var(--mira-navy-light)]">
+          <h2 className="text-base font-semibold text-[var(--mira-navy-light)] dark:text-[var(--foreground)]">
             Security
           </h2>
         </div>
         <div className="space-y-5 p-6">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[var(--mira-gray-700)]">
+            <label className="mb-1.5 block text-sm font-medium text-[var(--mira-gray-700)] dark:text-[var(--mira-gray-400)]">
               Session timeout (minutes)
             </label>
             <select
@@ -137,7 +148,7 @@ export function SettingsPage() {
               <option value="60">1 hour</option>
               <option value="480">8 hours</option>
             </select>
-            <p className="mt-1 text-xs text-[var(--mira-gray-500)]">
+            <p className="mt-1 text-xs text-[var(--mira-gray-500)] dark:text-[var(--mira-gray-400)]">
               Users will be signed out after this period of inactivity.
             </p>
           </div>
@@ -146,31 +157,31 @@ export function SettingsPage() {
 
       {/* Appearance */}
       <div className="mira-card overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-[var(--mira-gray-200)] dark:border-border px-6 py-4">
+        <div className="flex items-center gap-2 border-b border-[var(--mira-gray-200)] dark:border-[var(--mira-gray-200)] px-6 py-4">
           <Palette className="h-5 w-5 text-[var(--mira-teal)]" strokeWidth={1.75} />
-          <h2 className="text-base font-semibold text-[var(--mira-navy-light)] dark:text-foreground">
+          <h2 className="text-base font-semibold text-[var(--mira-navy-light)] dark:text-[var(--foreground)]">
             Appearance
           </h2>
         </div>
         <div className="p-6 space-y-4">
-          <p className="text-sm text-[var(--mira-gray-500)] dark:text-muted-foreground">
+          <p className="text-sm text-[var(--mira-gray-500)] dark:text-[var(--mira-gray-400)]">
             Choose how MIRA looks. Dark mode applies to the entire app including the sidebar and top bar.
           </p>
           <div className="flex flex-wrap gap-2">
             {[
-              { value: 'light' as const, label: 'Light', icon: Sun },
-              { value: 'dark' as const, label: 'Dark', icon: Moon },
-              { value: 'system' as const, label: 'System', icon: Monitor },
+              { value: "light" as const, label: "Light", icon: Sun },
+              { value: "dark" as const, label: "Dark", icon: Moon },
+              { value: "system" as const, label: "System", icon: Monitor },
             ].map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => setTheme(value)}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
+                  "inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
                   theme === value
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-background text-foreground hover:bg-muted',
+                    ? "border-[var(--mira-teal)] bg-[var(--mira-teal)] text-white dark:bg-[var(--mira-teal)] dark:text-[var(--mira-navy)]"
+                    : "border-[var(--mira-gray-200)] bg-[var(--mira-white)] text-[var(--mira-navy-light)] hover:bg-[var(--mira-gray-50)] dark:border-[var(--mira-gray-200)] dark:bg-[var(--mira-white)] dark:hover:bg-[var(--mira-gray-100)] dark:text-[var(--foreground)]"
                 )}
               >
                 <Icon className="h-4 w-4" />
