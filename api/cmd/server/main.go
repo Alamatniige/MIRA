@@ -20,7 +20,6 @@ import (
 
 func main() {
 	// 1. Load environment variables
-	// Try loading from root, then fall back to relative path if running from subdir
 	if err := godotenv.Load(".env.local"); err != nil {
 		if err := godotenv.Load("../../.env.local"); err != nil {
 			log.Println("Warning: Could not find .env.local file. Ensure it exists in 'api/'")
@@ -31,8 +30,6 @@ func main() {
 	db.Init()
 
 	// 3. Auto Migrate
-	// Note: Order matters for foreign keys if we were being strict, but GORM usually handles it.
-	// However, Role should ideally be before User if we are creating tables from scratch.
 	err := db.DB.AutoMigrate(
 		&user.Role{},
 		&user.User{},
@@ -52,6 +49,8 @@ func main() {
 	// 5. Register Routes
 	auth.RegisterRoutes()
 	user.RegisterRoutes()
+	asset.RegisterRoutes()
+	assignments.RegisterRoutes()
 
 	// Protected Routes
 	http.HandleFunc("/users", middleware.AuthMiddleware(user.GetCurrentUser))

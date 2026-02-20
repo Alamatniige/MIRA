@@ -11,7 +11,17 @@ type Asset struct {
 	Specification string    `json:"specification" gorm:"not null"`
 	Location      string    `json:"location" gorm:"not null"`
 	CurrentStatus string    `json:"currentStatus" gorm:"column:currentStatus;not null"`
+	IsAssigned    bool      `json:"isAssigned" gorm:"column:isAssigned;default:false;not null"`
 	CreatedAt     time.Time `json:"createdAt" gorm:"column:createdAt;autoCreateTime"`
+}
+
+type CreateAssetRequest struct {
+	AssetName     string `json:"assetName"`
+	AssetType     string `json:"assetType"`
+	SerialNumber  string `json:"serialNumber"`
+	Specification string `json:"specification"`
+	Location      string `json:"location"`
+	CurrentStatus string `json:"currentStatus"`
 }
 
 func (Asset) TableName() string {
@@ -29,4 +39,8 @@ type AssetStatusHistory struct {
 
 func (AssetStatusHistory) TableName() string {
 	return "assetStatusHistory"
+}
+
+type UpdateStatus struct {
+	CurrentStatus string `json:"currentStatus"`
 }

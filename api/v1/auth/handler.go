@@ -31,7 +31,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var targetUser user.User
-	// Use GORM to fetch user profile
 	if result := db.DB.Where("id = ?", userSession.User.ID).Preload("Role").First(&targetUser); result.Error != nil {
 		http.Error(w, "Error fetching user profile: "+result.Error.Error(), http.StatusInternalServerError)
 		return

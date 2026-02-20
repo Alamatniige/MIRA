@@ -14,3 +14,8 @@ type AssetAssignment struct {
 func (AssetAssignment) TableName() string {
 	return "assetsAssignment"
 }
+
+type AssignAssetRequest struct {
+	AssetID string `json:"assetId"`
+	UserID  string `json:"userId"`
+}
