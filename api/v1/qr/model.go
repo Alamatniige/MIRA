@@ -1,8 +1,14 @@
 package qr
 
-type QR struct {
-	ID          string `json:"id"`
-	AssetID     string `json:"assetId"`
-	QrValue     string `json:"qrValue"`
-	GeneratedAt string `json:"generatedAt"`
+import "time"
+
+type QrCode struct {
+	ID         string    `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	AssetID    string    `json:"assetId" gorm:"column:assetId;type:uuid;not null"`
+	QrValue    string    `json:"qrValue" gorm:"column:qrValue;not null"`
+	GenerateAt time.Time `json:"generateAt" gorm:"column:generateAt;autoCreateTime"`
+}
+
+func (QrCode) TableName() string {
+	return "qrCodes"
 }

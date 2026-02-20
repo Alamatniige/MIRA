@@ -3,13 +3,19 @@ package main
 import (
 	"fmt"
 	"log"
-	"mira-api/middleware"
-	"mira-api/v1/auth"
-	"mira-api/v1/supabase"
-	"mira-api/v1/user"
 	"net/http"
 
 	"github.com/joho/godotenv"
+
+	"mira-api/internal/db"
+	"mira-api/middleware"
+	asset "mira-api/v1/assets"
+	"mira-api/v1/assignments"
+	"mira-api/v1/auth"
+	"mira-api/v1/issues"
+	"mira-api/v1/qr"
+	"mira-api/v1/supabase"
+	"mira-api/v1/user"
 )
 
 func main() {
@@ -21,21 +27,40 @@ func main() {
 		}
 	}
 
-	// 2. Initialize Supabase client
+	// 2. Initialize Database (GORM)
+	db.Init()
+
+	// 3. Auto Migrate
+	// Note: Order matters for foreign keys if we were being strict, but GORM usually handles it.
+	// However, Role should ideally be before User if we are creating tables from scratch.
+	err := db.DB.AutoMigrate(
+		&user.Role{},
+		&user.User{},
+		&asset.Asset{},
+		&asset.AssetStatusHistory{},
+		&assignments.AssetAssignment{},
+		&issues.IssueReport{},
+		&qr.QrCode{},
+	)
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	// 4. Initialize Supabase client (for Auth only)
 	supabase.Init()
 
-	// 3. Register Routes
+	// 5. Register Routes
 	auth.RegisterRoutes()
 	user.RegisterRoutes()
 
 	// Protected Routes
-	http.HandleFunc("/users", middleware.AuthMiddleware(user.GetUser))
+	http.HandleFunc("/users", middleware.AuthMiddleware(user.GetCurrentUser))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Welcome to MIRA API!")
 	})
 
-	// 4. Start the server
+	// 6. Start the server
 	port := "8080"
 	log.Printf("Server starting on port %s...", port)
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
