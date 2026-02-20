@@ -7,7 +7,7 @@ type AssetAssignment struct {
 	AssetID      string    `json:"assetId" gorm:"column:assetId;type:uuid;not null"`
 	UserID       string    `json:"userId" gorm:"column:userId;type:uuid;not null"`
 	AssignedDate time.Time `json:"assignedDate" gorm:"column:assignedDate;autoCreateTime"`
-	ReturnedDate time.Time `json:"returnedDate" gorm:"column:returnedDate"`
+	ReturnedDate time.Time `json:"returnedDate" gorm:"column:returnedDate;type:timestamp;default:null"`
 	Acknowledged bool      `json:"acknowledged" gorm:"default:false;not null"`
 }
 
