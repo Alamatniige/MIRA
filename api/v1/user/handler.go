@@ -4,18 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"mira-api/internal/db"
 	"mira-api/v1/supabase"
+
+	"gorm.io/gorm"
 )
 
-func GetUser(w http.ResponseWriter, r *http.Request) {
-	// TODO: Get ID from context after AuthMiddleware injects it.
-	// For now, let's just return a placeholder or all users (as it was).
-	// Ideally: id := r.Context().Value("user_id").(string)
-
+func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	var users []User
-	err := supabase.Client.DB.From("users").Select("*").Limit(1).Execute(&users)
-	if err != nil {
-		http.Error(w, "Error fetching users: "+err.Error(), http.StatusInternalServerError)
+	if result := db.DB.Limit(1).Find(&users); result.Error != nil {
+		http.Error(w, "Error fetching users: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -24,28 +22,43 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddUser(w http.ResponseWriter, r *http.Request) {
-	var user User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
-		http.Error(w, "Error decoding user: "+err.Error(), http.StatusBadRequest)
+	var req CreateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	err = supabase.Client.DB.From("users").Insert(user).Execute(&user)
+	ctx := r.Context()
+	inviteResp, err := supabase.AdminClient.Auth.InviteUserByEmail(ctx, req.Email)
 	if err != nil {
-		http.Error(w, "Error adding user: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error inviting user: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	newUser := User{
+		ID:         inviteResp.ID,
+		Email:      req.Email,
+		FullName:   req.FullName,
+		Department: req.Department,
+		RoleID:     req.RoleID,
+		Password:   "",
+	}
+
+	if result := db.DB.Create(&newUser); result.Error != nil {
+		http.Error(w, "Error adding user to local DB: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(newUser)
 }
 
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	var users []User
-	err := supabase.Client.DB.From("users").Select("*").Execute(&users)
-	if err != nil {
-		http.Error(w, "Error fetching users: "+err.Error(), http.StatusInternalServerError)
+	if result := db.DB.Preload("Role").Find(&users); result.Error != nil {
+		http.Error(w, "Error fetching users: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -56,18 +69,16 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 func GetUserDetails(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	var users []User
-	err := supabase.Client.DB.From("users").Select("*").Eq("id", id).Execute(&users)
-	if err != nil {
-		http.Error(w, "Error fetching user: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if len(users) == 0 {
-		http.Error(w, "User not found", http.StatusNotFound)
+	var user User
+	if result := db.DB.Preload("Role").First(&user, "id = ?", id); result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			http.Error(w, "User not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error fetching user: "+result.Error.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users[0])
+	json.NewEncoder(w).Encode(user)
 }

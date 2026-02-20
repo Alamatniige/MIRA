@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"mira-api/internal/db"
 	"mira-api/v1/supabase"
 	"mira-api/v1/user"
 
@@ -29,17 +30,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userProfile []user.User
-	err = supabase.Client.DB.From("users").Select("*").Eq("id", userSession.User.ID).Execute(&userProfile)
-
-	if err != nil {
-		http.Error(w, "Error fetching user profile: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	var targetUser user.User
-	if len(userProfile) > 0 {
-		targetUser = userProfile[0]
+	if result := db.DB.Where("id = ?", userSession.User.ID).Preload("Role").First(&targetUser); result.Error != nil {
+		http.Error(w, "Error fetching user profile: "+result.Error.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	resp := LoginResponse{
