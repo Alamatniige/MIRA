@@ -51,6 +51,7 @@ func main() {
 	user.RegisterRoutes()
 	asset.RegisterRoutes()
 	assignments.RegisterRoutes()
+	qr.RegisterRoutes()
 
 	// Protected Routes
 	http.HandleFunc("/users", middleware.AuthMiddleware(user.GetCurrentUser))

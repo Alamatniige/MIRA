@@ -1,11 +1,15 @@
 package asset
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"mira-api/internal/db"
+	"mira-api/v1/qr"
 
+	"github.com/skip2/go-qrcode"
 	"gorm.io/gorm"
 )
 
@@ -56,15 +60,32 @@ func AddAsset(w http.ResponseWriter, r *http.Request) {
 		CurrentStatus: req.CurrentStatus,
 	}
 
+	// Save the new asset to generate UUID
 	if result := db.DB.Create(&newAsset); result.Error != nil {
 		http.Error(w, "Error adding asset: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Generate QR Code containing the Asset ID
+	qrContent := fmt.Sprintf("mira-asset:%s", newAsset.ID)
+	png, err := qrcode.Encode(qrContent, qrcode.Medium, 256)
+	var generatedQr qr.QrCode
+	if err == nil {
+		base64QR := base64.StdEncoding.EncodeToString(png)
+		generatedQr = qr.QrCode{
+			AssetID: newAsset.ID,
+			QrValue: base64QR,
+		}
+		db.DB.Create(&generatedQr)
+	}
+
 	w.WriteHeader(http.StatusCreated)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newAsset)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"asset":  newAsset,
+		"qrCode": generatedQr,
+	})
 }
 
 // Update asset
