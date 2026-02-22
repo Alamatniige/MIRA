@@ -152,3 +152,16 @@ func ReturnAsset(w http.ResponseWriter, r *http.Request) {
 		"asset":        asset,
 	})
 }
+
+// Fetch all assets with assigned users
+func GetAllAssets(w http.ResponseWriter, r *http.Request) {
+	var assignments []AssetAssignment
+
+	if err := db.DB.Find(&assignments).Error; err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(assignments)
+}
