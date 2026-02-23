@@ -13,18 +13,26 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final myCount = mockMyAssets.length;
-    final activeCount = mockMyAssets.where((a) => a.status.toLowerCase() == 'active').length;
-    final maintenanceCount = mockMyAssets.where((a) => a.status.toLowerCase() == 'maintenance').length;
+    final activeCount = mockMyAssets
+        .where((a) => a.status.toLowerCase() == 'active')
+        .length;
+    final maintenanceCount = mockMyAssets
+        .where((a) => a.status.toLowerCase() == 'maintenance')
+        .length;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: isDark ? AppColors.darkBackgroundGradient : AppColors.softBackgroundGradient,
+          gradient: isDark
+              ? AppColors.darkBackgroundGradient
+              : AppColors.softBackgroundGradient,
         ),
         child: SafeArea(
           child: CustomScrollView(
-            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
             slivers: [
               // Premium gradient header with decorative elements
               SliverToBoxAdapter(
@@ -45,7 +53,9 @@ class DashboardScreen extends StatelessWidget {
                           ],
                           stops: const [0.0, 0.5, 1.0],
                         ),
-                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(36),
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.tealPrimary.withOpacity(0.35),
@@ -159,7 +169,10 @@ class DashboardScreen extends StatelessWidget {
                           label: 'Total Assets',
                           value: '$myCount',
                           icon: Icons.inventory_2_rounded,
-                          gradient: const [Color(0xFF2563EB), Color(0xFF0D9488)],
+                          gradient: const [
+                            Color(0xFF2563EB),
+                            Color(0xFF0D9488),
+                          ],
                           accentColor: const Color(0xFF0D9488),
                         ),
                         const SizedBox(width: 14),
@@ -167,7 +180,10 @@ class DashboardScreen extends StatelessWidget {
                           label: 'Active',
                           value: '$activeCount',
                           icon: Icons.check_circle_rounded,
-                          gradient: const [Color(0xFF22C55E), Color(0xFF16A34A)],
+                          gradient: const [
+                            Color(0xFF22C55E),
+                            Color(0xFF16A34A),
+                          ],
                           accentColor: const Color(0xFF22C55E),
                         ),
                         const SizedBox(width: 14),
@@ -175,7 +191,10 @@ class DashboardScreen extends StatelessWidget {
                           label: 'Maintenance',
                           value: '$maintenanceCount',
                           icon: Icons.build_rounded,
-                          gradient: const [Color(0xFFEAB308), Color(0xFFCA8A04)],
+                          gradient: const [
+                            Color(0xFFEAB308),
+                            Color(0xFFCA8A04),
+                          ],
                           accentColor: const Color(0xFFEAB308),
                         ),
                       ],
@@ -194,19 +213,25 @@ class DashboardScreen extends StatelessWidget {
                       Text(
                         'My Assets',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: Theme.of(context).colorScheme.onSurface,
-                              letterSpacing: -0.3,
-                            ),
+                          fontWeight: FontWeight.w800,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          letterSpacing: -0.3,
+                        ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: (Theme.of(context).colorScheme.shadow ?? AppColors.navy).withOpacity(0.04),
+                              color:
+                                  (Theme.of(context).colorScheme.shadow ??
+                                          AppColors.navy)
+                                      .withOpacity(0.04),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -217,7 +242,9 @@ class DashboardScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -235,16 +262,13 @@ class DashboardScreen extends StatelessWidget {
                   : SliverPadding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final asset = mockMyAssets[index];
-                            return _AssetListCard(
-                              asset: asset,
-                              onTap: () => _openDetails(context, asset),
-                            );
-                          },
-                          childCount: mockMyAssets.length,
-                        ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final asset = mockMyAssets[index];
+                          return _AssetListCard(
+                            asset: asset,
+                            onTap: () => _openDetails(context, asset),
+                          );
+                        }, childCount: mockMyAssets.length),
                       ),
                     ),
             ],
@@ -263,18 +287,14 @@ class DashboardScreen extends StatelessWidget {
   }
 
   void _onScanTap(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const QrScannerScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const QrScannerScreen()));
   }
 
   void _openDetails(BuildContext context, Asset asset) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => AssetDetailScreen(asset: asset),
-      ),
+      MaterialPageRoute(builder: (context) => AssetDetailScreen(asset: asset)),
     );
   }
 }
@@ -294,7 +314,11 @@ class _EmptyAssetsState extends StatelessWidget {
               color: AppColors.tealMuted.withOpacity(0.5),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.inventory_2_outlined, size: 56, color: AppColors.tealPrimary.withOpacity(0.7)),
+            child: Icon(
+              Icons.inventory_2_outlined,
+              size: 56,
+              color: AppColors.tealPrimary.withOpacity(0.7),
+            ),
           ),
           const SizedBox(height: 24),
           Text(
@@ -345,7 +369,9 @@ class _SummaryCard extends StatelessWidget {
         color: isDark ? surfaceColor : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.9),
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.white.withOpacity(0.9),
           width: 1.5,
         ),
         boxShadow: [
@@ -355,80 +381,84 @@ class _SummaryCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: (Theme.of(context).colorScheme.shadow ?? AppColors.navy).withOpacity(isDark ? 0.2 : 0.06),
+            color: (Theme.of(context).colorScheme.shadow ?? AppColors.navy)
+                .withOpacity(isDark ? 0.2 : 0.06),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: gradient,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: accentColor.withOpacity(0.35),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(icon, color: Colors.white, size: 18),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
+              Expanded(
                 child: Text(
-                  value,
+                  label,
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    letterSpacing: -0.5,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: gradient,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withOpacity(0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: Colors.white, size: 18),
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onSurface,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 IconData _iconForCategory(String category) {
   final lower = category.toLowerCase();
-  if (lower.contains('laptop') || lower.contains('computer')) return Icons.laptop_mac_rounded;
-  if (lower.contains('monitor') || lower.contains('display')) return Icons.monitor_rounded;
-  if (lower.contains('keyboard') || lower.contains('peripheral')) return Icons.keyboard_rounded;
+  if (lower.contains('laptop') || lower.contains('computer'))
+    return Icons.laptop_mac_rounded;
+  if (lower.contains('monitor') || lower.contains('display'))
+    return Icons.monitor_rounded;
+  if (lower.contains('keyboard') || lower.contains('peripheral'))
+    return Icons.keyboard_rounded;
   if (lower.contains('printer')) return Icons.print_rounded;
   if (lower.contains('phone')) return Icons.smartphone_rounded;
   return Icons.devices_other_rounded;
@@ -444,7 +474,8 @@ class _AssetListCard extends StatelessWidget {
     final lower = asset.status.toLowerCase();
     if (lower == 'active') return AppColors.statusActive;
     if (lower == 'maintenance') return AppColors.statusMaintenance;
-    if (lower == 'reported' || lower == 'issue') return AppColors.statusReported;
+    if (lower == 'reported' || lower == 'issue')
+      return AppColors.statusReported;
     if (lower == 'disposed') return AppColors.statusDisposed;
     return AppColors.gray500;
   }
@@ -465,12 +496,16 @@ class _AssetListCard extends StatelessWidget {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.06) : AppColors.gray100,
+                color: isDark
+                    ? Colors.white.withOpacity(0.06)
+                    : AppColors.gray100,
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: (Theme.of(context).colorScheme.shadow ?? AppColors.navy).withOpacity(isDark ? 0.15 : 0.04),
+                  color:
+                      (Theme.of(context).colorScheme.shadow ?? AppColors.navy)
+                          .withOpacity(isDark ? 0.15 : 0.04),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -499,7 +534,9 @@ class _AssetListCard extends StatelessWidget {
                             accent.withOpacity(0.4),
                           ],
                         ),
-                        borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+                        borderRadius: const BorderRadius.horizontal(
+                          left: Radius.circular(20),
+                        ),
                       ),
                     ),
                     // Content
@@ -539,7 +576,9 @@ class _AssetListCard extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      color: Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -550,7 +589,9 @@ class _AssetListCard extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -606,7 +647,11 @@ class _PremiumFab extends StatelessWidget {
           customBorder: const CircleBorder(),
           child: const Padding(
             padding: EdgeInsets.all(22),
-            child: Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 28),
+            child: Icon(
+              Icons.qr_code_scanner_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
           ),
         ),
       ),
