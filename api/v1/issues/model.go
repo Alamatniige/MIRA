@@ -14,3 +14,10 @@ type IssueReport struct {
 func (IssueReport) TableName() string {
 	return "issueReports"
 }
+
+type CreateIssueRequest struct {
+	AssetID     string `json:"assetId" gorm:"column:assetId;type:uuid;not null"`
+	ReportedBy  string `json:"reportedBy" gorm:"column:reportedBy;type:uuid;not null"`
+	Description string `json:"description" gorm:"not null"`
+	Status      string `json:"status" gorm:"not null"`
+}

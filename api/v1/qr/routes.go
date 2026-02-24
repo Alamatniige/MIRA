@@ -6,6 +6,6 @@ import (
 )
 
 func RegisterRoutes() {
-	http.HandleFunc("POST /generate", middleware.AuthMiddleware(GenerateQrCode))
-	http.HandleFunc("GET /{id}", middleware.AuthMiddleware(ScanQrCode))
+	http.HandleFunc("POST /qr/generate", middleware.AuthMiddleware(GenerateQrCode))
+	http.HandleFunc("GET /qr/{id}", middleware.AuthMiddleware(ScanQrCode))
 }
