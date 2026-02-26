@@ -14,6 +14,7 @@ import (
 	"mira-api/v1/auth"
 	"mira-api/v1/issues"
 	"mira-api/v1/qr"
+	report "mira-api/v1/reports"
 	"mira-api/v1/supabase"
 	"mira-api/v1/user"
 )
@@ -53,6 +54,7 @@ func main() {
 	assignments.RegisterRoutes()
 	qr.RegisterRoutes()
 	issues.RegisterRoutes()
+	report.RegisterRoutes()
 
 	// Protected Routes
 	http.HandleFunc("/users", middleware.AuthMiddleware(user.GetCurrentUser))
