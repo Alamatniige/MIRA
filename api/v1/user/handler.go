@@ -7,6 +7,9 @@ import (
 	"mira-api/internal/db"
 	"mira-api/v1/supabase"
 
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+
 	"gorm.io/gorm"
 )
 
@@ -67,7 +70,18 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUserDetails(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	if id == "" {
+		http.Error(w, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	if _, err := uuid.Parse(id); err != nil {
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
 
 	var user User
 	if result := db.DB.Preload("Role").First(&user, "id = ?", id); result.Error != nil {

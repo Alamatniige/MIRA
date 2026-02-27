@@ -1,8 +1,10 @@
 package auth
 
-import "net/http"
+import (
+	"github.com/gorilla/mux"
+)
 
-func RegisterRoutes() {
-	http.HandleFunc("POST /login", Login)
-	http.HandleFunc("POST /logout", Logout)
+func RegisterRoutes(r *mux.Router) {
+	r.HandleFunc("/login", Login).Methods("POST")
+	r.HandleFunc("/logout", Logout).Methods("POST")
 }

@@ -5,6 +5,7 @@ import (
 	"mira-api/internal/db"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
@@ -54,7 +55,8 @@ func UpdateIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := r.PathValue("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 
 	var issue IssueReport
 	if result := db.DB.First(&issue, "id = ?", id); result.Error != nil {
@@ -77,7 +79,8 @@ func UpdateIssue(w http.ResponseWriter, r *http.Request) {
 
 // DELETE delete issue
 func DeleteIssue(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 
 	var issue IssueReport
 	if result := db.DB.First(&issue, "id = ?", id); result.Error != nil {
@@ -101,7 +104,8 @@ func DeleteIssue(w http.ResponseWriter, r *http.Request) {
 
 // GET issues by asset id
 func GetIssueByAssetID(w http.ResponseWriter, r *http.Request) {
-	assetID := r.PathValue("assetId")
+	vars := mux.Vars(r)
+	assetID := vars["assetId"]
 
 	var issues []IssueReport
 	if result := db.DB.Where(&IssueReport{AssetID: assetID}).Find(&issues); result.Error != nil {

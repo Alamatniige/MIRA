@@ -10,6 +10,8 @@ require (
 require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/uuid v1.6.0
+	github.com/gorilla/mux v1.8.1
 )
 
 require (

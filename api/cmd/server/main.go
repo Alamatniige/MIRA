@@ -17,6 +17,8 @@ import (
 	report "mira-api/v1/reports"
 	"mira-api/v1/supabase"
 	"mira-api/v1/user"
+
+	mux "github.com/gorilla/mux"
 )
 
 func main() {
@@ -47,26 +49,28 @@ func main() {
 	// 4. Initialize Supabase client (for Auth only)
 	supabase.Init()
 
+	r := mux.NewRouter()
+
 	// 5. Register Routes
-	auth.RegisterRoutes()
-	user.RegisterRoutes()
-	asset.RegisterRoutes()
-	assignments.RegisterRoutes()
-	qr.RegisterRoutes()
-	issues.RegisterRoutes()
-	report.RegisterRoutes()
+	auth.RegisterRoutes(r)
+	user.RegisterRoutes(r)
+	asset.RegisterRoutes(r)
+	assignments.RegisterRoutes(r)
+	qr.RegisterRoutes(r)
+	issues.RegisterRoutes(r)
+	report.RegisterRoutes(r)
 
 	// Protected Routes
-	http.HandleFunc("/users", middleware.AuthMiddleware(user.GetCurrentUser))
+	r.HandleFunc("/users", middleware.AuthMiddleware(user.GetCurrentUser))
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Welcome to MIRA API!")
 	})
 
 	// 6. Start the server
 	port := "8080"
 	log.Printf("Server starting on port %s...", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatal("ListenAndServe error: ", err)
 	}
 }

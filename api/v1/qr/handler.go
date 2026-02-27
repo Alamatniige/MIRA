@@ -47,24 +47,39 @@ func GenerateQrCode(w http.ResponseWriter, r *http.Request) {
 }
 
 // Scan QR Code
+type ScanRequest struct {
+	ScannedData string `json:"scannedData"`
+}
+
 func ScanQrCode(w http.ResponseWriter, r *http.Request) {
-	var req GenerateQrRequest
+	var req ScanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	if req.AssetID == "" {
-		http.Error(w, "AssetID is required", http.StatusBadRequest)
+	// 1. Verify it's a Mira QR Code
+	if len(req.ScannedData) < 11 || req.ScannedData[:11] != "mira-asset:" {
+		http.Error(w, "Invalid or unrecognized QR Code", http.StatusBadRequest)
 		return
 	}
 
+	// 2. Extract the Asset ID
+	assetID := req.ScannedData[11:]
+
+	if assetID == "" {
+		http.Error(w, "Malformed QR Code, missing Asset ID", http.StatusBadRequest)
+		return
+	}
+
+	// 3. Find the QR Code record
 	var qrCode QrCode
-	if err := db.DB.Where("assetId = ?", req.AssetID).First(&qrCode).Error; err != nil {
+	if err := db.DB.Where("assetId = ?", assetID).First(&qrCode).Error; err != nil {
 		http.Error(w, "QR code not found", http.StatusNotFound)
 		return
 	}
 
+	// 4. Return the QR Code details
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(qrCode)
 }

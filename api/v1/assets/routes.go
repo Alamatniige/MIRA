@@ -2,14 +2,16 @@ package asset
 
 import (
 	"mira-api/middleware"
-	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
-func RegisterRoutes() {
-	http.HandleFunc("GET /assets", middleware.AuthMiddleware(GetAssets))
-	http.HandleFunc("GET /assets/{id}", middleware.AuthMiddleware(GetAssetDetails))
-	http.HandleFunc("POST /assets", middleware.AuthMiddleware(AddAsset))
-	http.HandleFunc("PUT /assets/{id}", middleware.AuthMiddleware(UpdateAsset))
-	http.HandleFunc("PUT /assets/{id}/status", middleware.AuthMiddleware(UpdateAssetStatus))
-	http.HandleFunc("DELETE /assets/{id}", middleware.AuthMiddleware(DeleteAsset))
+func RegisterRoutes(r *mux.Router) {
+	r.HandleFunc("/assets", middleware.AuthMiddleware(GetAssets)).Methods("GET")
+	r.HandleFunc("/assets/{id}", middleware.AuthMiddleware(GetAssetDetails)).Methods("GET")
+	r.HandleFunc("/assets", middleware.AuthMiddleware(AddAsset)).Methods("POST")
+	r.HandleFunc("/assets/types", middleware.AuthMiddleware(AddAssetType)).Methods("POST")
+	r.HandleFunc("/assets/{id}", middleware.AuthMiddleware(UpdateAsset)).Methods("PUT")
+	r.HandleFunc("/assets/{id}/status", middleware.AuthMiddleware(UpdateAssetStatus)).Methods("PUT")
+	r.HandleFunc("/assets/{id}", middleware.AuthMiddleware(DeleteAsset)).Methods("DELETE")
 }

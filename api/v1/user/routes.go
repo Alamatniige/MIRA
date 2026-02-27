@@ -2,12 +2,13 @@ package user
 
 import (
 	"mira-api/middleware"
-	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
-func RegisterRoutes() {
-	http.HandleFunc("GET /users/me", middleware.AuthMiddleware(GetCurrentUser))
-	http.HandleFunc("GET /users", middleware.AuthMiddleware(GetAllUsers))
-	http.HandleFunc("GET /users/{id}", middleware.AuthMiddleware(GetUserDetails))
-	http.HandleFunc("POST /users", middleware.AuthMiddleware(AddUser))
+func RegisterRoutes(r *mux.Router) {
+	r.HandleFunc("/users/me", middleware.AuthMiddleware(GetCurrentUser)).Methods("GET")
+	r.HandleFunc("/users", middleware.AuthMiddleware(GetAllUsers)).Methods("GET")
+	r.HandleFunc("/users/{id}", middleware.AuthMiddleware(GetUserDetails)).Methods("GET")
+	r.HandleFunc("/users", middleware.AuthMiddleware(AddUser)).Methods("POST")
 }

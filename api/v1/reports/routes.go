@@ -2,11 +2,12 @@ package report
 
 import (
 	"mira-api/middleware"
-	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
-func RegisterRoutes() {
-	http.HandleFunc("GET /reports", middleware.AuthMiddleware(GetIssueAndMaintenanceReport))
-	http.HandleFunc("GET /reports/assets", middleware.AuthMiddleware(GetAssetInventory))
-	http.HandleFunc("GET /reports/assets/usage", middleware.AuthMiddleware(GetAssetUsageReport))
+func RegisterRoutes(r *mux.Router) {
+	r.HandleFunc("/reports", middleware.AuthMiddleware(GetIssueAndMaintenanceReport)).Methods("GET")
+	r.HandleFunc("/reports/assets", middleware.AuthMiddleware(GetAssetInventory)).Methods("GET")
+	r.HandleFunc("/reports/assets/usage", middleware.AuthMiddleware(GetAssetUsageReport)).Methods("GET")
 }

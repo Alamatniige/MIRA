@@ -2,13 +2,14 @@ package issues
 
 import (
 	"mira-api/middleware"
-	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
-func RegisterRoutes() {
-	http.HandleFunc("GET /issues", middleware.AuthMiddleware(GetIssues))
-	http.HandleFunc("POST /issues/create", middleware.AuthMiddleware(CreateIssue))
-	http.HandleFunc("PUT /issues/update/{id}", middleware.AuthMiddleware(UpdateIssue))
-	http.HandleFunc("DELETE /issues/delete/{id}", middleware.AuthMiddleware(DeleteIssue))
-	http.HandleFunc("GET /issues/asset/{assetId}", middleware.AuthMiddleware(GetIssueByAssetID))
+func RegisterRoutes(r *mux.Router) {
+	r.HandleFunc("/issues", middleware.AuthMiddleware(GetIssues)).Methods("GET")
+	r.HandleFunc("/issues/create", middleware.AuthMiddleware(CreateIssue)).Methods("POST")
+	r.HandleFunc("/issues/update/{id}", middleware.AuthMiddleware(UpdateIssue)).Methods("PUT")
+	r.HandleFunc("/issues/delete/{id}", middleware.AuthMiddleware(DeleteIssue)).Methods("DELETE")
+	r.HandleFunc("/issues/asset/{assetId}", middleware.AuthMiddleware(GetIssueByAssetID)).Methods("GET")
 }

@@ -2,10 +2,11 @@ package qr
 
 import (
 	"mira-api/middleware"
-	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
-func RegisterRoutes() {
-	http.HandleFunc("POST /qr/generate", middleware.AuthMiddleware(GenerateQrCode))
-	http.HandleFunc("GET /qr/{id}", middleware.AuthMiddleware(ScanQrCode))
+func RegisterRoutes(r *mux.Router) {
+	r.HandleFunc("/qr/generate", middleware.AuthMiddleware(GenerateQrCode)).Methods("POST")
+	r.HandleFunc("/qr/scan", middleware.AuthMiddleware(ScanQrCode)).Methods("POST")
 }
