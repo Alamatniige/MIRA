@@ -223,10 +223,10 @@ class DashboardScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color:
-                                  (Theme.of(context).colorScheme.shadow ??
-                                          AppColors.navy)
-                                      .withOpacity(0.04),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .shadow
+                                  .withOpacity(0.04),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -359,7 +359,9 @@ class _SummaryCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: (Theme.of(context).colorScheme.shadow ?? AppColors.navy)
+            color: Theme.of(context)
+                .colorScheme
+                .shadow
                 .withOpacity(isDark ? 0.2 : 0.06),
             blurRadius: 20,
             offset: const Offset(0, 6),
@@ -485,9 +487,10 @@ class _AssetListCard extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color:
-                      (Theme.of(context).colorScheme.shadow ?? AppColors.navy)
-                          .withOpacity(isDark ? 0.15 : 0.04),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .shadow
+                      .withOpacity(isDark ? 0.15 : 0.04),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
