@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
-import '../../data/mock_data.dart';
+import '../../controllers/dashboard_controller.dart';
 import '../../models/asset.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/status_badge.dart';
-import '../scan/qr_scanner_screen.dart';
-import '../assets/asset_detail_screen.dart';
 
 /// Premium Dashboard - modern design with glassmorphism, refined cards, premium FAB
 class DashboardScreen extends StatelessWidget {
@@ -12,13 +10,10 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final myCount = mockMyAssets.length;
-    final activeCount = mockMyAssets
-        .where((a) => a.status.toLowerCase() == 'active')
-        .length;
-    final maintenanceCount = mockMyAssets
-        .where((a) => a.status.toLowerCase() == 'maintenance')
-        .length;
+    final controller = DashboardController();
+    final myCount = controller.totalAssets;
+    final activeCount = controller.activeAssetsCount;
+    final maintenanceCount = controller.maintenanceAssetsCount;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
@@ -114,7 +109,7 @@ class DashboardScreen extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                _getGreeting(),
+                                controller.getGreeting(),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -124,7 +119,7 @@ class DashboardScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                mockUserName.split(' ')[0],
+                                controller.userFirstName,
                                 style: const TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.w800,
@@ -252,7 +247,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              mockMyAssets.isEmpty
+              controller.myAssets.isEmpty
                   ? SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.all(40),
@@ -263,38 +258,21 @@ class DashboardScreen extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
-                          final asset = mockMyAssets[index];
+                          final asset = controller.myAssets[index];
                           return _AssetListCard(
                             asset: asset,
-                            onTap: () => _openDetails(context, asset),
+                            onTap: () =>
+                                DashboardController().openDetails(context, asset),
                           );
-                        }, childCount: mockMyAssets.length),
+                        }, childCount: controller.myAssets.length),
                       ),
                     ),
             ],
           ),
         ),
       ),
-      floatingActionButton: _PremiumFab(onPressed: () => _onScanTap(context)),
-    );
-  }
-
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  }
-
-  void _onScanTap(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const QrScannerScreen()));
-  }
-
-  void _openDetails(BuildContext context, Asset asset) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => AssetDetailScreen(asset: asset)),
+      floatingActionButton:
+          _PremiumFab(onPressed: () => controller.onScanTap(context)),
     );
   }
 }
@@ -453,12 +431,15 @@ class _SummaryCard extends StatelessWidget {
 
 IconData _iconForCategory(String category) {
   final lower = category.toLowerCase();
-  if (lower.contains('laptop') || lower.contains('computer'))
+  if (lower.contains('laptop') || lower.contains('computer')) {
     return Icons.laptop_mac_rounded;
-  if (lower.contains('monitor') || lower.contains('display'))
+  }
+  if (lower.contains('monitor') || lower.contains('display')) {
     return Icons.monitor_rounded;
-  if (lower.contains('keyboard') || lower.contains('peripheral'))
+  }
+  if (lower.contains('keyboard') || lower.contains('peripheral')) {
     return Icons.keyboard_rounded;
+  }
   if (lower.contains('printer')) return Icons.print_rounded;
   if (lower.contains('phone')) return Icons.smartphone_rounded;
   return Icons.devices_other_rounded;
@@ -474,8 +455,9 @@ class _AssetListCard extends StatelessWidget {
     final lower = asset.status.toLowerCase();
     if (lower == 'active') return AppColors.statusActive;
     if (lower == 'maintenance') return AppColors.statusMaintenance;
-    if (lower == 'reported' || lower == 'issue')
+    if (lower == 'reported' || lower == 'issue') {
       return AppColors.statusReported;
+    }
     if (lower == 'disposed') return AppColors.statusDisposed;
     return AppColors.gray500;
   }

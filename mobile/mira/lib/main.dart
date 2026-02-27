@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_mode_scope.dart';
-import 'screens/welcome/welcome_screen.dart';
-import 'screens/login/login_screen.dart';
-import 'screens/dashboard/dashboard_screen.dart';
-import 'screens/scan/qr_scanner_screen.dart';
-import 'screens/history/history_screen.dart';
-import 'screens/profile/profile_screen.dart';
+import 'views/welcome/welcome_screen.dart';
+import 'views/login/login_screen.dart';
+import 'views/dashboard/dashboard_screen.dart';
+import 'views/scan/qr_scanner_screen.dart';
+import 'views/history/history_screen.dart';
+import 'views/profile/profile_screen.dart';
 import 'widgets/modern_bottom_nav.dart';
 
 void main() {

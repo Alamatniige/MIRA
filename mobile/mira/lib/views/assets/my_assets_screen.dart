@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../controllers/assets_controller.dart';
 import '../../theme/app_theme.dart';
-import '../../data/mock_data.dart';
-import '../../models/asset.dart';
 import '../../widgets/asset_card.dart';
-import 'asset_detail_screen.dart';
 
 /// My Assets list - staff's assigned assets
 class MyAssetsScreen extends StatelessWidget {
@@ -11,16 +9,19 @@ class MyAssetsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = AssetsController();
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Assets'),
-      ),
-      body: mockMyAssets.isEmpty
+      appBar: AppBar(title: const Text('My Assets')),
+      body: controller.myAssets.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inventory_2_outlined, size: 64, color: AppColors.gray400),
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 64,
+                    color: AppColors.gray400,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'No assets assigned',
@@ -40,34 +41,17 @@ class MyAssetsScreen extends StatelessWidget {
               },
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: mockMyAssets.length,
+                itemCount: controller.myAssets.length,
                 itemBuilder: (context, index) {
-                  final asset = mockMyAssets[index];
+                  final asset = controller.myAssets[index];
                   return AssetCard(
                     asset: asset,
-                    onTap: () => _openDetails(context, asset),
-                    onReportIssue: () => _reportIssue(context, asset),
+                    onTap: () => controller.openDetails(context, asset),
+                    onReportIssue: () => controller.reportIssue(context, asset),
                   );
                 },
               ),
             ),
-    );
-  }
-
-  void _openDetails(BuildContext context, Asset asset) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => AssetDetailScreen(asset: asset),
-      ),
-    );
-  }
-
-  void _reportIssue(BuildContext context, Asset asset) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Report issue for ${asset.name} (frontend only)'),
-        behavior: SnackBarBehavior.floating,
-      ),
     );
   }
 }

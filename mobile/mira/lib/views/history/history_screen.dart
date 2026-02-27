@@ -34,7 +34,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: isDark ? AppColors.darkBackgroundGradient : AppColors.softBackgroundGradient,
+          gradient: isDark
+              ? AppColors.darkBackgroundGradient
+              : AppColors.softBackgroundGradient,
         ),
         child: SafeArea(
           child: CustomScrollView(
@@ -45,9 +47,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   child: Text(
                     'Activity History',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                 ),
               ),
@@ -64,18 +66,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         child: FilterChip(
                           label: Text(f['label']!),
                           selected: isSelected,
-                          onSelected: (_) => setState(() => _selectedFilter = f['id']!),
+                          onSelected: (_) =>
+                              setState(() => _selectedFilter = f['id']!),
                           backgroundColor: colorScheme.surface,
                           selectedColor: colorScheme.primary.withOpacity(0.2),
                           checkmarkColor: colorScheme.primary,
                           labelStyle: TextStyle(
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                            color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? colorScheme.primary
+                                : colorScheme.onSurfaceVariant,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                         ),
                       );
                     }).toList(),
@@ -93,11 +103,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             padding: const EdgeInsets.all(48),
                             child: Column(
                               children: [
-                                Icon(Icons.history, size: 64, color: colorScheme.onSurfaceVariant),
+                                Icon(
+                                  Icons.history,
+                                  size: 64,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
                                 const SizedBox(height: 16),
                                 Text(
                                   'No activity yet',
-                                  style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                               ],
                             ),
@@ -105,18 +122,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                       )
                     : SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final item = _filteredActivities[index];
-                            final isLast = index == _filteredActivities.length - 1;
-                            return _TimelineItem(
-                              activity: item,
-                              isLast: isLast,
-                              onTap: () => _openAsset(context, item),
-                            );
-                          },
-                          childCount: _filteredActivities.length,
-                        ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final item = _filteredActivities[index];
+                          final isLast =
+                              index == _filteredActivities.length - 1;
+                          return _TimelineItem(
+                            activity: item,
+                            isLast: isLast,
+                            onTap: () => _openAsset(context, item),
+                          );
+                        }, childCount: _filteredActivities.length),
                       ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
@@ -180,7 +195,9 @@ class _TimelineItem extends StatelessWidget {
                     child: Container(
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withOpacity(0.5),
                     ),
                   ),
               ],
@@ -203,7 +220,9 @@ class _TimelineItem extends StatelessWidget {
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.shadow.withOpacity(0.05),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.shadow.withOpacity(0.05),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -232,7 +251,12 @@ class _TimelineItem extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           _formatDateTime(activity.dateTime),
-                          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),

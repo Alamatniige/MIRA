@@ -6,15 +6,15 @@ import { BrowserRouter, MemoryRouter, Routes, Route } from "react-router-dom";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AppLayout } from "@/components/AppLayout";
-import Dashboard from "./routes/Dashboard";
-import Assets from "./routes/Assets";
-import MyAssets from "./routes/MyAssets";
-import AssetDetails from "./routes/AssetDetails";
-import Assignments from "./routes/Assignments";
-import QRScanner from "./routes/QRScanner";
-import Reports from "./routes/Reports";
-import NotFound from "./routes/NotFound";
-import { SettingsPage } from "./pages/settings/SettingsPage";
+import Dashboard from "@/routes/Dashboard";
+import Assets from "@/routes/Assets";
+import MyAssets from "@/routes/MyAssets";
+import AssetDetails from "@/routes/AssetDetails";
+import Assignments from "@/routes/Assignments";
+import QRScanner from "@/routes/QRScanner";
+import Reports from "@/routes/Reports";
+import NotFound from "@/routes/NotFound";
+import { SettingsPage } from "@/pages/settings/SettingsPage";
 
 const queryClient = new QueryClient();
 

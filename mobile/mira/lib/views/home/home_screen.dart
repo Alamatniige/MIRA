@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../controllers/home_controller.dart';
 import '../../theme/app_theme.dart';
-import '../../data/mock_data.dart';
-import '../scan/qr_scanner_screen.dart';
 
 /// Home/Dashboard - matches web Dashboard summary cards
 class HomeScreen extends StatelessWidget {
@@ -9,8 +8,9 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final myCount = mockMyAssets.length;
-    final activeCount = mockMyAssets.where((a) => a.status.toLowerCase() == 'active').length;
+    final controller = HomeController();
+    final myCount = controller.myAssetsCount;
+    final activeCount = controller.activeAssetsCount;
 
     return Scaffold(
       appBar: AppBar(
@@ -28,7 +28,7 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hello, ${mockUserName.split(' ')[0]}',
+                  'Hello, ${controller.userFirstName}',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -68,7 +68,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 24),
             // Quick action - Scan QR
             GestureDetector(
-              onTap: () => _onScanTap(context),
+              onTap: () => controller.onScanTap(context),
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -121,14 +121,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _onScanTap(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const QrScannerScreen(),
       ),
     );
   }

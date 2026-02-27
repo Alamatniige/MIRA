@@ -15,7 +15,9 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: isDark ? AppColors.darkBackgroundGradient : AppColors.softBackgroundGradient,
+          gradient: isDark
+              ? AppColors.darkBackgroundGradient
+              : AppColors.softBackgroundGradient,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -61,7 +63,10 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Engineering',
-                  style: TextStyle(fontSize: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 // Info cards
@@ -91,10 +96,19 @@ class ProfileScreen extends StatelessWidget {
                 _InfoCard(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
                       child: Row(
                         children: [
-                          Icon(Icons.dark_mode_outlined, size: 22, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          Icon(
+                            Icons.dark_mode_outlined,
+                            size: 22,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
@@ -102,15 +116,24 @@ class ProfileScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'Dark Mode',
-                                  style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  ThemeModeScope.of(context).isDarkMode ? 'On' : 'Off',
+                                  ThemeModeScope.of(context).isDarkMode
+                                      ? 'On'
+                                      : 'Off',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                   ),
                                 ),
                               ],
@@ -118,7 +141,8 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           Switch(
                             value: ThemeModeScope.of(context).isDarkMode,
-                            onChanged: (_) => ThemeModeScope.of(context).toggleDarkMode(),
+                            onChanged: (_) =>
+                                ThemeModeScope.of(context).toggleDarkMode(),
                           ),
                         ],
                       ),
@@ -150,7 +174,9 @@ class ProfileScreen extends StatelessWidget {
                               },
                               child: const Text(
                                 'Log out',
-                                style: TextStyle(color: AppColors.statusReported),
+                                style: TextStyle(
+                                  color: AppColors.statusReported,
+                                ),
                               ),
                             ),
                           ],
@@ -160,8 +186,12 @@ class ProfileScreen extends StatelessWidget {
                     icon: const Icon(Icons.logout, size: 20),
                     label: const Text('Log out'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                      side: BorderSide(color: Theme.of(context).colorScheme.outline),
+                      foregroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant,
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -198,9 +228,7 @@ class _InfoCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 }
@@ -231,7 +259,10 @@ class _InfoRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(

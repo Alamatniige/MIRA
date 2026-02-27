@@ -24,9 +24,25 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/components/*": ["./src/views/components/*"],
+      "@/layouts/*": ["./src/views/layouts/*"],
+      "@/pages/*": ["./src/views/pages/*"],
+      "@/routes/*": ["./src/views/routes/*"],
+
+      "@/contexts/*": ["./src/controllers/contexts/*"],
+      "@/hooks/*": ["./src/controllers/hooks/*"],
+      "@/features/*": ["./src/controllers/features/*"],
+      "@/services/*": ["./src/controllers/services/*"],
+
+      "@/types/*": ["./src/models/types/*"],
+      "@/utils/*": ["./src/models/utils/*"],
+      "@/lib/*": ["./src/models/lib/*"],
+
+      "@models/*": ["./src/models/*"],
+      "@controllers/*": ["./src/controllers/*"],
+      "@views/*": ["./src/views/*"],
+
+      "@/*": ["./src/*"]
     }
   },
   "include": [

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../theme/app_theme.dart';
@@ -130,14 +129,9 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          MobileScanner(
-            controller: _controller,
-            onDetect: _onDetect,
-          ),
+          MobileScanner(controller: _controller, onDetect: _onDetect),
           // Dark overlay with cutout
-          CustomPaint(
-            painter: _ScannerOverlayPainter(),
-          ),
+          CustomPaint(painter: _ScannerOverlayPainter()),
           // Glowing scan frame
           Center(
             child: Container(
@@ -170,10 +164,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                           left: 0,
                           right: 0,
                           child: Transform.translate(
-                            offset: Offset(
-                              0,
-                              260 * _scanLineController.value,
-                            ),
+                            offset: Offset(0, 260 * _scanLineController.value),
                             child: Container(
                               height: 3,
                               decoration: BoxDecoration(
@@ -204,9 +195,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                   ? widget.onBack!()
                   : Navigator.maybePop(context),
               icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.black38,
-              ),
+              style: IconButton.styleFrom(backgroundColor: Colors.black38),
             ),
           ),
           // Flash toggle
@@ -224,9 +213,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                         : Icons.flash_off,
                     color: Colors.white,
                   ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.black38,
-                  ),
+                  style: IconButton.styleFrom(backgroundColor: Colors.black38),
                 );
               },
             ),
@@ -238,7 +225,10 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             right: 0,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(16),
@@ -288,8 +278,7 @@ class _ScannerOverlayPainter extends CustomPainter {
       ..color = Colors.black.withOpacity(0.5)
       ..style = PaintingStyle.fill;
 
-    final path = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final path = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
     const frameSize = 260.0;
     final centerX = size.width / 2;
@@ -316,10 +305,7 @@ class _ScanResultSheet extends StatelessWidget {
   final Asset asset;
   final VoidCallback onViewDetails;
 
-  const _ScanResultSheet({
-    required this.asset,
-    required this.onViewDetails,
-  });
+  const _ScanResultSheet({required this.asset, required this.onViewDetails});
 
   @override
   Widget build(BuildContext context) {
