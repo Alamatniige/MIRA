@@ -1,6 +1,6 @@
 import { GlassCard } from './GlassCard';
 import { StatusBadge } from './StatusBadge';
-import { Asset } from '@/types';
+import { Asset } from '@/models/types';
 import { QrCode, MapPin, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';

@@ -36,6 +36,8 @@ class AppColors {
   static const Color backgroundGradientEnd = Color(0xFFEFF6FF);
   static const Color foreground = Color(0xFF0F172A);
 
+  static const Color tealBlue = Color(0xFF0891B2);
+
   /// Primary gradient for headers, FAB, buttons
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -43,11 +45,25 @@ class AppColors {
     colors: [bluePrimary, tealPrimary],
   );
 
+  /// Teal gradient for specific pages
+  static const LinearGradient tealGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [tealBlue, tealPrimary], // Teal blue to teal green
+  );
+
   /// Soft background gradient
   static const LinearGradient softBackgroundGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [backgroundGradientStart, backgroundGradientEnd, gray100],
+  );
+
+  /// Light Teal background gradient
+  static const LinearGradient tealBackgroundGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFE0F2FE), Color(0xFFCCFBF1)], // Light teal blue to light teal green
   );
 
   // Dark mode colors
@@ -62,6 +78,13 @@ class AppColors {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+  );
+
+  /// Dark Teal background gradient
+  static const LinearGradient darkTealBackgroundGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF083344), Color(0xFF042F2E)], // Very dark teal blue to very dark teal green
   );
 }
 

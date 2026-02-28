@@ -104,7 +104,7 @@ export function AssetModal({ open, onClose, asset }: AssetModalProps) {
               <div className="space-y-2">
                 <Label htmlFor="category" className="flex items-center gap-2 text-[13px] font-medium text-[var(--mira-navy-light)]">
                   <Tag className="h-4 w-4 text-[var(--mira-gray-500)]" />
-                  Category
+                  Model
                 </Label>
                 <Select
                   value={formData.category}
@@ -112,7 +112,7 @@ export function AssetModal({ open, onClose, asset }: AssetModalProps) {
                   required
                 >
                   <SelectTrigger id="category" className="h-11 rounded-xl border-[var(--mira-gray-200)]">
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder="Select model" />
                   </SelectTrigger>
                   <SelectContent className="bg-[var(--mira-white)] border-[var(--mira-gray-200)]">
                     <SelectItem value="Laptop">Laptop</SelectItem>

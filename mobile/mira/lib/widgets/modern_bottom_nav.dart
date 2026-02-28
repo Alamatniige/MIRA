@@ -21,13 +21,14 @@ class ModernBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withOpacity(0.08),
+            color: isDark ? Colors.black.withOpacity(0.3) : AppColors.navy.withOpacity(0.08),
             blurRadius: 24,
             offset: const Offset(0, -4),
           ),
@@ -79,6 +80,10 @@ class _NavItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final unselectedColor = isDark ? AppColors.gray400 : AppColors.gray500;
+    
     return Expanded(
       child: Material(
         color: Colors.transparent,
@@ -89,7 +94,9 @@ class _NavItemWidget extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.tealMuted.withOpacity(0.5) : Colors.transparent,
+              color: isSelected 
+                  ? (isDark ? primaryColor.withOpacity(0.15) : AppColors.tealMuted.withOpacity(0.5)) 
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -99,7 +106,7 @@ class _NavItemWidget extends StatelessWidget {
                 Icon(
                   icon,
                   size: 24,
-                  color: isSelected ? AppColors.tealPrimary : AppColors.gray500,
+                  color: isSelected ? primaryColor : unselectedColor,
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -107,7 +114,7 @@ class _NavItemWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? AppColors.tealPrimary : AppColors.gray500,
+                    color: isSelected ? primaryColor : unselectedColor,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

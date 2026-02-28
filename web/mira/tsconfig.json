@@ -34,6 +34,7 @@
       "@/features/*": ["./src/controllers/features/*"],
       "@/services/*": ["./src/controllers/services/*"],
 
+      "@/types": ["./src/models/types/index.ts"],
       "@/types/*": ["./src/models/types/*"],
       "@/utils/*": ["./src/models/utils/*"],
       "@/lib/*": ["./src/models/lib/*"],

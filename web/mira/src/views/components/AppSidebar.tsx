@@ -13,7 +13,7 @@ const allItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard, roles: ['Staff', 'IT Department'] },
   { title: 'Assets', url: '/assets', icon: Box, roles: ['IT Department'] },
   { title: 'My Assets', url: '/my-assets', icon: Laptop, roles: ['Staff'] },
-  { title: 'Assignments', url: '/assignments', icon: ArrowLeftRight, roles: ['IT Department'] },
+  { title: 'Registry', url: '/registry', icon: ArrowLeftRight, roles: ['IT Department'] },
   { title: 'Reports', url: '/reports', icon: BarChart3, roles: ['IT Department'] },
   { title: 'QR Scanner', url: '/qr-scanner', icon: QrCode, roles: ['IT Department'] },
   { title: 'Users', url: '/users', icon: Users, roles: ['IT Department'] },

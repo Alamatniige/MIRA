@@ -35,8 +35,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: Container(
         decoration: BoxDecoration(
           gradient: isDark
-              ? AppColors.darkBackgroundGradient
-              : AppColors.softBackgroundGradient,
+              ? AppColors.darkTealBackgroundGradient
+              : AppColors.tealBackgroundGradient,
         ),
         child: SafeArea(
           child: CustomScrollView(

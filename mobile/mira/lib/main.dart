@@ -61,10 +61,36 @@ class _AppInitialScreenState extends State<AppInitialScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_showWelcome) {
-      return WelcomeScreen(onGetStarted: _onGetStarted);
-    }
-    return AuthWrapper();
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 450),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        final slideAnimation = Tween<Offset>(
+          begin: const Offset(0.06, 0.04),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        ));
+
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: slideAnimation,
+            child: child,
+          ),
+        );
+      },
+      child: _showWelcome
+          ? WelcomeScreen(
+              key: const ValueKey('welcome'),
+              onGetStarted: _onGetStarted,
+            )
+          : const AuthWrapper(
+              key: ValueKey('auth'),
+            ),
+    );
   }
 }
 

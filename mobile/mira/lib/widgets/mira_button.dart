@@ -7,6 +7,7 @@ class MiraButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final IconData? icon;
+  final Color? backgroundColor;
 
   const MiraButton({
     super.key,
@@ -14,6 +15,7 @@ class MiraButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.icon,
+    this.backgroundColor,
   });
 
   @override
@@ -23,7 +25,7 @@ class MiraButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.teal,
+          backgroundColor: backgroundColor ?? AppColors.teal,
           foregroundColor: AppColors.white,
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

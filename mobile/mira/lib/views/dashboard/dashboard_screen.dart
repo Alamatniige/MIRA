@@ -20,8 +20,8 @@ class DashboardScreen extends StatelessWidget {
       body: Container(
         decoration: BoxDecoration(
           gradient: isDark
-              ? AppColors.darkBackgroundGradient
-              : AppColors.softBackgroundGradient,
+              ? AppColors.darkTealBackgroundGradient
+              : AppColors.tealBackgroundGradient,
         ),
         child: SafeArea(
           child: CustomScrollView(
@@ -42,11 +42,10 @@ class DashboardScreen extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            AppColors.bluePrimary,
-                            const Color(0xFF0891B2),
+                            AppColors.tealBlue,
                             AppColors.tealPrimary,
                           ],
-                          stops: const [0.0, 0.5, 1.0],
+                          stops: const [0.0, 1.0],
                         ),
                         borderRadius: const BorderRadius.vertical(
                           bottom: Radius.circular(36),
@@ -610,7 +609,7 @@ class _PremiumFab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        gradient: AppColors.tealGradient,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
@@ -619,7 +618,7 @@ class _PremiumFab extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: AppColors.bluePrimary.withOpacity(0.3),
+            color: AppColors.tealBlue.withOpacity(0.3),
             blurRadius: 24,
             offset: const Offset(0, 4),
           ),

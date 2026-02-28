@@ -16,8 +16,8 @@ class ProfileScreen extends StatelessWidget {
       body: Container(
         decoration: BoxDecoration(
           gradient: isDark
-              ? AppColors.darkBackgroundGradient
-              : AppColors.softBackgroundGradient,
+              ? AppColors.darkTealBackgroundGradient
+              : AppColors.tealBackgroundGradient,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -30,7 +30,7 @@ class ProfileScreen extends StatelessWidget {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    gradient: AppColors.tealGradient,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(

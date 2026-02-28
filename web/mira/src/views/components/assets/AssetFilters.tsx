@@ -43,7 +43,7 @@ export function AssetFilters({
           <SelectTrigger className="h-11 w-[160px] rounded-xl border-[var(--mira-gray-200)] bg-[var(--mira-white)] text-[13px] text-[var(--mira-navy-light)]">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[var(--mira-white)] border-[var(--mira-gray-200)]">
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="maintenance">Maintenance</SelectItem>
@@ -55,7 +55,7 @@ export function AssetFilters({
           <SelectTrigger className="h-11 w-[160px] rounded-xl border-[var(--mira-gray-200)] bg-[var(--mira-white)] text-[13px] text-[var(--mira-navy-light)]">
             <SelectValue placeholder="All departments" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[var(--mira-white)] border-[var(--mira-gray-200)]">
             <SelectItem value="all">All departments</SelectItem>
             <SelectItem value="it">IT</SelectItem>
             <SelectItem value="hr">HR</SelectItem>
