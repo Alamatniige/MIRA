@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Modal } from "@/components/ui/modal";
 import {
-    Users,
+    Users as UsersIcon,
     UserCheck,
     UserX,
     ShieldCheck,
@@ -27,7 +27,10 @@ import {
     Phone,
     Building2,
     ChevronRight,
+    Filter,
+    ArrowUpRight
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -140,11 +143,11 @@ const USERS: User[] = [
 
 const ROLE_STYLES: Record<RoleVariant, string> = {
     admin:
-        "bg-[#0F766E]/10 text-[#0F766E] dark:bg-teal-500/10 dark:text-teal-400 border border-[#0F766E]/20 dark:border-teal-500/20",
+        "bg-teal-50 text-teal-700 border-teal-100 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20",
     manager:
-        "bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400 border border-violet-200 dark:border-violet-500/20",
+        "bg-violet-50 text-violet-700 border-violet-100 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20",
     staff:
-        "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700",
+        "bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700",
 };
 
 const STATUS_STYLES: Record<StatusVariant, string> = {
@@ -160,37 +163,42 @@ const kpis = [
     {
         label: "Total Users",
         value: "148",
-        sub: "Registered system accounts",
-        icon: Users,
-        gradient: "from-blue-500 to-indigo-500",
+        sub: "System accounts",
+        icon: UsersIcon,
+        color: "bg-blue-600",
+        bg: "bg-blue-50",
     },
     {
         label: "Active Users",
         value: "132",
         sub: "Currently enabled",
         icon: UserCheck,
-        gradient: "from-emerald-400 to-teal-500",
+        color: "bg-emerald-600",
+        bg: "bg-emerald-50",
     },
     {
         label: "Inactive Users",
         value: "16",
-        sub: "Disabled / offboarded",
+        sub: "Offboarded",
         icon: UserX,
-        gradient: "from-slate-400 to-slate-500",
+        color: "bg-slate-600",
+        bg: "bg-slate-50",
     },
     {
         label: "IT Admins",
         value: "8",
-        sub: "Full system access",
+        sub: "Full access",
         icon: ShieldCheck,
-        gradient: "from-[#0F766E] to-[#0E7490]",
+        color: "bg-teal-600",
+        bg: "bg-teal-50",
     },
     {
         label: "IT Managers",
         value: "24",
-        sub: "Department leads",
+        sub: "Dept leads",
         icon: ShieldAlert,
-        gradient: "from-violet-500 to-purple-500",
+        color: "bg-violet-600",
+        bg: "bg-violet-50",
     },
 ];
 
@@ -221,23 +229,23 @@ export function UsersContent() {
     });
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+        <div className="space-y-6 pb-12">
             {/* Page Header */}
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
                         User Management
                     </h1>
-                    <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-                        Manage system accounts, roles, and department assignments.
+                    <p className="mt-1 text-sm text-slate-500">
+                        Administer system access, roles, and department synchronization.
                     </p>
                 </div>
                 <Button
                     onClick={() => setAddOpen(true)}
-                    className="gap-2 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-xs font-semibold text-white shadow-[0_4px_14px_rgba(15,118,110,0.35)] hover:shadow-[0_6px_20px_rgba(15,118,110,0.45)] hover:opacity-90 transition-all"
+                    className="h-10 gap-2 rounded-xl bg-slate-900 px-5 text-xs font-semibold text-white shadow-md transition-all hover:bg-slate-800 hover:shadow-lg active:scale-95"
                 >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add User
+                    <Plus className="h-4 w-4" />
+                    New User Account
                 </Button>
             </div>
 
@@ -248,28 +256,26 @@ export function UsersContent() {
                     return (
                         <Card
                             key={kpi.label}
-                            className="group relative overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl transition-all hover:bg-white/80 hover:shadow-md dark:border-white/10 dark:bg-slate-900/50 dark:hover:bg-slate-900/80"
-                            style={{ animationDelay: `${i * 80}ms` }}
+                            className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md"
                         >
-                            <div
-                                className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${kpi.gradient} opacity-80`}
-                            />
                             <CardContent className="p-5">
                                 <div className="flex items-center justify-between">
-                                    <div
-                                        className={`rounded-lg bg-gradient-to-br ${kpi.gradient} p-2 text-white shadow-sm ring-1 ring-white/20`}
-                                    >
+                                    <div className={cn("rounded-xl p-2.5 text-white shadow-sm transition-transform group-hover:scale-110", kpi.color)}>
                                         <Icon className="h-4 w-4" />
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                                        <ArrowUpRight className="h-3 w-3" />
+                                        <span>Live</span>
                                     </div>
                                 </div>
                                 <div className="mt-4">
-                                    <p className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                                        {kpi.value}
-                                    </p>
-                                    <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-2xl font-bold text-slate-900">{kpi.value}</span>
+                                    </div>
+                                    <p className="text-[11px] font-semibold text-slate-500">
                                         {kpi.label}
                                     </p>
-                                    <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+                                    <p className="mt-1 text-[10px] text-slate-400">
                                         {kpi.sub}
                                     </p>
                                 </div>
@@ -280,59 +286,29 @@ export function UsersContent() {
             </div>
 
             {/* Users Table Card */}
-            <Card className="overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/50">
-                <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+            <Card className="overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md">
+                <CardHeader className="border-b border-slate-100 bg-white/50 pb-4 backdrop-blur-sm">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <CardTitle className="text-base">All Users</CardTitle>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                {filtered.length} of {USERS.length} users shown
+                            <CardTitle className="text-base font-bold text-slate-900">Registered Users</CardTitle>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                                {filtered.length} matching administrative accounts
                             </p>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            {/* Search */}
-                            <div className="relative">
-                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="relative group">
+                                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 transition-colors group-hover:text-slate-600" />
                                 <Input
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Search name, email, dept…"
-                                    className="h-8 w-52 pl-8 text-[11px]"
+                                    placeholder="Filter by name, email..."
+                                    className="h-9 w-64 rounded-xl border-slate-200 bg-slate-50/50 pl-9 text-xs shadow-sm transition-all focus:bg-white focus:ring-slate-200"
                                 />
                             </div>
-                            {/* Role Filter */}
-                            <select
-                                value={roleFilter}
-                                onChange={(e) => setRoleFilter(e.target.value)}
-                                className="h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-[11px] text-slate-700 dark:text-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
-                            >
-                                <option value="all">Role: All</option>
-                                <option value="admin">IT Administrator</option>
-                                <option value="manager">IT Manager</option>
-                                <option value="staff">Staff</option>
-                            </select>
-                            {/* Status Filter */}
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-[11px] text-slate-700 dark:text-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
-                            >
-                                <option value="all">Status: All</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                            {/* Department Filter */}
-                            <select
-                                value={deptFilter}
-                                onChange={(e) => setDeptFilter(e.target.value)}
-                                className="h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-[11px] text-slate-700 dark:text-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
-                            >
-                                <option value="all">Department: All</option>
-                                <option value="IT Operations">IT Operations</option>
-                                <option value="Finance">Finance</option>
-                                <option value="Operations">Operations</option>
-                                <option value="HR">HR &amp; Admin</option>
-                            </select>
+                            <Button variant="outline" size="sm" className="h-9 rounded-xl border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50">
+                                <Filter className="mr-2 h-3.5 w-3.5" />
+                                Filters
+                            </Button>
                         </div>
                     </div>
                 </CardHeader>
@@ -616,7 +592,7 @@ export function UsersContent() {
                                 {
                                     label: "Last Active",
                                     value: viewUser.lastActive,
-                                    icon: Users,
+                                    icon: UsersIcon,
                                 },
                             ].map(({ label, value, icon: Icon }) => (
                                 <div

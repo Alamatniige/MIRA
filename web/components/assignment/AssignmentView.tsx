@@ -13,116 +13,214 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  ClipboardList,
+  UserCheck,
+  RotateCcw,
+  Wrench,
+  ChevronRight,
+  Search,
+  CalendarDays,
+  SlidersHorizontal,
+} from "lucide-react";
+
+const stats = [
+  {
+    label: "Total Assignments",
+    value: "874",
+    sub: "All-time records",
+    icon: <ClipboardList className="h-5 w-5" />,
+    color: "from-teal-500/10 to-teal-600/10 text-teal-700 border-teal-200/60 dark:border-teal-800/40 dark:text-teal-400",
+    valueColor: "text-teal-800 dark:text-teal-300",
+  },
+  {
+    label: "Currently Assigned",
+    value: "631",
+    sub: "Active with staff",
+    icon: <UserCheck className="h-5 w-5" />,
+    color: "from-emerald-500/10 to-emerald-600/10 text-emerald-700 border-emerald-200/60 dark:border-emerald-800/40 dark:text-emerald-400",
+    valueColor: "text-emerald-800 dark:text-emerald-300",
+  },
+  {
+    label: "Returned",
+    value: "198",
+    sub: "Back in inventory",
+    icon: <RotateCcw className="h-5 w-5" />,
+    color: "from-slate-400/10 to-slate-500/10 text-slate-600 border-slate-200/60 dark:border-slate-700/40 dark:text-slate-400",
+    valueColor: "text-slate-800 dark:text-slate-200",
+  },
+  {
+    label: "Under Maintenance",
+    value: "45",
+    sub: "Pending return",
+    icon: <Wrench className="h-5 w-5" />,
+    color: "from-amber-500/10 to-amber-600/10 text-amber-700 border-amber-200/60 dark:border-amber-800/40 dark:text-amber-400",
+    valueColor: "text-amber-800 dark:text-amber-300",
+  },
+];
 
 const history = [
   {
-    asset: "LPT-02318 · Lenovo ThinkPad T14",
+    asset: "LPT-02318",
+    name: "Lenovo ThinkPad T14",
     assignee: "Santos, Mark",
+    initials: "MS",
     department: "IT Operations",
-    date: "2026-03-04 09:32",
+    date: "Mar 4, 2026 · 09:32",
     status: "Active",
     statusVariant: "success" as const,
   },
   {
-    asset: "LPT-02197 · MacBook Pro 14\"",
+    asset: "LPT-02197",
+    name: 'MacBook Pro 14"',
     assignee: "Dela Cruz, Ana",
+    initials: "AD",
     department: "Finance",
-    date: "2026-03-02 11:47",
+    date: "Mar 2, 2026 · 11:47",
     status: "Active",
     statusVariant: "success" as const,
   },
   {
-    asset: "MON-00872 · Dell UltraSharp 27\"",
+    asset: "MON-00872",
+    name: 'Dell UltraSharp 27"',
     assignee: "Unassigned",
+    initials: "–",
     department: "Inventory",
-    date: "2026-03-03 17:10",
+    date: "Mar 3, 2026 · 17:10",
     status: "Returned",
     statusVariant: "muted" as const,
   },
+  {
+    asset: "SRV-00041",
+    name: "HPE ProLiant DL380",
+    assignee: "Data Center A-03",
+    initials: "DC",
+    department: "Infrastructure",
+    date: "Mar 1, 2026 · 14:05",
+    status: "Under Maintenance",
+    statusVariant: "warning" as const,
+  },
 ];
+
+const badgeStyles: Record<string, string> = {
+  success:
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
+  warning:
+    "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  muted:
+    "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+};
 
 export function AssignmentView() {
   const [viewTimeline, setViewTimeline] = useState(false);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+      {/* Page Header */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-lg font-semibold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Asset Assignment
           </h1>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
             Assign and reassign IT hardware assets to staff or departments.
           </p>
         </div>
         <Button
-          size="lg"
-          className="rounded-full bg-gradient-to-r from-primary to-secondary px-5 text-xs font-semibold shadow-sm"
+          size="sm"
+          className="h-9 self-start rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-xs font-semibold text-white shadow-md hover:opacity-90 md:self-auto"
         >
-          Assign Asset
+          + Assign Asset
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <Card>
-          <CardHeader>
-            <div>
-              <CardTitle>New Assignment</CardTitle>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Capture a new asset assignment or reassignment.
-              </p>
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            className={`flex flex-col gap-2 rounded-xl border bg-gradient-to-br p-4 transition-shadow hover:shadow-md ${s.color}`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium opacity-80">{s.label}</span>
+              <span className="opacity-60">{s.icon}</span>
             </div>
+            <p className={`text-2xl font-bold tracking-tight ${s.valueColor}`}>
+              {s.value}
+            </p>
+            <p className="text-[10px] font-medium opacity-60">{s.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Main Grid */}
+      <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        {/* New Assignment Form */}
+        <Card className="overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/50">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0F766E] to-[#0E7490] rounded-t-xl" />
+          <CardHeader className="pb-3 pt-6">
+            <CardTitle className="text-base">New Assignment</CardTitle>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              Capture a new asset assignment or reassignment.
+            </p>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4 text-xs">
+            <form className="space-y-4">
+              {/* Select Asset */}
               <div>
-                <label className="mb-1 block text-[11px] font-medium text-slate-700">
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Select Asset
                 </label>
-                <select className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[11px] text-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20">
-                  <option>Search or select asset</option>
-                  <option>LPT-02318 · Lenovo ThinkPad T14</option>
-                  <option>LPT-02197 · MacBook Pro 14&quot;</option>
-                  <option>MON-00872 · Dell UltraSharp 27&quot;</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-[11px] font-medium text-slate-700">
-                    Assign To (Staff)
-                  </label>
-                  <Input
-                    placeholder="Full name of staff"
-                    className="h-8 text-[11px]"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[11px] font-medium text-slate-700">
-                    Department / Unit
-                  </label>
-                  <Input
-                    placeholder="e.g. Finance, Operations, IT"
-                    className="h-8 text-[11px]"
-                  />
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                  <select className="h-9 w-full rounded-lg border border-slate-200 bg-white/80 pl-8 pr-3 text-[11px] text-slate-700 shadow-sm focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200">
+                    <option>Search or select asset…</option>
+                    <option>LPT-02318 · Lenovo ThinkPad T14</option>
+                    <option>LPT-02197 · MacBook Pro 14&quot;</option>
+                    <option>MON-00872 · Dell UltraSharp 27&quot;</option>
+                    <option>SRV-00041 · HPE ProLiant DL380</option>
+                  </select>
                 </div>
               </div>
 
+              {/* Assignee + Department */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[11px] font-medium text-slate-700">
-                    Assignment Date
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Assign To
+                  </label>
+                  <Input
+                    placeholder="Staff full name"
+                    className="h-8 border-slate-200 bg-white/80 text-[11px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Department
+                  </label>
+                  <Input
+                    placeholder="e.g. Finance, IT"
+                    className="h-8 border-slate-200 bg-white/80 text-[11px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200"
+                  />
+                </div>
+              </div>
+
+              {/* Date + Status */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <CalendarDays className="h-3 w-3" /> Date
                   </label>
                   <Input
                     type="date"
-                    className="h-8 text-[11px]"
+                    className="h-8 border-slate-200 bg-white/80 text-[11px] focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11px] font-medium text-slate-700">
-                    Status
+                  <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <SlidersHorizontal className="h-3 w-3" /> Status
                   </label>
-                  <select className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20">
+                  <select className="h-8 w-full rounded-lg border border-slate-200 bg-white/80 px-2 text-[11px] text-slate-700 shadow-sm focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200">
                     <option>Assigned</option>
                     <option>Returned</option>
                     <option>Under Maintenance</option>
@@ -130,29 +228,32 @@ export function AssignmentView() {
                 </div>
               </div>
 
+              {/* Notes */}
               <div>
-                <label className="mb-1 block text-[11px] font-medium text-slate-700">
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Notes
                 </label>
                 <textarea
-                  className="min-h-[64px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  placeholder="Purpose, project, or any special conditions for this assignment."
+                  rows={3}
+                  className="w-full rounded-lg border border-slate-200 bg-white/80 px-3 py-2 text-[11px] text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:placeholder:text-slate-500"
+                  placeholder="Purpose, project, or special conditions for this assignment."
                 />
               </div>
 
-              <div className="mt-2 flex items-center justify-end gap-2">
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-2 pt-1">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 rounded-full border-slate-200 px-3 text-[11px]"
+                  className="h-8 rounded-full border-slate-200 px-4 text-[11px] dark:border-slate-700 dark:text-slate-300"
                 >
                   Clear
                 </Button>
                 <Button
                   type="submit"
                   size="sm"
-                  className="h-8 rounded-full bg-gradient-to-r from-primary to-secondary px-4 text-[11px] font-semibold"
+                  className="h-8 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-[11px] font-semibold text-white shadow-md hover:opacity-90"
                 >
                   Confirm Assignment
                 </Button>
@@ -161,53 +262,79 @@ export function AssignmentView() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <CardTitle>Assignment History</CardTitle>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Track historical movements of key assets.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setViewTimeline((v) => !v)}
-                className="text-[11px] font-medium text-primary hover:underline"
-              >
-                {viewTimeline ? "View as table" : "View as timeline"}
-              </button>
+        {/* Assignment History */}
+        <Card className="overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/50">
+          <CardHeader className="relative border-b border-slate-100 pb-4 dark:border-slate-800">
+            <div className="pr-32">
+              <CardTitle className="text-base">Assignment History</CardTitle>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Track historical movements of key assets.
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setViewTimeline((v) => !v)}
+              className="absolute right-6 top-5 flex items-center gap-1 text-xs font-semibold text-[#0F766E] transition-colors hover:text-[#0E7490] dark:text-teal-400 dark:hover:text-teal-300"
+            >
+              {viewTimeline ? "View as table" : "View as timeline"}
+              <ChevronRight className="h-3 w-3" />
+            </button>
           </CardHeader>
-          <CardContent className="px-0 pb-0 pt-0">
+
+          <CardContent className="p-0">
             {viewTimeline ? (
-              <div className="space-y-4 px-5 py-4">
+              /* Timeline View */
+              <div className="space-y-0 divide-y divide-slate-100 dark:divide-slate-800">
                 {history.map((item, index) => (
                   <div
                     key={item.asset}
-                    className="relative flex gap-3"
+                    className="group flex gap-4 px-5 py-4 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
                   >
+                    {/* Timeline dot + line */}
                     <div className="flex flex-col items-center">
-                      <span className="flex h-2.5 w-2.5 items-center justify-center rounded-full bg-primary" />
+                      <span
+                        className={`mt-1 flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${item.statusVariant === "success"
+                            ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]"
+                            : item.statusVariant === "warning"
+                              ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]"
+                              : "bg-slate-400"
+                          }`}
+                      />
                       {index < history.length - 1 && (
-                        <span className="mt-1 h-10 w-px bg-slate-200" />
+                        <span className="mt-1.5 flex-1 w-px bg-slate-200 dark:bg-slate-700" />
                       )}
                     </div>
-                    <div className="flex-1 rounded-lg bg-slate-50/60 px-3 py-2.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-semibold text-slate-900">
-                          {item.asset}
-                        </p>
-                        <Badge variant={item.statusVariant}>
+
+                    {/* Content */}
+                    <div className="flex-1 pb-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-[11px] font-mono font-medium text-slate-400 dark:text-slate-500">
+                            {item.asset}
+                          </p>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {item.name}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={item.statusVariant}
+                          className={`mt-0.5 flex-shrink-0 text-[10px] ${badgeStyles[item.statusVariant]}`}
+                        >
                           {item.status}
                         </Badge>
                       </div>
-                      <p className="mt-1 text-[11px] text-slate-600">
-                        Assigned to{" "}
-                        <span className="font-medium">{item.assignee}</span> ·{" "}
-                        {item.department}
-                      </p>
-                      <p className="mt-1 text-[11px] text-slate-500">
+                      <div className="mt-1.5 flex items-center gap-3">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[9px] font-bold text-slate-600 dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
+                          {item.initials}
+                        </div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                          <span className="font-medium text-slate-800 dark:text-slate-200">
+                            {item.assignee}
+                          </span>{" "}
+                          · {item.department}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
                         {item.date}
                       </p>
                     </div>
@@ -215,34 +342,71 @@ export function AssignmentView() {
                 ))}
               </div>
             ) : (
+              /* Table View */
               <Table>
-                <TableHeader>
-                  <tr>
-                    <TableHead>Asset</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Date Assigned</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </tr>
+                <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <TableRow className="border-slate-100 hover:bg-transparent dark:border-slate-800">
+                    <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                      Asset
+                    </TableHead>
+                    <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                      Assignee
+                    </TableHead>
+                    <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                      Department
+                    </TableHead>
+                    <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                      Date Assigned
+                    </TableHead>
+                    <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                      Status
+                    </TableHead>
+                    <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                      Action
+                    </TableHead>
+                  </TableRow>
                 </TableHeader>
                 <TableBody>
                   {history.map((item) => (
-                    <TableRow key={item.asset}>
-                      <TableCell>{item.asset}</TableCell>
-                      <TableCell>{item.assignee}</TableCell>
-                      <TableCell>{item.department}</TableCell>
-                      <TableCell className="text-xs text-slate-600">
+                    <TableRow
+                      key={item.asset}
+                      className="group cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-800/40"
+                    >
+                      <TableCell className="p-3 sm:p-4">
+                        <p className="font-mono text-[11px] font-medium text-slate-400 dark:text-slate-500 group-hover:text-[#0F766E] dark:group-hover:text-teal-400 transition-colors">
+                          {item.asset}
+                        </p>
+                        <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                          {item.name}
+                        </p>
+                      </TableCell>
+                      <TableCell className="p-3 sm:p-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[10px] font-bold text-slate-600 shadow-sm dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
+                            {item.initials}
+                          </div>
+                          <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                            {item.assignee}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="p-3 text-xs text-slate-500 dark:text-slate-400 sm:p-4">
+                        {item.department}
+                      </TableCell>
+                      <TableCell className="p-3 text-xs text-slate-500 dark:text-slate-400 sm:p-4">
                         {item.date}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={item.statusVariant}>
+                      <TableCell className="p-3 sm:p-4">
+                        <Badge
+                          variant={item.statusVariant}
+                          className={`text-[10px] shadow-sm ${badgeStyles[item.statusVariant]}`}
+                        >
                           {item.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <button className="text-[11px] font-medium text-primary hover:underline">
-                          View trail
+                      <TableCell className="p-3 sm:p-4">
+                        <button className="flex items-center gap-0.5 text-[11px] font-semibold text-[#0F766E] transition-colors hover:text-[#0E7490] dark:text-teal-400 dark:hover:text-teal-300">
+                          View trail <ChevronRight className="h-3 w-3" />
                         </button>
                       </TableCell>
                     </TableRow>
@@ -256,4 +420,3 @@ export function AssignmentView() {
     </div>
   );
 }
-

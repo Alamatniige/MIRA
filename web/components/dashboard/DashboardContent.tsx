@@ -25,11 +25,46 @@ import {
 } from "lucide-react";
 
 const kpis = [
-  { label: "Total Assets", value: "1,248", sub: "All registered IT hardware", icon: Package, gradient: "from-blue-500 to-indigo-500" },
-  { label: "Active Assets", value: "1,032", sub: "Currently operational", icon: CheckCircle2, gradient: "from-emerald-400 to-teal-500" },
-  { label: "Assigned Assets", value: "874", sub: "Allocated to staff", icon: UserCheck, gradient: "from-violet-500 to-purple-500" },
-  { label: "Under Maintenance", value: "46", sub: "With IT or vendor", icon: Wrench, gradient: "from-amber-400 to-orange-500" },
-  { label: "Unassigned Assets", value: "198", sub: "Available in inventory", icon: Monitor, gradient: "from-slate-400 to-slate-500" },
+  {
+    label: "Total Assets",
+    value: "1,248",
+    sub: "All registered IT hardware",
+    icon: <Package className="h-5 w-5" />,
+    color: "from-teal-500/10 to-teal-600/10 text-teal-700 border-teal-200/60",
+    valueColor: "text-teal-800 dark:text-teal-300",
+  },
+  {
+    label: "Active Assets",
+    value: "1,032",
+    sub: "Currently operational",
+    icon: <CheckCircle2 className="h-5 w-5" />,
+    color: "from-emerald-500/10 to-emerald-600/10 text-emerald-700 border-emerald-200/60",
+    valueColor: "text-emerald-800 dark:text-emerald-300",
+  },
+  {
+    label: "Assigned Assets",
+    value: "874",
+    sub: "Allocated to staff",
+    icon: <UserCheck className="h-5 w-5" />,
+    color: "from-blue-500/10 to-blue-600/10 text-blue-700 border-blue-200/60",
+    valueColor: "text-blue-800 dark:text-blue-300",
+  },
+  {
+    label: "Under Maintenance",
+    value: "46",
+    sub: "With IT or vendor",
+    icon: <Wrench className="h-5 w-5" />,
+    color: "from-amber-500/10 to-amber-600/10 text-amber-700 border-amber-200/60",
+    valueColor: "text-amber-800 dark:text-amber-300",
+  },
+  {
+    label: "Unassigned Assets",
+    value: "198",
+    sub: "Available in inventory",
+    icon: <Monitor className="h-5 w-5" />,
+    color: "from-slate-400/10 to-slate-500/10 text-slate-600 border-slate-200/60",
+    valueColor: "text-slate-800 dark:text-slate-200",
+  },
 ];
 
 const recentActivity = [
@@ -98,37 +133,22 @@ export function DashboardContent() {
       </div>
 
       {/* KPI Section */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {kpis.map((kpi, i) => {
-          const Icon = kpi.icon;
-          return (
-            <Card
-              key={kpi.label}
-              className="group relative overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl transition-all hover:bg-white/80 hover:shadow-md dark:border-white/10 dark:bg-slate-900/50 dark:hover:bg-slate-900/80"
-              style={{ animationDelay: `${i * 100}ms` }}
-            >
-              <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${kpi.gradient} opacity-80`} />
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className={`rounded-lg bg-gradient-to-br ${kpi.gradient} p-2 text-white shadow-sm ring-1 ring-white/20`}>
-                    <Icon className="h-4 w-4" />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    {kpi.value}
-                  </p>
-                  <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {kpi.label}
-                  </p>
-                  <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
-                    {kpi.sub}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {kpis.map((kpi) => (
+          <div
+            key={kpi.label}
+            className={`flex flex-col gap-2 rounded-xl border bg-gradient-to-br p-4 transition-shadow hover:shadow-md ${kpi.color}`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium opacity-80">{kpi.label}</span>
+              <span className="opacity-60">{kpi.icon}</span>
+            </div>
+            <p className={`text-2xl font-bold tracking-tight ${kpi.valueColor}`}>
+              {kpi.value}
+            </p>
+            <p className="text-[10px] font-medium opacity-60">{kpi.sub}</p>
+          </div>
+        ))}
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
