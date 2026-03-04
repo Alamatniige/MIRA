@@ -1,5 +1,0 @@
-.DS_Store
-
-# Website build output and dependencies
-website/.next/
-website/node_modules/
