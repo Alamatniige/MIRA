@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     User,
     Mail,
@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { FullPageLoader } from "@/components/ui/loader"; // Added FullPageLoader import
+
 export function ProfileContent() {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
@@ -30,6 +32,14 @@ export function ProfileContent() {
     });
 
     const [saved, setSaved] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 1200);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleSave = () => {
         setIsEditing(false);
@@ -40,6 +50,10 @@ export function ProfileContent() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
+
+    if (isLoading) {
+        return <FullPageLoader label="Loading user profile..." />;
+    }
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -301,7 +315,7 @@ export function ProfileContent() {
                                 <select
                                     name="timezone"
                                     value={formData.timezone}
-                                    onChange={(e: any) => handleChange(e)}
+                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleChange(e as unknown as React.ChangeEvent<HTMLInputElement>)}
                                     disabled={!isEditing}
                                     className={cn(
                                         "w-full px-4 py-2.5 rounded-xl border text-sm transition-all outline-none appearance-none",

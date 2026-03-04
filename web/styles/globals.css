@@ -58,9 +58,11 @@
   --popover-foreground: #0f172a;
 
   /* Corporate teal palette */
-  --primary: #0f766e; /* Teal Green */
+  --primary: #0f766e;
+  /* Teal Green */
   --primary-foreground: #ffffff;
-  --secondary: #0e7490; /* Teal Blue */
+  --secondary: #0e7490;
+  /* Teal Blue */
   --secondary-foreground: #e5f4f3;
   --muted: #e2e8f0;
   --muted-foreground: #64748b;
@@ -136,5 +138,38 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* MIRA Custom Spinner */
+.mira-spinner {
+  width: 50px;
+  aspect-ratio: 1;
+  display: grid;
+  border: 4px solid transparent;
+  border-radius: 50%;
+  border-right-color: #25b09b;
+  animation: mira-spin 1s infinite linear;
+  position: relative;
+}
+
+.mira-spinner::before,
+.mira-spinner::after {
+  content: "";
+  grid-area: 1/1;
+  margin: 2px;
+  border: inherit;
+  border-radius: 50%;
+  animation: mira-spin 2s infinite;
+}
+
+.mira-spinner::after {
+  margin: 8px;
+  animation-duration: 3s;
+}
+
+@keyframes mira-spin {
+  100% {
+    transform: rotate(1turn);
   }
 }

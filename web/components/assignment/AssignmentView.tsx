@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { FullPageLoader } from "@/components/ui/loader";
 import {
   Table,
   TableBody,
@@ -113,6 +114,18 @@ const badgeStyles: Record<string, string> = {
 
 export function AssignmentView() {
   const [viewTimeline, setViewTimeline] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <FullPageLoader label="Loading assignments..." />;
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
@@ -294,10 +307,10 @@ export function AssignmentView() {
                     <div className="flex flex-col items-center">
                       <span
                         className={`mt-1 flex h-2.5 w-2.5 flex-shrink-0 rounded-full ${item.statusVariant === "success"
-                            ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]"
-                            : item.statusVariant === "warning"
-                              ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]"
-                              : "bg-slate-400"
+                          ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]"
+                          : item.statusVariant === "warning"
+                            ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]"
+                            : "bg-slate-400"
                           }`}
                       />
                       {index < history.length - 1 && (

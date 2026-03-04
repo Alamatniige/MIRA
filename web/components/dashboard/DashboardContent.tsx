@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { FullPageLoader } from "@/components/ui/loader";
 import {
   Table,
   TableBody,
@@ -11,17 +13,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Monitor,
+  Package,
+  History,
+  AlertCircle,
   CheckCircle2,
+  Clock,
+  ArrowUpRight,
+  TrendingUp,
+  MoreVertical,
+  Activity,
+  Box,
+  LayoutDashboard,
+  ShieldCheck,
+  ChevronRight,
+  ArrowRight,
   UserCheck,
   Wrench,
-  Package,
+  Monitor,
   Server,
   Briefcase,
   Landmark,
   Users,
-  MoreHorizontal,
-  ChevronRight
+  MoreHorizontal
 } from "lucide-react";
 
 const kpis = [
@@ -119,6 +132,19 @@ const departments = [
 ];
 
 export function DashboardContent() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <FullPageLoader label="Loading dashboard..." />;
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">

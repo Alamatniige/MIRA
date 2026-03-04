@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+
+import { FullPageLoader } from "@/components/ui/loader";
 import {
   Table,
   TableBody,
@@ -287,6 +289,14 @@ function getAvatarColor(initials: string) {
 export function AssetRegistry() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filtered = assets.filter(
     (a) =>
@@ -294,6 +304,10 @@ export function AssetRegistry() {
       a.name.toLowerCase().includes(search.toLowerCase()) ||
       a.location.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (isLoading) {
+    return <FullPageLoader label="Loading asset registry..." />;
+  }
 
   return (
     <div className="space-y-6">

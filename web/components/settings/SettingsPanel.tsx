@@ -1,24 +1,47 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FullPageLoader } from "@/components/ui/loader";
 import {
   Settings,
-  Shield,
   Bell,
-  FileLock2,
-  UserPlus,
-  Users,
-  AlertTriangle,
+  Lock,
+  Eye,
+  Globe,
+  UserCheck,
   Smartphone,
-  History,
+  Database,
+  Users,
+  Key,
+  CheckCircle2,
+  Cloud,
+  Shield,
+  Layout,
   Save,
-  CheckCircle2
+  UserPlus,
+  AlertTriangle,
+  FileLock2,
+  History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function SettingsPanel() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <FullPageLoader label="Loading settings..." />;
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header Section */}
