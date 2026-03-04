@@ -1,0 +1,27 @@
+"use client";
+
+import { useState } from "react";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Header } from "@/components/layout/Header";
+import { cn } from "@/lib/utils";
+
+export function ClientLayout({ children }: { children: React.ReactNode }) {
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
+    return (
+        <div className="flex min-h-screen bg-background text-foreground overflow-x-hidden">
+            <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+            <div
+                className={cn(
+                    "flex min-h-screen flex-1 flex-col transition-all duration-300 ease-in-out w-full",
+                    isCollapsed ? "md:pl-20 pl-0" : "md:pl-64 pl-0"
+                )}
+            >
+                <Header />
+                <main className="flex-1 bg-gradient-to-b from-slate-50 to-slate-100/70 px-4 md:px-6 pb-8 pt-6 overflow-x-hidden">
+                    <div className="mx-auto max-w-6xl space-y-6">{children}</div>
+                </main>
+            </div>
+        </div>
+    );
+}
