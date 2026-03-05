@@ -3,11 +3,12 @@
 import React, { useState } from "react";
 import { ShieldCheck, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth";
 
 export function LoginForm() {
-    const router = useRouter();
+    const { login } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -16,13 +17,16 @@ export function LoginForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setError(null);
 
-        // Simulate authentication delay
-        setTimeout(() => {
+        try {
+            await login(formData.email, formData.password);
+            // Redirect happens inside login function
+        } catch (err: any) {
+            setError(err.message || "Failed to sign in. Please check your credentials.");
+        } finally {
             setIsLoading(false);
-            // Redirect to dashboard (assuming "/" is the dashboard or "/dashboard")
-            router.push("/");
-        }, 1500);
+        }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +63,12 @@ export function LoginForm() {
                             <h2 className="text-xl font-bold text-slate-800">Welcome back</h2>
                             <p className="text-sm text-slate-500 mt-1 font-medium">Please enter your credentials to access the system.</p>
                         </div>
+
+                        {error && (
+                            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+                                {error}
+                            </div>
+                        )}
 
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="space-y-2">

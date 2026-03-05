@@ -70,7 +70,9 @@ func main() {
 	// 6. Start the server
 	port := "8080"
 	log.Printf("Server starting on port %s...", port)
-	if err := http.ListenAndServe(":"+port, r); err != nil {
+	// Apply CORS middleware
+	handler := middleware.CORSMiddleware(r)
+	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		log.Fatal("ListenAndServe error: ", err)
 	}
 }

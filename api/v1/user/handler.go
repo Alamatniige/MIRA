@@ -15,7 +15,7 @@ import (
 
 func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	var users []User
-	if result := db.DB.Limit(1).Find(&users); result.Error != nil {
+	if result := db.DB.Preload("Role").Limit(1).Find(&users); result.Error != nil {
 		http.Error(w, "Error fetching users: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -90,6 +90,76 @@ func GetUserDetails(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "Error fetching user: "+result.Error.Error(), http.StatusInternalServerError)
 		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	if id == "" {
+		http.Error(w, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	if _, err := uuid.Parse(id); err != nil {
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	var user User
+	if result := db.DB.First(&user, "id = ?", id); result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			http.Error(w, "User not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error fetching user: "+result.Error.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	if result := db.DB.Delete(&user); result.Error != nil {
+		http.Error(w, "Error deleting user: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	if id == "" {
+		http.Error(w, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	var user User
+	if result := db.DB.First(&user, "id = ?", id); result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			http.Error(w, "User not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error fetching user: "+result.Error.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	var updateData map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Remove fields that shouldn't be updated via this endpoint if any
+	delete(updateData, "id")
+	delete(updateData, "email")
+	delete(updateData, "role") // Roles should be updated via a different mechanism usually
+
+	if result := db.DB.Model(&user).Updates(updateData); result.Error != nil {
+		http.Error(w, "Error updating user: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
 

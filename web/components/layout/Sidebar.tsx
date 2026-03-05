@@ -15,6 +15,8 @@ import {
   ShieldCheck,
   LogOut
 } from "lucide-react";
+import { Button } from "../ui/button";
+import { useAuth } from "@/lib/auth";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -32,6 +34,7 @@ export interface SidebarProps {
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   return (
     <aside
@@ -141,8 +144,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           )}
         </Link>
 
-        <Link
-          href="/login"
+        <Button
+          onClick={async () => {
+            await logout();
+          }}
           className={cn(
             "w-full group relative flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-300",
             "text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border-l-[3px] border-transparent hover:scale-[1.02]",
@@ -165,7 +170,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               <div className="absolute top-1/2 -left-1 -mt-1 border-t-4 border-t-transparent border-r-4 border-r-[#0F766E] border-b-4 border-b-transparent"></div>
             </div>
           )}
-        </Link>
+        </Button>
       </div>
     </aside>
   );

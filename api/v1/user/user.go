@@ -20,8 +20,8 @@ func (User) TableName() string {
 }
 
 type Role struct {
-	ID       string `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	RoleName string `json:"roleName" gorm:"column:roleName;not null"`
+	ID       string `json:"id" gorm:"primaryKey;type:int;default:gen_random_uuid()"`
+	RoleName string `json:"name" gorm:"column:roleName;not null"`
 }
 
 func (Role) TableName() string {

@@ -4,9 +4,24 @@ import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
+import { Loader2 } from "lucide-react";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const { isLoading, token } = useAuth();
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen w-full flex items-center justify-center bg-slate-50">
+                <Loader2 className="w-10 h-10 text-[#0F766E] animate-spin" />
+            </div>
+        );
+    }
+
+    if (!token) {
+        return null; // AuthProvider handles redirect
+    }
 
     return (
         <div className="flex min-h-screen bg-background text-foreground overflow-x-hidden">

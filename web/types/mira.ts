@@ -69,3 +69,13 @@ export interface MovementPoint {
   maintenanceTransfers: number;
 }
 
+export interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  department: string;
+  phone: string;
+  role?: {
+    name: string;
+  };
+}
