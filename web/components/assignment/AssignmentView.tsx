@@ -169,7 +169,7 @@ export function AssignmentView() {
       {/* Main Grid */}
       <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         {/* New Assignment Form */}
-        <Card className="overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/50">
+        <Card className="overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#09090b]">
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0F766E] to-[#0E7490] rounded-t-xl" />
           <CardHeader className="pb-3 pt-6">
             <CardTitle className="text-base">New Assignment</CardTitle>
@@ -186,7 +186,7 @@ export function AssignmentView() {
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                  <select className="h-9 w-full rounded-lg border border-slate-200 bg-white/80 pl-8 pr-3 text-[11px] text-slate-700 shadow-sm focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200">
+                  <select className="h-9 w-full rounded-lg border border-slate-200 bg-white/80 pl-8 pr-3 text-[11px] text-slate-700 shadow-sm focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300">
                     <option>Search or select asset…</option>
                     <option>LPT-02318 · Lenovo ThinkPad T14</option>
                     <option>LPT-02197 · MacBook Pro 14&quot;</option>
@@ -204,7 +204,7 @@ export function AssignmentView() {
                   </label>
                   <Input
                     placeholder="Staff full name"
-                    className="h-8 border-slate-200 bg-white/80 text-[11px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200"
+                    className="h-8 border-slate-200 bg-white/80 text-[11px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
                   />
                 </div>
                 <div>
@@ -213,7 +213,7 @@ export function AssignmentView() {
                   </label>
                   <Input
                     placeholder="e.g. Finance, IT"
-                    className="h-8 border-slate-200 bg-white/80 text-[11px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200"
+                    className="h-8 border-slate-200 bg-white/80 text-[11px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
                   />
                 </div>
               </div>
@@ -226,14 +226,14 @@ export function AssignmentView() {
                   </label>
                   <Input
                     type="date"
-                    className="h-8 border-slate-200 bg-white/80 text-[11px] focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200"
+                    className="h-8 border-slate-200 bg-white/80 text-[11px] focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
                   />
                 </div>
                 <div>
                   <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     <SlidersHorizontal className="h-3 w-3" /> Status
                   </label>
-                  <select className="h-8 w-full rounded-lg border border-slate-200 bg-white/80 px-2 text-[11px] text-slate-700 shadow-sm focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200">
+                  <select className="h-8 w-full rounded-lg border border-slate-200 bg-white/80 px-2 text-[11px] text-slate-700 shadow-sm focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300">
                     <option>Assigned</option>
                     <option>Returned</option>
                     <option>Under Maintenance</option>
@@ -248,7 +248,7 @@ export function AssignmentView() {
                 </label>
                 <textarea
                   rows={3}
-                  className="w-full rounded-lg border border-slate-200 bg-white/80 px-3 py-2 text-[11px] text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:placeholder:text-slate-500"
+                  className="w-full rounded-lg border border-slate-200 bg-white/80 px-3 py-2 text-[11px] text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300 dark:placeholder:text-zinc-500"
                   placeholder="Purpose, project, or special conditions for this assignment."
                 />
               </div>
@@ -259,7 +259,7 @@ export function AssignmentView() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 rounded-full border-slate-200 px-4 text-[11px] dark:border-slate-700 dark:text-slate-300"
+                  className="h-8 rounded-full border-slate-200 px-4 text-[11px] dark:border-white/10 dark:text-zinc-300"
                 >
                   Clear
                 </Button>
@@ -276,8 +276,8 @@ export function AssignmentView() {
         </Card>
 
         {/* Assignment History */}
-        <Card className="overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/50">
-          <CardHeader className="relative border-b border-slate-100 pb-4 dark:border-slate-800">
+        <Card className="overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#09090b]">
+          <CardHeader className="relative border-b border-slate-100 pb-4 dark:border-white/5">
             <div className="pr-32">
               <CardTitle className="text-base">Assignment History</CardTitle>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -297,11 +297,11 @@ export function AssignmentView() {
           <CardContent className="p-0">
             {viewTimeline ? (
               /* Timeline View */
-              <div className="space-y-0 divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="space-y-0 divide-y divide-slate-100 dark:divide-white/5">
                 {history.map((item, index) => (
                   <div
                     key={item.asset}
-                    className="group flex gap-4 px-5 py-4 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                    className="group flex gap-4 px-5 py-4 transition-colors hover:bg-slate-50/80 dark:hover:bg-zinc-900/50"
                   >
                     {/* Timeline dot + line */}
                     <div className="flex flex-col items-center">
@@ -314,7 +314,7 @@ export function AssignmentView() {
                           }`}
                       />
                       {index < history.length - 1 && (
-                        <span className="mt-1.5 flex-1 w-px bg-slate-200 dark:bg-slate-700" />
+                        <span className="mt-1.5 flex-1 w-px bg-slate-200 dark:bg-white/5" />
                       )}
                     </div>
 
@@ -357,8 +357,8 @@ export function AssignmentView() {
             ) : (
               /* Table View */
               <Table>
-                <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50">
-                  <TableRow className="border-slate-100 hover:bg-transparent dark:border-slate-800">
+                <TableHeader className="bg-slate-50/50 dark:bg-black/50">
+                  <TableRow className="border-slate-100 hover:bg-transparent dark:border-white/5">
                     <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
                       Asset
                     </TableHead>
@@ -383,7 +383,7 @@ export function AssignmentView() {
                   {history.map((item) => (
                     <TableRow
                       key={item.asset}
-                      className="group cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-800/40"
+                      className="group cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/80 dark:border-white/5 dark:hover:bg-zinc-900/50"
                     >
                       <TableCell className="p-3 sm:p-4">
                         <p className="font-mono text-[11px] font-medium text-slate-400 dark:text-slate-500 group-hover:text-[#0F766E] dark:group-hover:text-teal-400 transition-colors">

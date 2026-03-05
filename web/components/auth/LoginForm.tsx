@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { ShieldCheck, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ShieldCheck, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 
@@ -9,10 +9,20 @@ export function LoginForm() {
     const { login } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const [formData, setFormData] = useState({
         email: "",
         password: "",
     });
+
+    useEffect(() => {
+        const storedEmail = localStorage.getItem("rememberedEmail");
+        if (storedEmail) {
+            setFormData(prev => ({ ...prev, email: storedEmail }));
+            setRememberMe(true);
+        }
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -21,6 +31,13 @@ export function LoginForm() {
 
         try {
             await login(formData.email, formData.password);
+
+            if (rememberMe) {
+                localStorage.setItem("rememberedEmail", formData.email);
+            } else {
+                localStorage.removeItem("rememberedEmail");
+            }
+
             // Redirect happens inside login function
         } catch (err: any) {
             setError(err.message || "Failed to sign in. Please check your credentials.");
@@ -105,15 +122,39 @@ export function LoginForm() {
                                         <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-[#0F766E] transition-colors" />
                                     </div>
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         name="password"
                                         placeholder="••••••••••••"
                                         required
                                         value={formData.password}
                                         onChange={handleChange}
-                                        className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:border-[#0F766E] focus:ring-4 focus:ring-[#0F766E]/10 transition-all placeholder:text-slate-400 font-medium tracking-wider shadow-sm"
+                                        className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl pl-11 pr-12 py-3.5 outline-none focus:border-[#0F766E] focus:ring-4 focus:ring-[#0F766E]/10 transition-all placeholder:text-slate-400 font-medium tracking-wider shadow-sm"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-[#0F766E] focus:outline-none transition-colors"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-5 w-5" />
+                                        ) : (
+                                            <Eye className="h-5 w-5" />
+                                        )}
+                                    </button>
                                 </div>
+                            </div>
+
+                            <div className="flex items-center space-x-2 ml-1">
+                                <input
+                                    type="checkbox"
+                                    id="remember"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    className="w-4 h-4 rounded border-slate-300 text-[#0F766E] focus:ring-[#0F766E] accent-[#0F766E] cursor-pointer transition-colors"
+                                />
+                                <label htmlFor="remember" className="text-sm text-slate-600 font-medium cursor-pointer select-none">
+                                    Remember me
+                                </label>
                             </div>
 
                             <div className="pt-2">

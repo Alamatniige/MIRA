@@ -14,7 +14,8 @@ import {
   ChevronRight,
   ShieldCheck,
   LogOut,
-  User
+  User,
+  Loader2
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuth } from "@/lib/auth";
@@ -37,12 +38,13 @@ export interface SidebarProps {
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const { logout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   return (
     <aside
       className={cn(
         "fixed inset-y-0 left-0 z-40 flex flex-col transition-all duration-300 ease-in-out",
-        "bg-white dark:bg-[#041112]/80 border-r border-teal-100 dark:border-teal-900/40 shadow-[4px_0_24px_rgba(15,118,110,0.03)] dark:shadow-[4px_0_24px_rgba(15,118,110,0.08)]",
+        "bg-white dark:bg-[#000000] border-r border-teal-100 dark:border-white/10 shadow-[4px_0_24px_rgba(15,118,110,0.03)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.8)]",
         "backdrop-blur-xl",
         isCollapsed ? "w-20" : "w-64"
       )}
@@ -75,7 +77,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       </button>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
+      <nav className="flex-1 px-3 py-6 space-y-2">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href || (item.href === "/dashboard" && pathname === "/");
           const Icon = item.icon;
@@ -147,29 +149,51 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         </Link>
 
         <Button
+          variant="ghost"
+          disabled={isLoggingOut}
           onClick={async () => {
-            await logout();
+            setIsLoggingOut(true);
+            try {
+              // The logout function handles the redirect, so we keep the loading state
+              // active during the page transition to provide a seamless UX.
+              await logout();
+            } catch (error) {
+              console.error(error);
+              setIsLoggingOut(false);
+            }
           }}
           className={cn(
             "w-full group relative flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-300",
-            "text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-l-[3px] border-transparent hover:scale-[1.02]",
-            isCollapsed ? "justify-center px-0" : ""
+            "bg-transparent text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-l-[3px] border-transparent hover:scale-[1.02]",
+            isCollapsed ? "justify-center px-0" : "justify-start px-3",
+            isLoggingOut && "opacity-70 cursor-not-allowed"
           )}
         >
-          <LogOut
-            className={cn(
-              "flex-shrink-0 w-5 h-5 transition-all duration-300",
-              "text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400"
-            )}
-          />
+          {isLoggingOut ? (
+            <Loader2
+              className={cn(
+                "flex-shrink-0 w-5 h-5 animate-spin transition-all duration-300",
+                "text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400"
+              )}
+            />
+          ) : (
+            <LogOut
+              className={cn(
+                "flex-shrink-0 w-5 h-5 transition-all duration-300",
+                "text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400"
+              )}
+            />
+          )}
           {!isCollapsed && (
-            <span className="font-medium text-sm whitespace-nowrap">Log Out</span>
+            <span className="font-medium text-sm whitespace-nowrap">
+              {isLoggingOut ? "Logging out..." : "Log Out"}
+            </span>
           )}
 
           {isCollapsed && (
-            <div className="absolute left-full ml-4 px-2.5 py-1.5 bg-[#0F766E] text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
-              Log Out
-              <div className="absolute top-1/2 -left-1 -mt-1 border-t-4 border-t-transparent border-r-4 border-r-[#0F766E] border-b-4 border-b-transparent"></div>
+            <div className="absolute left-full ml-4 px-2.5 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+              {isLoggingOut ? "Logging out..." : "Log Out"}
+              <div className="absolute top-1/2 -left-1 -mt-1 border-t-4 border-t-transparent border-r-4 border-r-rose-600 border-b-4 border-b-transparent"></div>
             </div>
           )}
         </Button>

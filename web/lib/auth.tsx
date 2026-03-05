@@ -17,7 +17,7 @@ interface AuthContextType {
     user: User | null;
     token: string | null;
     login: (email: string, password: string) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
     isLoading: boolean;
 }
 
@@ -94,12 +94,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const logout = () => {
-        setToken(null);
-        setUser(null);
-        localStorage.removeItem('mira_token');
-        localStorage.removeItem('mira_user');
-        router.push('/login');
+    const logout = async () => {
+        try {
+            if (token) {
+                // Call the backend logout API, we ignore errors since we're clearing local state anyway
+                await apiClient('/logout', { method: 'POST' }).catch(() => { });
+            } else {
+                // Just to give the UI a tiny moment to show the spinner if there's no backend request
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        } finally {
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem('mira_token');
+            localStorage.removeItem('mira_user');
+            router.push('/login');
+        }
     };
 
     // Public routes that don't require authentication

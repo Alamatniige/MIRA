@@ -149,8 +149,8 @@ const statCards = [
         <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
       </svg>
     ),
-    color: "from-teal-500/10 to-teal-600/10 text-teal-700 border-teal-200/60",
-    valueColor: "text-teal-800",
+    color: "from-teal-500/10 to-teal-600/10 text-teal-700 border-teal-200/60 dark:from-teal-500/15 dark:to-teal-400/5 dark:text-teal-300 dark:border-teal-400/20",
+    valueColor: "text-teal-800 dark:text-teal-200",
   },
   {
     label: "Assigned",
@@ -163,8 +163,8 @@ const statCards = [
         <polyline points="16 11 18 13 22 9" />
       </svg>
     ),
-    color: "from-blue-500/10 to-blue-600/10 text-blue-700 border-blue-200/60",
-    valueColor: "text-blue-800",
+    color: "from-blue-500/10 to-blue-600/10 text-blue-700 border-blue-200/60 dark:from-sky-500/15 dark:to-sky-400/5 dark:text-sky-300 dark:border-sky-400/20",
+    valueColor: "text-blue-800 dark:text-sky-200",
   },
   {
     label: "Available",
@@ -176,8 +176,8 @@ const statCards = [
         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
       </svg>
     ),
-    color: "from-emerald-500/10 to-emerald-600/10 text-emerald-700 border-emerald-200/60",
-    valueColor: "text-emerald-800",
+    color: "from-emerald-500/10 to-emerald-600/10 text-emerald-700 border-emerald-200/60 dark:from-emerald-500/15 dark:to-emerald-400/5 dark:text-emerald-300 dark:border-emerald-400/20",
+    valueColor: "text-emerald-800 dark:text-emerald-200",
   },
   {
     label: "Under Maintenance",
@@ -188,8 +188,8 @@ const statCards = [
         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
       </svg>
     ),
-    color: "from-amber-500/10 to-amber-600/10 text-amber-700 border-amber-200/60",
-    valueColor: "text-amber-800",
+    color: "from-amber-500/10 to-amber-600/10 text-amber-700 border-amber-200/60 dark:from-amber-500/15 dark:to-amber-400/5 dark:text-amber-300 dark:border-amber-400/20",
+    valueColor: "text-amber-800 dark:text-amber-200",
   },
 ];
 
@@ -272,12 +272,12 @@ const statusDot: Record<string, string> = {
 };
 
 const avatarColors = [
-  "bg-indigo-100 text-indigo-700",
-  "bg-teal-100 text-teal-700",
-  "bg-violet-100 text-violet-700",
-  "bg-sky-100 text-sky-700",
-  "bg-orange-100 text-orange-700",
-  "bg-emerald-100 text-emerald-700",
+  "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
+  "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
+  "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+  "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300",
+  "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
+  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
 ];
 function getAvatarColor(initials: string) {
   const idx = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % avatarColors.length;
@@ -323,7 +323,7 @@ export function AssetRegistry() {
         </div>
         <Button
           size="sm"
-          className="h-9 rounded-full bg-gradient-to-r from-primary to-secondary px-5 text-xs font-semibold shadow-sm hover:opacity-90 transition-opacity"
+          className="h-9 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-xs font-semibold shadow-sm hover:shadow-lg transition-all active:scale-95"
           onClick={() => setOpen(true)}
         >
           <span className="mr-1.5 text-sm leading-none">+</span>
@@ -336,16 +336,16 @@ export function AssetRegistry() {
         {statCards.map((card) => (
           <div
             key={card.label}
-            className={`flex flex-col gap-2 rounded-xl border bg-gradient-to-br p-4 transition-shadow hover:shadow-md ${card.color}`}
+            className={`flex flex-col gap-2 rounded-xl border bg-gradient-to-br p-4 transition-all hover:shadow-md dark:hover:shadow-teal-900/30 dark:bg-[#09090b] ${card.color}`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-medium opacity-80">{card.label}</span>
-              <span className="opacity-60">{card.icon}</span>
+              <span className="text-[11px] font-semibold opacity-75 dark:opacity-90">{card.label}</span>
+              <span className="opacity-60 dark:opacity-80">{card.icon}</span>
             </div>
             <p className={`text-2xl font-bold tracking-tight ${card.valueColor}`}>
               {card.value}
             </p>
-            <p className="text-[10px] font-medium opacity-60">{card.sub}</p>
+            <p className="text-[10px] font-medium opacity-55 dark:opacity-70">{card.sub}</p>
           </div>
         ))}
       </div>
@@ -353,7 +353,7 @@ export function AssetRegistry() {
       {/* ── Main table card ── */}
       <Card className="overflow-hidden shadow-sm">
         {/* Filter bar */}
-        <CardHeader className="border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-card pb-3 pt-4">
+        <CardHeader className="border-b border-slate-100 dark:border-teal-800/25 bg-white dark:bg-[#09090b] pb-3 pt-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="text-sm font-semibold">Asset Inventory</CardTitle>
             <div className="flex flex-wrap items-center gap-2">
@@ -394,7 +394,7 @@ export function AssetRegistry() {
               ].map((f) => (
                 <select
                   key={f.label}
-                  className="h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-[11px] text-slate-700 dark:text-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2.5 text-[11px] text-slate-700 dark:text-slate-300 focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 outline-none transition-colors"
                 >
                   <option value="">{f.label}: All</option>
                   {f.options.slice(1).map((o) => (
@@ -404,7 +404,7 @@ export function AssetRegistry() {
               ))}
 
               {/* Export button */}
-              <button className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <button className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-teal-900/20 transition-colors">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7 10 12 15 17 10" />
@@ -426,7 +426,7 @@ export function AssetRegistry() {
               <col style={{ width: "14%" }} />{/* Actions */}
             </colgroup>
             <TableHeader>
-              <tr className="bg-slate-50/80 dark:bg-slate-800/30">
+              <tr className="bg-slate-50/80 dark:bg-teal-950/50">
                 {[
                   { label: "Asset Tag", cls: "pl-5" },
                   { label: "Asset", cls: "pl-4" },
@@ -436,7 +436,7 @@ export function AssetRegistry() {
                 ].map(({ label, cls }) => (
                   <TableHead
                     key={label}
-                    className={`py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 ${cls ?? ""}`}
+                    className={`py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 ${cls ?? ""}`}
                   >
                     {label}
                   </TableHead>
@@ -462,7 +462,7 @@ export function AssetRegistry() {
                   return (
                     <TableRow
                       key={asset.tag}
-                      className="group border-b border-slate-100 dark:border-slate-800/60 transition-colors hover:bg-primary/[0.03] dark:hover:bg-primary/[0.06] align-middle"
+                      className="group border-b border-slate-100 dark:border-teal-800/20 transition-colors hover:bg-primary/[0.03] dark:hover:bg-teal-900/20 align-middle"
                     >
                       {/* Asset Tag */}
                       <TableCell className="pl-5 py-3 whitespace-nowrap">
@@ -554,20 +554,20 @@ export function AssetRegistry() {
           </Table>
 
           {/* Pagination footer */}
-          <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-card px-5 py-3">
-            <p className="text-[11px] text-slate-400">
+          <div className="flex items-center justify-between border-t border-slate-100 dark:border-teal-800/25 bg-white dark:bg-[#09090b] px-5 py-3">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">
               Showing{" "}
-              <span className="font-medium text-slate-700 dark:text-slate-200">{filtered.length}</span> of{" "}
-              <span className="font-medium text-slate-700 dark:text-slate-200">{assets.length}</span> assets
+              <span className="font-medium text-slate-700 dark:text-slate-300">{filtered.length}</span> of{" "}
+              <span className="font-medium text-slate-700 dark:text-slate-300">{assets.length}</span> assets
             </p>
             <div className="flex items-center gap-1">
-              <button className="h-7 rounded-md border border-slate-200 dark:border-slate-700 px-2.5 text-[11px] text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <button className="h-7 rounded-md border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2.5 text-[11px] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-teal-900/20 transition-colors">
                 ← Prev
               </button>
-              <button className="h-7 rounded-md border border-primary bg-primary/5 px-2.5 text-[11px] font-medium text-primary">
+              <button className="h-7 rounded-md border border-primary bg-primary/5 dark:bg-primary/10 px-2.5 text-[11px] font-medium text-primary dark:text-teal-300">
                 1
               </button>
-              <button className="h-7 rounded-md border border-slate-200 dark:border-slate-700 px-2.5 text-[11px] text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <button className="h-7 rounded-md border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2.5 text-[11px] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-teal-900/20 transition-colors">
                 Next →
               </button>
             </div>
@@ -617,7 +617,7 @@ export function AssetRegistry() {
                 <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   {f.label}
                 </label>
-                <select className="h-8 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-[11px] text-slate-700 dark:text-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                <select className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 outline-none transition-colors">
                   <option value="">{f.ph}</option>
                   {f.opts.map((o) => (
                     <option key={o}>{o}</option>
@@ -644,7 +644,7 @@ export function AssetRegistry() {
               <span className="ml-1 font-normal text-slate-400">(optional)</span>
             </label>
             <textarea
-              className="min-h-[64px] w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+              className="min-h-[64px] w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 resize-none transition-colors"
               placeholder="Any additional information relevant to IT or audit."
             />
           </div>
@@ -663,7 +663,7 @@ export function AssetRegistry() {
             <Button
               type="submit"
               size="sm"
-              className="h-8 rounded-full bg-gradient-to-r from-primary to-secondary px-5 text-[11px] font-semibold shadow-sm hover:opacity-90 transition-opacity"
+              className="h-8 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-[11px] font-semibold shadow-sm hover:shadow-lg transition-all active:scale-95"
             >
               Save Asset
             </Button>

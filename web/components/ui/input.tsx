@@ -14,6 +14,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           "placeholder:text-slate-400",
           "focus:border-primary focus:ring-2 focus:ring-primary/20",
           "disabled:cursor-not-allowed disabled:bg-slate-50",
+          "dark:border-white/10 dark:bg-[#09090b] dark:text-zinc-100 dark:placeholder:text-zinc-500",
+          "dark:focus:border-teal-500 dark:focus:ring-teal-500/20",
+          "dark:disabled:bg-teal-950/30",
           className
         )}
         {...props}

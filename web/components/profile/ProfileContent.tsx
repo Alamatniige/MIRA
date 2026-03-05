@@ -80,13 +80,13 @@ export function ProfileContent() {
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Admin Profile</h1>
-                    <p className="text-sm text-slate-500 mt-1">Manage your administrator account settings and preferences.</p>
+                    <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Admin Profile</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your administrator account settings and preferences.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
                     {saved && (
-                        <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full animate-in fade-in slide-in-from-right-4">
+                        <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1.5 rounded-full animate-in fade-in slide-in-from-right-4">
                             <CheckCircle2 className="w-4 h-4" />
                             Saved successfully
                         </span>
@@ -96,7 +96,7 @@ export function ProfileContent() {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setIsEditing(false)}
-                                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                             >
                                 Cancel
                             </button>
@@ -111,7 +111,7 @@ export function ProfileContent() {
                     ) : (
                         <button
                             onClick={() => setIsEditing(true)}
-                            className="px-4 py-2 text-sm font-medium text-[#0F766E] bg-[#0F766E]/10 rounded-lg hover:bg-[#0F766E]/20 transition-colors"
+                            className="px-4 py-2 text-sm font-medium text-[#0F766E] dark:text-teal-400 bg-[#0F766E]/10 dark:bg-teal-500/10 rounded-lg hover:bg-[#0F766E]/20 dark:hover:bg-teal-500/20 transition-colors"
                         >
                             Edit Profile
                         </button>
@@ -122,13 +122,13 @@ export function ProfileContent() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Column - Profile Card */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm shadow-slate-100 relative overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-6 shadow-sm shadow-slate-100 dark:shadow-none relative overflow-hidden">
                         <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-br from-[#0F766E] to-[#0E7490] opacity-90"></div>
 
                         <div className="relative pt-12 flex flex-col items-center">
                             <div className="relative group">
-                                <div className="w-28 h-28 rounded-full bg-white p-1.5 shadow-md">
-                                    <div className="w-full h-full rounded-full bg-gradient-to-br from-[#0F766E] to-[#0E7490] flex items-center justify-center border-4 border-white shadow-inner overflow-hidden relative">
+                                <div className="w-28 h-28 rounded-full bg-white dark:bg-slate-800 p-1.5 shadow-md">
+                                    <div className="w-full h-full rounded-full bg-gradient-to-br from-[#0F766E] to-[#0E7490] flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-inner overflow-hidden relative">
                                         <span className="text-white text-3xl font-bold tracking-wider">AD</span>
 
                                         {/* Camera overlay for edit mode */}
@@ -139,21 +139,21 @@ export function ProfileContent() {
                                         )}
                                     </div>
                                 </div>
-                                <div className="absolute bottom-2 right-2 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
+                                <div className="absolute bottom-2 right-2 w-5 h-5 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full shadow-sm"></div>
                             </div>
 
-                            <h2 className="mt-4 text-xl font-bold text-slate-800">{formData.fullName}</h2>
-                            <p className="text-sm font-medium text-[#0F766E] mt-1">{formData.role?.name}</p>
+                            <h2 className="mt-4 text-xl font-bold text-slate-800 dark:text-white">{formData.fullName}</h2>
+                            <p className="text-sm font-medium text-[#0F766E] dark:text-teal-400 mt-1">{formData.role?.name}</p>
 
                         </div>
 
-                        <div className="mt-8 pt-6 border-t border-slate-100 space-y-4">
-                            <div className="flex items-center gap-3 text-sm text-slate-600">
-                                <Mail className="w-4 h-4 text-slate-400" />
+                        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                            <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+                                <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                                 {formData.email}
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-slate-600">
-                                <MapPin className="w-4 h-4 text-slate-400" />
+                            <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+                                <MapPin className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                                 {formData.department}
                             </div>
                         </div>
@@ -162,15 +162,15 @@ export function ProfileContent() {
 
                 {/* Right Column - Details Form */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm shadow-slate-100">
-                        <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100">
-                            <User className="w-5 h-5 text-[#0F766E]" />
-                            <h2 className="text-lg font-bold text-slate-800">Personal Information</h2>
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-6 shadow-sm shadow-slate-100 dark:shadow-none">
+                        <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <User className="w-5 h-5 text-[#0F766E] dark:text-teal-400" />
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Personal Information</h2>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Full Name</label>
+                                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Full Name</label>
                                 <input
                                     type="text"
                                     name="fullName"
@@ -180,13 +180,13 @@ export function ProfileContent() {
                                     className={cn(
                                         "w-full px-4 py-2.5 rounded-xl border text-sm transition-all outline-none",
                                         isEditing
-                                            ? "border-slate-300 bg-white focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10"
-                                            : "border-transparent bg-slate-50 text-slate-700"
+                                            ? "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-[#0F766E] dark:focus:border-teal-500 focus:ring-2 focus:ring-[#0F766E]/10 dark:focus:ring-teal-500/20"
+                                            : "border-transparent bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300"
                                     )}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Email Address</label>
+                                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Email Address</label>
                                 <input
                                     type="email"
                                     name="email"
@@ -196,13 +196,13 @@ export function ProfileContent() {
                                     className={cn(
                                         "w-full px-4 py-2.5 rounded-xl border text-sm transition-all outline-none",
                                         isEditing
-                                            ? "border-slate-300 bg-white focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10"
-                                            : "border-transparent bg-slate-50 text-slate-700"
+                                            ? "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-[#0F766E] dark:focus:border-teal-500 focus:ring-2 focus:ring-[#0F766E]/10 dark:focus:ring-teal-500/20"
+                                            : "border-transparent bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300"
                                     )}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Phone Number</label>
+                                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Phone Number</label>
                                 <input
                                     type="text"
                                     name="phoneNumber"
@@ -212,35 +212,35 @@ export function ProfileContent() {
                                     className={cn(
                                         "w-full px-4 py-2.5 rounded-xl border text-sm transition-all outline-none",
                                         isEditing
-                                            ? "border-slate-300 bg-white focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10"
-                                            : "border-transparent bg-slate-50 text-slate-700"
+                                            ? "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-[#0F766E] dark:focus:border-teal-500 focus:ring-2 focus:ring-[#0F766E]/10 dark:focus:ring-teal-500/20"
+                                            : "border-transparent bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300"
                                     )}
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm shadow-slate-100">
-                        <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100">
-                            <Briefcase className="w-5 h-5 text-[#0F766E]" />
-                            <h2 className="text-lg font-bold text-slate-800">Professional Details</h2>
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-6 shadow-sm shadow-slate-100 dark:shadow-none">
+                        <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <Briefcase className="w-5 h-5 text-[#0F766E] dark:text-teal-400" />
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Professional Details</h2>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Role</label>
+                                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Role</label>
                                 <input
                                     type="text"
                                     name="role"
                                     value={formData.role?.name || ""}
                                     readOnly
                                     className={cn(
-                                        "w-full px-4 py-2.5 rounded-xl border text-sm transition-all outline-none border-transparent bg-slate-50 text-slate-700"
+                                        "w-full px-4 py-2.5 rounded-xl border text-sm transition-all outline-none border-transparent bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300"
                                     )}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Department</label>
+                                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Department</label>
                                 <input
                                     type="text"
                                     name="department"
@@ -250,8 +250,8 @@ export function ProfileContent() {
                                     className={cn(
                                         "w-full px-4 py-2.5 rounded-xl border text-sm transition-all outline-none",
                                         isEditing
-                                            ? "border-slate-300 bg-white focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10"
-                                            : "border-transparent bg-slate-50 text-slate-700"
+                                            ? "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-[#0F766E] dark:focus:border-teal-500 focus:ring-2 focus:ring-[#0F766E]/10 dark:focus:ring-teal-500/20"
+                                            : "border-transparent bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300"
                                     )}
                                 />
                             </div>

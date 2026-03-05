@@ -77,8 +77,63 @@ export function UsersContent() {
         roleId: "",
     });
     const [viewUser, setViewUser] = useState<DisplayUser | null>(null);
+    const [editUser, setEditUser] = useState<DisplayUser | null>(null);
+    const [deleteUser, setDeleteUser] = useState<DisplayUser | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        fullName: "",
+        email: "",
+        phoneNumber: "",
+        department: "",
+        roleId: "",
+    });
     const [isLoading, setIsLoading] = useState(true);
-    const { users: dynamicUsers, isLoading: isUsersLoading, refresh, addUser, getRoles } = useUsers();
+    const { users: dynamicUsers, isLoading: isUsersLoading, refresh, addUser, getRoles, updateUser, deleteUser: apiDeleteUser } = useUsers();
+
+    useEffect(() => {
+        if (editUser) {
+            setEditFormData({
+                fullName: editUser.fullName,
+                email: editUser.email,
+                phoneNumber: editUser.phoneNumber || "",
+                department: editUser.department,
+                roleId: roles.find(r => r.name === editUser.role?.name)?.id || "",
+            });
+        }
+    }, [editUser, roles]);
+
+    const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setEditFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleEditUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editUser) return;
+        setIsSubmitting(true);
+        try {
+            await updateUser(editUser.id, editFormData);
+            setEditUser(null);
+        } catch (err) {
+            alert("Failed to update user. Please check your inputs.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteUser = async () => {
+        if (!deleteUser) return;
+        setIsSubmitting(true);
+        try {
+            await apiDeleteUser(deleteUser.id);
+            setDeleteUser(null);
+            setViewUser(null);
+        } catch (err) {
+            alert("Failed to delete user.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     useEffect(() => {
         const fetchRoles = async () => {
@@ -180,7 +235,7 @@ export function UsersContent() {
             u.id.toLowerCase().includes(search.toLowerCase());
         const matchRole = roleFilter === "all" || u.role?.name === roleFilter;
         const matchStatus =
-            statusFilter === "all" || u.status === statusFilter;
+            statusFilter === "all" || (u.status || "active").toLowerCase() === statusFilter.toLowerCase();
         const matchDept =
             deptFilter === "all" ||
             u.department.toLowerCase().includes(deptFilter.toLowerCase());
@@ -196,16 +251,16 @@ export function UsersContent() {
             {/* Page Header */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+                    <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:to-slate-400">
                         User Management
                     </h1>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">
                         Administer system access, roles, and department synchronization.
                     </p>
                 </div>
                 <Button
                     onClick={() => setAddOpen(true)}
-                    className="h-10 gap-2 rounded-xl bg-slate-900 px-5 text-xs font-semibold text-white shadow-md transition-all hover:bg-slate-800 hover:shadow-lg active:scale-95"
+                    className="h-10 gap-2 rounded-xl bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg active:scale-95"
                 >
                     <Plus className="h-4 w-4" />
                     New User Account
@@ -218,7 +273,7 @@ export function UsersContent() {
                     return (
                         <Card
                             key={kpi.label}
-                            className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md"
+                            className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b]"
                         >
                             <CardContent className="p-5">
                                 <div className="flex items-center justify-between">
@@ -232,12 +287,12 @@ export function UsersContent() {
                                 </div>
                                 <div className="mt-4">
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-2xl font-bold text-slate-900">{kpi.value}</span>
+                                        <span className="text-2xl font-bold text-slate-900 dark:text-white">{kpi.value}</span>
                                     </div>
-                                    <p className="text-[11px] font-semibold text-slate-500">
+                                    <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400">
                                         {kpi.label}
                                     </p>
-                                    <p className="mt-1 text-[10px] text-slate-400">
+                                    <p className="mt-1 text-[10px] text-slate-400 dark:text-zinc-500">
                                         {kpi.sub}
                                     </p>
                                 </div>
@@ -248,12 +303,12 @@ export function UsersContent() {
             </div>
 
             {/* Users Table Card */}
-            <Card className="overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md">
-                <CardHeader className="border-b border-slate-100 bg-white/50 pb-4 backdrop-blur-sm">
+            <Card className="overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b]">
+                <CardHeader className="border-b border-slate-100 bg-white/50 pb-4 backdrop-blur-sm dark:border-white/10 dark:bg-black/50">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <CardTitle className="text-base font-bold text-slate-900">Registered Users</CardTitle>
-                            <p className="mt-0.5 text-xs text-slate-500">
+                            <CardTitle className="text-base font-bold text-slate-900 dark:text-white">Registered Users</CardTitle>
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
                                 {filtered.length} matching administrative accounts
                             </p>
                         </div>
@@ -264,13 +319,46 @@ export function UsersContent() {
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Filter by name, email..."
-                                    className="h-9 w-64 rounded-xl border-slate-200 bg-slate-50/50 pl-9 text-xs shadow-sm transition-all focus:bg-white focus:ring-slate-200"
+                                    className="h-9 w-64 rounded-xl border-slate-200 bg-slate-50/50 pl-9 text-xs shadow-sm transition-all focus:bg-white focus:ring-slate-200 dark:border-white/10 dark:bg-zinc-900/50 dark:focus:bg-zinc-900"
                                 />
                             </div>
-                            <Button variant="outline" size="sm" className="h-9 rounded-xl border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50">
-                                <Filter className="mr-2 h-3.5 w-3.5" />
-                                Filters
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <select
+                                    value={roleFilter}
+                                    onChange={(e) => setRoleFilter(e.target.value)}
+                                    className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
+                                >
+                                    <option value="all">All Roles</option>
+                                    {roles.map((r) => (
+                                        <option key={r.id} value={r.name}>
+                                            {r.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                                <select
+                                    value={deptFilter}
+                                    onChange={(e) => setDeptFilter(e.target.value)}
+                                    className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
+                                >
+                                    <option value="all">All Depts</option>
+                                    {Array.from(new Set(displayUsers.map((u) => u.department)))
+                                        .filter(Boolean)
+                                        .map((dept) => (
+                                            <option key={dept} value={dept}>
+                                                {dept}
+                                            </option>
+                                        ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </CardHeader>
@@ -402,13 +490,7 @@ export function UsersContent() {
                                                     onClick={() => setViewUser(user)}
                                                     className="flex items-center gap-0.5 text-[#0F766E] dark:text-teal-400 hover:underline"
                                                 >
-                                                    View <ChevronRight className="h-3 w-3" />
-                                                </button>
-                                                <button className="text-slate-600 dark:text-slate-400 hover:underline">
-                                                    Edit
-                                                </button>
-                                                <button className="text-rose-600 dark:text-rose-400 hover:underline">
-                                                    Disable
+                                                    View
                                                 </button>
                                             </div>
                                         </TableCell>
@@ -494,7 +576,7 @@ export function UsersContent() {
                             value={addFormData.roleId}
                             onChange={handleAddInputChange}
                             required
-                            className="h-8 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-[11px] text-slate-700 dark:text-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
+                            className="h-8 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 px-2 text-[11px] text-slate-700 dark:text-zinc-300 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
                         >
                             <option value="">Select role</option>
                             {roles.map((role) => (
@@ -589,7 +671,7 @@ export function UsersContent() {
                             ].map(({ label, value, icon: Icon }) => (
                                 <div
                                     key={label}
-                                    className="flex items-start gap-2 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3"
+                                    className="flex items-start gap-2 rounded-lg border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-zinc-900/50 p-3"
                                 >
                                     <Icon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
                                     <div>
@@ -604,24 +686,188 @@ export function UsersContent() {
                             ))}
                         </div>
 
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-between mt-4">
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                disabled={isSubmitting}
+                                className="h-8 rounded-full px-4 text-[11px] font-semibold bg-rose-600 hover:bg-rose-700 text-white"
+                                onClick={() => {
+                                    setDeleteUser(viewUser);
+                                    setViewUser(null);
+                                }}
+                            >
+                                Delete
+                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isSubmitting}
+                                    className="h-8 rounded-full border-slate-200 px-3 text-[11px]"
+                                    onClick={() => setViewUser(null)}
+                                >
+                                    Close
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    disabled={isSubmitting}
+                                    className="h-8 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-4 text-[11px] font-semibold text-white"
+                                    onClick={() => {
+                                        setEditUser(viewUser);
+                                        setViewUser(null);
+                                    }}
+                                >
+                                    Edit User
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            {/* ── Edit User Modal ─────────────────────────────────────────────── */}
+            {editUser && (
+                <Modal
+                    open={!!editUser}
+                    onClose={() => setEditUser(null)}
+                    title="Edit User"
+                    description={`Update profile for ${editUser.fullName}`}
+                >
+                    <form onSubmit={handleEditUser} className="space-y-4 text-xs">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="mb-1 block text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                                    Full Name
+                                </label>
+                                <Input
+                                    name="fullName"
+                                    value={editFormData.fullName}
+                                    onChange={handleEditInputChange}
+                                    placeholder="e.g. Juan Dela Cruz"
+                                    className="h-8 text-[11px]"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                                    Email Address
+                                </label>
+                                <Input
+                                    name="email"
+                                    type="email"
+                                    value={editFormData.email}
+                                    onChange={handleEditInputChange}
+                                    placeholder="e.g. j.delacruz@company.ph"
+                                    className="h-8 text-[11px]"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="mb-1 block text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                                    Phone Number
+                                </label>
+                                <Input
+                                    name="phoneNumber"
+                                    value={editFormData.phoneNumber}
+                                    onChange={handleEditInputChange}
+                                    placeholder="+63 9XX XXX XXXX"
+                                    className="h-8 text-[11px]"
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                                    Department
+                                </label>
+                                <Input
+                                    name="department"
+                                    value={editFormData.department}
+                                    onChange={handleEditInputChange}
+                                    placeholder="e.g. IT Operations"
+                                    className="h-8 text-[11px]"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="mb-1 block text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                                Role
+                            </label>
+                            <select
+                                name="roleId"
+                                value={editFormData.roleId}
+                                onChange={handleEditInputChange}
+                                required
+                                className="h-8 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-[11px] text-slate-700 dark:text-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
+                            >
+                                <option value="">Select role</option>
+                                {roles.map((role) => (
+                                    <option key={role.id} value={role.id}>
+                                        {role.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-end gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 className="h-8 rounded-full border-slate-200 px-3 text-[11px]"
-                                onClick={() => setViewUser(null)}
+                                onClick={() => setEditUser(null)}
+                                disabled={isSubmitting}
                             >
-                                Close
+                                Cancel
                             </Button>
                             <Button
-                                type="button"
+                                type="submit"
                                 size="sm"
+                                disabled={isSubmitting}
                                 className="h-8 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-4 text-[11px] font-semibold text-white"
                             >
-                                Edit User
+                                {isSubmitting ? "Saving..." : "Save Changes"}
                             </Button>
                         </div>
+                    </form>
+                </Modal>
+            )}
+
+            {/* ── Delete User Confirmation Modal ───────────────────────────────── */}
+            {deleteUser && (
+                <Modal
+                    open={!!deleteUser}
+                    onClose={() => setDeleteUser(null)}
+                    title="Delete User Account"
+                    description={`Are you sure you want to delete ${deleteUser.fullName}? This action cannot be undone.`}
+                >
+                    <div className="flex items-center justify-end gap-2 mt-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-full border-slate-200 px-3 text-[11px]"
+                            onClick={() => setDeleteUser(null)}
+                            disabled={isSubmitting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="destructive"
+                            disabled={isSubmitting}
+                            className="h-8 rounded-full bg-rose-600 hover:bg-rose-700 px-4 text-[11px] font-semibold text-white"
+                            onClick={handleDeleteUser}
+                        >
+                            {isSubmitting ? "Deleting..." : "Confirm Delete"}
+                        </Button>
                     </div>
                 </Modal>
             )}

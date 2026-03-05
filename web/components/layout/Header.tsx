@@ -75,7 +75,7 @@ export function Header() {
   }, [getCurrentUser]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-teal-100 bg-white/80 dark:border-teal-900/40 dark:bg-[#041112]/80 px-6 backdrop-blur-xl shadow-[0_4px_24px_rgba(15,118,110,0.03)] dark:shadow-[0_4px_24px_rgba(15,118,110,0.08)]">
+    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-teal-100 bg-white/80 dark:border-white/10 dark:bg-[#000000]/90 px-6 backdrop-blur-xl shadow-[0_4px_24px_rgba(15,118,110,0.03)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.7)]">
       {/* Top Gradient Accent */}
       <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0F766E] to-[#0E7490]" />
 
