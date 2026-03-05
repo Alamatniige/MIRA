@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
-  LogOut
+  LogOut,
+  User
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuth } from "@/lib/auth";
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { label: "Assets", href: "/asset", icon: Box },
   { label: "Assignments", href: "/assignment", icon: ClipboardList },
   { label: "Reports", href: "/report", icon: BarChart3 },
+  { label: "Users", href: "/users", icon: User },
 ];
 
 const SETTINGS_ITEM = { label: "Settings", href: "/settings", icon: Settings };
@@ -40,7 +42,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     <aside
       className={cn(
         "fixed inset-y-0 left-0 z-40 flex flex-col transition-all duration-300 ease-in-out",
-        "bg-gradient-to-b from-[#041112] to-[#020809] border-r border-[#0F766E]/20 shadow-[4px_0_24px_rgba(15,118,110,0.08)]",
+        "bg-white dark:bg-[#041112]/80 border-r border-teal-100 dark:border-teal-900/40 shadow-[4px_0_24px_rgba(15,118,110,0.03)] dark:shadow-[4px_0_24px_rgba(15,118,110,0.08)]",
         "backdrop-blur-xl",
         isCollapsed ? "w-20" : "w-64"
       )}
@@ -56,8 +58,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           </div>
           {!isCollapsed && (
             <div className="flex flex-col animate-in fade-in duration-300 whitespace-nowrap">
-              <span className="text-white font-bold tracking-wider text-xl leading-tight">MIRA</span>
-              <span className="text-[10px] text-teal-400/80 font-medium uppercase tracking-widest mt-0.5">IT Admin Portal</span>
+              <span className="text-slate-900 dark:text-white font-bold tracking-wider text-xl leading-tight">MIRA</span>
+              <span className="text-[10px] text-[#0F766E] dark:text-teal-400/80 font-medium uppercase tracking-widest mt-0.5">IT Admin Portal</span>
             </div>
           )}
         </div>
@@ -66,7 +68,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       {/* Collapse Toggle */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-24 z-50 flex items-center justify-center w-6 h-6 rounded-full bg-[#0F766E] text-white border-2 border-[#041112] hover:bg-[#0E7490] hover:scale-110 transition-all shadow-[0_0_10px_rgba(15,118,110,0.5)]"
+        className="absolute -right-3 top-24 z-50 flex items-center justify-center w-6 h-6 rounded-full bg-teal-50 dark:bg-[#0F766E] text-teal-700 dark:text-white border border-teal-200 dark:border-[#041112] hover:bg-teal-100 dark:hover:bg-[#0E7490] hover:text-[#0F766E] dark:hover:text-white hover:scale-110 transition-all shadow-sm dark:shadow-[0_0_10px_rgba(15,118,110,0.5)]"
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {isCollapsed ? <ChevronRight className="w-3.5 h-3.5 ml-0.5" /> : <ChevronLeft className="w-3.5 h-3.5 mr-0.5" />}
@@ -85,15 +87,15 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               className={cn(
                 "group relative flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-300",
                 isActive
-                  ? "bg-gradient-to-r from-[#0F766E]/25 to-transparent text-white border-l-[3px] border-[#2dd4bf] shadow-[inset_0_0_20px_rgba(15,118,110,0.1)]"
-                  : "text-slate-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent hover:scale-[1.02]",
+                  ? "bg-[#0F766E]/10 dark:bg-gradient-to-r dark:from-[#0F766E]/25 dark:to-transparent text-[#0F766E] dark:text-white border-l-[3px] border-[#0F766E] dark:border-[#2dd4bf] dark:shadow-[inset_0_0_20px_rgba(15,118,110,0.1)]"
+                  : "text-slate-600 dark:text-slate-400 hover:text-[#0F766E] dark:hover:text-white hover:bg-teal-100/50 dark:hover:bg-white/5 border-l-[3px] border-transparent hover:scale-[1.02]",
                 isCollapsed ? "justify-center px-0" : ""
               )}
             >
               <Icon
                 className={cn(
                   "flex-shrink-0 w-5 h-5 transition-all duration-300",
-                  isActive ? "text-[#2dd4bf] drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]" : "text-slate-400 group-hover:text-teal-400"
+                  isActive ? "text-[#0F766E] dark:text-[#2dd4bf] dark:drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]" : "text-slate-400 group-hover:text-[#0F766E] dark:group-hover:text-teal-400"
                 )}
               />
 
@@ -115,21 +117,21 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       </nav>
 
       {/* Bottom Actions */}
-      <div className="p-3 border-t border-slate-700/40 space-y-2">
+      <div className="p-3 border-t border-teal-100 dark:border-slate-700/40 space-y-2">
         <Link
           href={SETTINGS_ITEM.href}
           className={cn(
             "group relative flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-300",
             pathname === SETTINGS_ITEM.href
-              ? "bg-gradient-to-r from-[#0F766E]/25 to-transparent text-white border-l-[3px] border-[#2dd4bf] shadow-[inset_0_0_20px_rgba(15,118,110,0.1)]"
-              : "text-slate-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent hover:scale-[1.02]",
+              ? "bg-[#0F766E]/10 dark:bg-gradient-to-r dark:from-[#0F766E]/25 dark:to-transparent text-[#0F766E] dark:text-white border-l-[3px] border-[#0F766E] dark:border-[#2dd4bf] dark:shadow-[inset_0_0_20px_rgba(15,118,110,0.1)]"
+              : "text-slate-600 dark:text-slate-400 hover:text-[#0F766E] dark:hover:text-white hover:bg-teal-100/50 dark:hover:bg-white/5 border-l-[3px] border-transparent hover:scale-[1.02]",
             isCollapsed ? "justify-center px-0" : ""
           )}
         >
           <SETTINGS_ITEM.icon
             className={cn(
               "flex-shrink-0 w-5 h-5 transition-all duration-300",
-              pathname === SETTINGS_ITEM.href ? "text-[#2dd4bf] drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]" : "text-slate-400 group-hover:text-teal-400"
+              pathname === SETTINGS_ITEM.href ? "text-[#0F766E] dark:text-[#2dd4bf] dark:drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]" : "text-slate-400 group-hover:text-[#0F766E] dark:group-hover:text-teal-400"
             )}
           />
           {!isCollapsed && (
@@ -150,14 +152,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           }}
           className={cn(
             "w-full group relative flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-300",
-            "text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border-l-[3px] border-transparent hover:scale-[1.02]",
+            "text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-l-[3px] border-transparent hover:scale-[1.02]",
             isCollapsed ? "justify-center px-0" : ""
           )}
         >
           <LogOut
             className={cn(
               "flex-shrink-0 w-5 h-5 transition-all duration-300",
-              "text-slate-400 group-hover:text-rose-400"
+              "text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400"
             )}
           />
           {!isCollapsed && (

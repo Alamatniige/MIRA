@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useUsers } from "@/hooks/useUsers";
 import { User as UserType } from "@/types/mira";
+import { FullPageLoader } from "@/components/ui/loader";
 
 export function ProfileContent() {
     const [isEditing, setIsEditing] = useState(false);
@@ -34,6 +35,14 @@ export function ProfileContent() {
     });
 
     const [saved, setSaved] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 1200);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -62,6 +71,10 @@ export function ProfileContent() {
     }, [getCurrentUser]);
 
 
+
+    if (isLoading) {
+        return <FullPageLoader label="Loading user profile..." />;
+    }
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
