@@ -31,8 +31,21 @@ export async function apiClient<T>(
         }
 
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: response.statusText }));
-            throw new Error(error.message || `API error: ${response.status}`);
+            let errorMessage = `API error: ${response.status}`;
+            try {
+                const error = await response.json();
+                errorMessage = error.message || error.error || errorMessage;
+            } catch (e) {
+                // If it's not JSON, it might be plain text from http.Error
+                try {
+                    const text = await response.text();
+                    if (text) errorMessage = text;
+                } catch (textErr) {
+                    console.error('Failed to parse error response:', textErr);
+                    errorMessage = response.statusText;
+                }
+            }
+            throw new Error(errorMessage);
         }
 
         // Handle empty responses

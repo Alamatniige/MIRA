@@ -28,7 +28,7 @@ export function ProfileContent() {
         email: "",
         fullName: "",
         department: "",
-        phone: "sample",
+        phoneNumber: "",
         role: {
             name: "",
         },
@@ -205,8 +205,8 @@ export function ProfileContent() {
                                 <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Phone Number</label>
                                 <input
                                     type="text"
-                                    name="phone"
-                                    value={formData.phone || ""}
+                                    name="phoneNumber"
+                                    value={formData.phoneNumber || ""}
                                     onChange={handleChange}
                                     disabled={!isEditing}
                                     className={cn(

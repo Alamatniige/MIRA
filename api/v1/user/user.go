@@ -5,14 +5,18 @@ import "time"
 // User struct mirrors the 'users' table in Drizzle schema
 // User struct mirrors the 'users' table
 type User struct {
-	ID         string    `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	Email      string    `json:"email" gorm:"unique;not null"`
-	FullName   string    `json:"fullName" gorm:"column:fullName;not null"`
-	Password   string    `json:"-" gorm:"not null"`
-	Department string    `json:"department" gorm:"not null"`
-	RoleID     string    `json:"roleId" gorm:"column:roleId;type:uuid;not null"`
-	Role       Role      `json:"role" gorm:"foreignKey:RoleID"`
-	CreatedAt  time.Time `json:"createdAt" gorm:"column:createdAt;autoCreateTime"`
+	ID          string     `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	Email       string     `json:"email" gorm:"unique;not null"`
+	FullName    string     `json:"fullName" gorm:"column:fullName;not null"`
+	Password    string     `json:"-" gorm:"not null"`
+	Department  string     `json:"department" gorm:"not null"`
+	RoleID      string     `json:"roleId" gorm:"column:roleId;type:uuid;not null"`
+	PhoneNumber string     `json:"phoneNumber" gorm:"column:phoneNumber;not null"`
+	Status      string     `json:"status" gorm:"column:status;default:active;not null"`
+	LastActive  *time.Time `json:"lastActive" gorm:"column:lastActive"`
+	AssetsCount int        `json:"assetsCount" gorm:"-"`
+	Role        Role       `json:"role" gorm:"foreignKey:RoleID"`
+	CreatedAt   time.Time  `json:"createdAt" gorm:"column:createdAt;autoCreateTime"`
 }
 
 func (User) TableName() string {
@@ -29,8 +33,9 @@ func (Role) TableName() string {
 }
 
 type CreateUserRequest struct {
-	Email      string `json:"email"`
-	FullName   string `json:"fullName"`
-	Department string `json:"department"`
-	RoleID     string `json:"roleId"`
+	Email       string `json:"email"`
+	FullName    string `json:"fullName"`
+	Department  string `json:"department"`
+	RoleID      string `json:"roleId"`
+	PhoneNumber string `json:"phoneNumber"`
 }

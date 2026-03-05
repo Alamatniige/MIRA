@@ -12,4 +12,5 @@ func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/users/{id}", middleware.AuthMiddleware(GetUserDetails)).Methods("GET")
 	r.HandleFunc("/users", middleware.AuthMiddleware(AddUser)).Methods("POST")
 	r.HandleFunc("/users/{id}", middleware.AuthMiddleware(UpdateUser)).Methods("PUT")
+	r.HandleFunc("/roles", middleware.AuthMiddleware(GetRoles)).Methods("GET")
 }

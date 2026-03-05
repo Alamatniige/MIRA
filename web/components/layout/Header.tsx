@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { useRef, useState, useEffect } from "react";
 import { Bell, Moon, Sun, Package, Wrench, UserCheck, X, CheckCheck } from "lucide-react";
+import { User as UserType } from "@/types/mira";
+import { useUsers } from "@/hooks/useUsers";
 
 const NOTIFICATIONS = [
   {
@@ -41,6 +43,8 @@ const NOTIFICATIONS = [
 
 export function Header() {
   const { theme, setTheme } = useTheme();
+  const { getCurrentUser } = useUsers();
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState(NOTIFICATIONS);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -61,6 +65,14 @@ export function Header() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [notifOpen]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+    };
+    fetchCurrentUser();
+  }, [getCurrentUser]);
 
   return (
     <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-teal-100 bg-white/80 dark:border-teal-900/40 dark:bg-[#041112]/80 px-6 backdrop-blur-xl shadow-[0_4px_24px_rgba(15,118,110,0.03)] dark:shadow-[0_4px_24px_rgba(15,118,110,0.08)]">
@@ -175,10 +187,10 @@ export function Header() {
           </div>
           <div className="hidden flex-col sm:flex">
             <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-[#0F766E] dark:group-hover:text-teal-400 transition-colors">
-              IT Administrator
+              {currentUser?.fullName}
             </span>
             <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-              Admin Access
+              {currentUser?.role?.name}
             </span>
           </div>
         </Link>

@@ -31,121 +31,24 @@ import {
     ArrowUpRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
+import { User as UserType } from "@/types/mira";
+import { useUsers } from "@/hooks/useUsers";
+import { getInitials, getAvatarGradient } from "@/utils/user";
+import { formatDistanceToNow } from "date-fns";
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type RoleVariant = "admin" | "manager" | "staff";
+type RoleVariant = "admin" | "staff";
 type StatusVariant = "active" | "inactive";
 
-interface User {
-    id: string;
-    name: string;
-    initials: string;
-    email: string;
-    phone: string;
-    department: string;
-    role: string;
+interface DisplayUser extends UserType {
     roleVariant: RoleVariant;
-    status: StatusVariant;
-    assetsCount: number;
-    lastActive: string;
-    avatarGradient: string;
 }
 
 // ─── Static Data ─────────────────────────────────────────────────────────────
 
-const USERS: User[] = [
-    {
-        id: "USR-001",
-        name: "Adriana Dela Cruz",
-        initials: "AD",
-        email: "a.delacruz@company.ph",
-        phone: "+63 917 123 4567",
-        department: "Finance",
-        role: "IT Manager",
-        roleVariant: "manager",
-        status: "active",
-        assetsCount: 3,
-        lastActive: "Just now",
-        avatarGradient: "from-violet-500 to-purple-600",
-    },
-    {
-        id: "USR-002",
-        name: "Mark Santos",
-        initials: "MS",
-        email: "m.santos@company.ph",
-        phone: "+63 918 234 5678",
-        department: "IT Operations",
-        role: "IT Administrator",
-        roleVariant: "admin",
-        status: "active",
-        assetsCount: 5,
-        lastActive: "2 min ago",
-        avatarGradient: "from-[#0F766E] to-[#0E7490]",
-    },
-    {
-        id: "USR-003",
-        name: "Bianca Reyes",
-        initials: "BR",
-        email: "b.reyes@company.ph",
-        phone: "+63 919 345 6789",
-        department: "HR & Admin",
-        role: "Staff",
-        roleVariant: "staff",
-        status: "active",
-        assetsCount: 2,
-        lastActive: "1 hour ago",
-        avatarGradient: "from-pink-500 to-rose-500",
-    },
-    {
-        id: "USR-004",
-        name: "Carlo Mendoza",
-        initials: "CM",
-        email: "c.mendoza@company.ph",
-        phone: "+63 920 456 7890",
-        department: "Operations",
-        role: "Staff",
-        roleVariant: "staff",
-        status: "inactive",
-        assetsCount: 1,
-        lastActive: "3 days ago",
-        avatarGradient: "from-amber-500 to-orange-500",
-    },
-    {
-        id: "USR-005",
-        name: "Diana Lim",
-        initials: "DL",
-        email: "d.lim@company.ph",
-        phone: "+63 921 567 8901",
-        department: "Finance",
-        role: "Staff",
-        roleVariant: "staff",
-        status: "active",
-        assetsCount: 2,
-        lastActive: "Yesterday",
-        avatarGradient: "from-sky-500 to-blue-600",
-    },
-    {
-        id: "USR-006",
-        name: "Eduardo Garcia",
-        initials: "EG",
-        email: "e.garcia@company.ph",
-        phone: "+63 922 678 9012",
-        department: "IT Operations",
-        role: "IT Manager",
-        roleVariant: "manager",
-        status: "active",
-        assetsCount: 4,
-        lastActive: "5 min ago",
-        avatarGradient: "from-emerald-500 to-teal-600",
-    },
-];
-
 const ROLE_STYLES: Record<RoleVariant, string> = {
     admin:
         "bg-teal-50 text-teal-700 border-teal-100 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20",
-    manager:
-        "bg-violet-50 text-violet-700 border-violet-100 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20",
     staff:
         "bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700",
 };
@@ -157,51 +60,6 @@ const STATUS_STYLES: Record<StatusVariant, string> = {
         "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
 };
 
-// ─── KPI Card ──────────────────────────────────────────────────────────────
-
-const kpis = [
-    {
-        label: "Total Users",
-        value: "148",
-        sub: "System accounts",
-        icon: UsersIcon,
-        color: "bg-blue-600",
-        bg: "bg-blue-50",
-    },
-    {
-        label: "Active Users",
-        value: "132",
-        sub: "Currently enabled",
-        icon: UserCheck,
-        color: "bg-emerald-600",
-        bg: "bg-emerald-50",
-    },
-    {
-        label: "Inactive Users",
-        value: "16",
-        sub: "Offboarded",
-        icon: UserX,
-        color: "bg-slate-600",
-        bg: "bg-slate-50",
-    },
-    {
-        label: "IT Admins",
-        value: "8",
-        sub: "Full access",
-        icon: ShieldCheck,
-        color: "bg-teal-600",
-        bg: "bg-teal-50",
-    },
-    {
-        label: "IT Managers",
-        value: "24",
-        sub: "Dept leads",
-        icon: ShieldAlert,
-        color: "bg-violet-600",
-        bg: "bg-violet-50",
-    },
-];
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function UsersContent() {
@@ -210,9 +68,102 @@ export function UsersContent() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [deptFilter, setDeptFilter] = useState("all");
     const [addOpen, setAddOpen] = useState(false);
-    const [viewUser, setViewUser] = useState<User | null>(null);
+    const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
+    const [addFormData, setAddFormData] = useState({
+        fullName: "",
+        email: "",
+        phoneNumber: "",
+        department: "General",
+        roleId: "",
+    });
+    const [viewUser, setViewUser] = useState<DisplayUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const { users: dynamicUsers, isLoading: isUsersLoading, refresh, addUser, getRoles } = useUsers();
 
+    useEffect(() => {
+        const fetchRoles = async () => {
+            try {
+                const rolesData = await getRoles();
+                setRoles(rolesData);
+            } catch (err) {
+                console.error("Failed to fetch roles:", err);
+            }
+        };
+        fetchRoles();
+    }, [getRoles]);
+
+    const handleAddInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setAddFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleAddUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await addUser(addFormData);
+            setAddOpen(false);
+            setAddFormData({
+                fullName: "",
+                email: "",
+                phoneNumber: "",
+                department: "General",
+                roleId: "",
+            });
+        } catch (err) {
+            alert("Failed to add user. Please check your inputs.");
+        }
+    };
+
+    // Map dynamic users to the display interface
+    const mappedUsers: DisplayUser[] = dynamicUsers.map((u) => ({
+        ...u,
+        roleVariant: (u.role?.name?.toLowerCase().includes("admin") ? "admin" : "staff") as RoleVariant,
+    }));
+
+    const displayUsers = mappedUsers;
+
+    const kpis = [
+        {
+            label: "Total Users",
+            value: mappedUsers.length.toString(),
+            sub: "Registered accounts",
+            icon: UsersIcon,
+            color: "bg-blue-600",
+            bg: "bg-blue-50",
+        },
+        {
+            label: "Active Users",
+            value: mappedUsers.filter(u => u.status === "active").length.toString(),
+            sub: "Currently enabled",
+            icon: UserCheck,
+            color: "bg-emerald-600",
+            bg: "bg-emerald-50",
+        },
+        {
+            label: "Inactive Users",
+            value: mappedUsers.filter(u => u.status === "inactive").length.toString(),
+            sub: "Offboarded",
+            icon: UserX,
+            color: "bg-slate-600",
+            bg: "bg-slate-50",
+        },
+        {
+            label: "IT Admins",
+            value: mappedUsers.filter(u => u.role?.name === "admin").length.toString(),
+            sub: "Full access",
+            icon: ShieldCheck,
+            color: "bg-teal-600",
+            bg: "bg-teal-50",
+        },
+        {
+            label: "IT Managers",
+            value: mappedUsers.filter(u => u.role?.name === "staff").length.toString(),
+            sub: "Dept leads",
+            icon: ShieldAlert,
+            color: "bg-violet-600",
+            bg: "bg-violet-50",
+        },
+    ];
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsLoading(false);
@@ -220,14 +171,14 @@ export function UsersContent() {
         return () => clearTimeout(timer);
     }, []);
 
-    const filtered = USERS.filter((u) => {
+    const filtered = displayUsers.filter((u) => {
         const matchSearch =
             !search ||
-            u.name.toLowerCase().includes(search.toLowerCase()) ||
+            u.fullName.toLowerCase().includes(search.toLowerCase()) ||
             u.email.toLowerCase().includes(search.toLowerCase()) ||
             u.department.toLowerCase().includes(search.toLowerCase()) ||
             u.id.toLowerCase().includes(search.toLowerCase());
-        const matchRole = roleFilter === "all" || u.roleVariant === roleFilter;
+        const matchRole = roleFilter === "all" || u.role?.name === roleFilter;
         const matchStatus =
             statusFilter === "all" || u.status === statusFilter;
         const matchDept =
@@ -236,7 +187,7 @@ export function UsersContent() {
         return matchSearch && matchRole && matchStatus && matchDept;
     });
 
-    if (isLoading) {
+    if (isLoading || isUsersLoading) {
         return <FullPageLoader label="Loading users..." />;
     }
 
@@ -374,13 +325,13 @@ export function UsersContent() {
                                         <TableCell className="p-3 sm:p-4">
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${user.avatarGradient} text-xs font-bold text-white shadow-sm`}
+                                                    className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${getAvatarGradient(user.id)} text-xs font-bold text-white shadow-sm`}
                                                 >
-                                                    {user.initials}
+                                                    {getInitials(user.fullName)}
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                        {user.name}
+                                                        {user.fullName}
                                                     </span>
                                                     <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
                                                         {user.id}
@@ -398,7 +349,7 @@ export function UsersContent() {
                                                 </div>
                                                 <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-500">
                                                     <Phone className="h-3 w-3 flex-shrink-0 text-slate-400" />
-                                                    {user.phone}
+                                                    {user.phoneNumber}
                                                 </div>
                                             </div>
                                         </TableCell>
@@ -416,19 +367,19 @@ export function UsersContent() {
                                             <span
                                                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${ROLE_STYLES[user.roleVariant]}`}
                                             >
-                                                {user.role}
+                                                {user.role?.name}
                                             </span>
                                         </TableCell>
 
                                         {/* Status Badge */}
                                         <TableCell className="p-3 sm:p-4">
                                             <span
-                                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLES[user.status]}`}
+                                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLES[user.status as StatusVariant || "active"]}`}
                                             >
                                                 <span
                                                     className={`h-1.5 w-1.5 rounded-full ${user.status === "active" ? "bg-emerald-500" : "bg-slate-400"}`}
                                                 />
-                                                {user.status === "active" ? "Active" : "Inactive"}
+                                                {user.status === "active" ? "Active" : user.status === "inactive" ? "Inactive" : user.status || "Active"}
                                             </span>
                                         </TableCell>
 
@@ -441,7 +392,7 @@ export function UsersContent() {
 
                                         {/* Last Active */}
                                         <TableCell className="p-3 text-xs text-slate-500 dark:text-slate-400 sm:p-4">
-                                            {user.lastActive}
+                                            {user.lastActive ? formatDistanceToNow(new Date(user.lastActive), { addSuffix: true }) : "Never"}
                                         </TableCell>
 
                                         {/* Actions */}
@@ -476,22 +427,33 @@ export function UsersContent() {
                 title="Add New User"
                 description="Create a new system account and assign department and role."
             >
-                <form className="space-y-4 text-xs">
+                <form onSubmit={handleAddUser} className="space-y-4 text-xs">
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="mb-1 block text-[11px] font-medium text-slate-700 dark:text-slate-300">
                                 Full Name
                             </label>
-                            <Input placeholder="e.g. Juan Dela Cruz" className="h-8 text-[11px]" />
+                            <Input
+                                name="fullName"
+                                value={addFormData.fullName}
+                                onChange={handleAddInputChange}
+                                placeholder="e.g. Juan Dela Cruz"
+                                className="h-8 text-[11px]"
+                                required
+                            />
                         </div>
                         <div>
                             <label className="mb-1 block text-[11px] font-medium text-slate-700 dark:text-slate-300">
                                 Email Address
                             </label>
                             <Input
+                                name="email"
                                 type="email"
+                                value={addFormData.email}
+                                onChange={handleAddInputChange}
                                 placeholder="e.g. j.delacruz@company.ph"
                                 className="h-8 text-[11px]"
+                                required
                             />
                         </div>
                     </div>
@@ -501,13 +463,25 @@ export function UsersContent() {
                             <label className="mb-1 block text-[11px] font-medium text-slate-700 dark:text-slate-300">
                                 Phone Number
                             </label>
-                            <Input placeholder="+63 9XX XXX XXXX" className="h-8 text-[11px]" />
+                            <Input
+                                name="phoneNumber"
+                                value={addFormData.phoneNumber}
+                                onChange={handleAddInputChange}
+                                placeholder="+63 9XX XXX XXXX"
+                                className="h-8 text-[11px]"
+                            />
                         </div>
                         <div>
                             <label className="mb-1 block text-[11px] font-medium text-slate-700 dark:text-slate-300">
                                 Department
                             </label>
-                            <Input placeholder="e.g. IT Operations" className="h-8 text-[11px]" />
+                            <Input
+                                name="department"
+                                value={addFormData.department}
+                                onChange={handleAddInputChange}
+                                placeholder="e.g. IT Operations"
+                                className="h-8 text-[11px]"
+                            />
                         </div>
                     </div>
 
@@ -515,11 +489,19 @@ export function UsersContent() {
                         <label className="mb-1 block text-[11px] font-medium text-slate-700 dark:text-slate-300">
                             Role
                         </label>
-                        <select className="h-8 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-[11px] text-slate-700 dark:text-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20">
-                            <option>Select role</option>
-                            <option>IT Administrator</option>
-                            <option>IT Manager</option>
-                            <option>Staff</option>
+                        <select
+                            name="roleId"
+                            value={addFormData.roleId}
+                            onChange={handleAddInputChange}
+                            required
+                            className="h-8 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-[11px] text-slate-700 dark:text-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
+                        >
+                            <option value="">Select role</option>
+                            {roles.map((role) => (
+                                <option key={role.id} value={role.id}>
+                                    {role.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -543,26 +525,25 @@ export function UsersContent() {
                     </div>
                 </form>
             </Modal>
-
             {/* ── View User Modal ─────────────────────────────────────────────── */}
             {viewUser && (
                 <Modal
                     open={!!viewUser}
                     onClose={() => setViewUser(null)}
                     title="User Details"
-                    description={`Full profile for ${viewUser.name}`}
+                    description={`Full profile for ${viewUser.fullName}`}
                 >
                     <div className="space-y-5">
                         {/* Avatar + Name row */}
                         <div className="flex items-center gap-4">
                             <div
-                                className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${viewUser.avatarGradient} text-lg font-bold text-white shadow-md`}
+                                className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${getAvatarGradient(viewUser.id)} text-lg font-bold text-white shadow-md`}
                             >
-                                {viewUser.initials}
+                                {getInitials(viewUser.fullName)}
                             </div>
                             <div>
                                 <p className="text-base font-bold text-slate-900 dark:text-white">
-                                    {viewUser.name}
+                                    {viewUser.fullName}
                                 </p>
                                 <p className="text-[11px] font-mono text-slate-400">
                                     {viewUser.id}
@@ -571,15 +552,15 @@ export function UsersContent() {
                                     <span
                                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${ROLE_STYLES[viewUser.roleVariant]}`}
                                     >
-                                        {viewUser.role}
+                                        {viewUser.role?.name}
                                     </span>
                                     <span
-                                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[viewUser.status]}`}
+                                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[viewUser.status as StatusVariant || "active"]}`}
                                     >
                                         <span
                                             className={`h-1.5 w-1.5 rounded-full ${viewUser.status === "active" ? "bg-emerald-500" : "bg-slate-400"}`}
                                         />
-                                        {viewUser.status === "active" ? "Active" : "Inactive"}
+                                        {viewUser.status === "active" ? "Active" : viewUser.status === "inactive" ? "Inactive" : viewUser.status || "Active"}
                                     </span>
                                 </div>
                             </div>
@@ -589,7 +570,7 @@ export function UsersContent() {
                         <div className="grid grid-cols-2 gap-3 text-[11px]">
                             {[
                                 { label: "Email", value: viewUser.email, icon: Mail },
-                                { label: "Phone", value: viewUser.phone, icon: Phone },
+                                { label: "Phone", value: viewUser.phoneNumber || "N/A", icon: Phone },
                                 {
                                     label: "Department",
                                     value: viewUser.department,
@@ -602,7 +583,7 @@ export function UsersContent() {
                                 },
                                 {
                                     label: "Last Active",
-                                    value: viewUser.lastActive,
+                                    value: viewUser.lastActive ? formatDistanceToNow(new Date(viewUser.lastActive), { addSuffix: true }) : "Never",
                                     icon: UsersIcon,
                                 },
                             ].map(({ label, value, icon: Icon }) => (

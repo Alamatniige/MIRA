@@ -13,7 +13,7 @@ SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 
 # create .env.local file in web folder directory
 # env contents of web folder
-WALA PA
+NEXT_PUBLIC_API_URL = 'http://localhost:8080'
 
 # create .env.local file in mobile folder directory
 # env contents of mobile folder

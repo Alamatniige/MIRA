@@ -15,8 +15,13 @@ import (
 
 func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	var users []User
-	if result := db.DB.Preload("Role").Limit(1).Find(&users); result.Error != nil {
-		http.Error(w, "Error fetching users: "+result.Error.Error(), http.StatusInternalServerError)
+	// Fetching the first user with their role and asset count
+	if result := db.DB.Model(&User{}).
+		Select("users.*, (SELECT COUNT(*) FROM \"assetsAssignment\" WHERE \"assetsAssignment\".\"userId\" = users.id AND \"assetsAssignment\".\"returnedDate\" IS NULL) as assetsCount").
+		Preload("Role").
+		Limit(1).
+		Find(&users); result.Error != nil {
+		http.Error(w, "Error fetching user: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -39,12 +44,13 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newUser := User{
-		ID:         inviteResp.ID,
-		Email:      req.Email,
-		FullName:   req.FullName,
-		Department: req.Department,
-		RoleID:     req.RoleID,
-		Password:   "",
+		ID:          inviteResp.ID,
+		Email:       req.Email,
+		FullName:    req.FullName,
+		Department:  req.Department,
+		RoleID:      req.RoleID,
+		Password:    "TempPassword123!",
+		PhoneNumber: req.PhoneNumber,
 	}
 
 	if result := db.DB.Create(&newUser); result.Error != nil {
@@ -60,7 +66,10 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	var users []User
-	if result := db.DB.Preload("Role").Find(&users); result.Error != nil {
+	if result := db.DB.Model(&User{}).
+		Select("users.*, (SELECT COUNT(*) FROM \"assetsAssignment\" WHERE \"assetsAssignment\".\"userId\" = users.id AND \"assetsAssignment\".\"returnedDate\" IS NULL) as assetsCount").
+		Preload("Role").
+		Find(&users); result.Error != nil {
 		http.Error(w, "Error fetching users: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -165,4 +174,15 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+func GetRoles(w http.ResponseWriter, r *http.Request) {
+	var roles []Role
+	if result := db.DB.Find(&roles); result.Error != nil {
+		http.Error(w, "Error fetching roles: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(roles)
 }

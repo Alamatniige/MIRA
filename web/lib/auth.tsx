@@ -36,11 +36,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const savedUser = localStorage.getItem('mira_user');
 
         if (savedToken && savedUser) {
-            setToken(savedToken);
             try {
-                setUser(JSON.parse(savedUser));
+                const parsedUser = JSON.parse(savedUser) as User;
+
+                // RBAC: Only Admins are allowed in this console
+                if (parsedUser.role?.name !== 'Admin') {
+                    console.warn("Non-admin user session detected during hydration. Clearing session.");
+                    logout();
+                    return;
+                }
+
+                setToken(savedToken);
+                setUser(parsedUser);
             } catch (e) {
                 console.error("Failed to parse saved user", e);
+                logout();
             }
         }
         setIsLoading(false);
@@ -56,14 +66,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             const { access_token, user: userData } = response.data;
 
+            // RBAC: Check if user is an Admin
+            if (userData.role?.name !== 'Admin') {
+                throw new Error("Access denied. Only administrators are allowed to enter the IT Admin Console.");
+            }
+
             setToken(access_token);
             setUser(userData);
             localStorage.setItem('mira_token', access_token);
             localStorage.setItem('mira_user', JSON.stringify(userData));
 
             router.push('/dashboard');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Login error:', error);
+
+            // Map common error patterns to user-friendly messages
+            const message = error.message || '';
+            if (message.toLowerCase().includes('unauthorized') ||
+                message.toLowerCase().includes('invalid login credentials') ||
+                message.toLowerCase().includes('login failed')) {
+                throw new Error("Invalid email or password. Please try again.");
+            }
+
             throw error;
         } finally {
             setIsLoading(false);

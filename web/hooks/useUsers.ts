@@ -94,6 +94,20 @@ export function useUsers() {
         }
     }, [getHeaders, fetchUsers]);
 
+    const getRoles = useCallback(async () => {
+        try {
+            const response = await fetch("/api/roles", {
+                headers: getHeaders(),
+            });
+            if (!response.ok) throw new Error("Failed to fetch roles");
+            const data = await response.json();
+            return data || [];
+        } catch (err: any) {
+            console.error("Failed to fetch roles:", err);
+            throw err;
+        }
+    }, [getHeaders]);
+
     useEffect(() => {
         fetchUsers();
     }, [fetchUsers]);
@@ -107,5 +121,6 @@ export function useUsers() {
         deleteUser,
         getCurrentUser,
         updateUser,
+        getRoles,
     };
 }

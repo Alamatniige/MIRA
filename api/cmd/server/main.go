@@ -60,9 +60,6 @@ func main() {
 	issues.RegisterRoutes(r)
 	report.RegisterRoutes(r)
 
-	// Protected Routes
-	r.HandleFunc("/users", middleware.AuthMiddleware(user.GetCurrentUser))
-
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Welcome to MIRA API!")
 	})

@@ -74,8 +74,11 @@ export interface User {
   email: string;
   fullName: string;
   department: string;
-  phone: string;
+  phoneNumber: string;
   role?: {
     name: string;
   };
+  status?: string;
+  lastActive?: string;
+  assetsCount?: number;
 }
