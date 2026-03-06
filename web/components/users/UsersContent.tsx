@@ -203,7 +203,7 @@ export function UsersContent() {
             bg: "bg-slate-50",
         },
         {
-            label: "IT Admins",
+            label: "Admins",
             value: mappedUsers.filter(u => u.role?.name === "admin").length.toString(),
             sub: "Full access",
             icon: ShieldCheck,
@@ -211,7 +211,7 @@ export function UsersContent() {
             bg: "bg-teal-50",
         },
         {
-            label: "IT Managers",
+            label: "Staff",
             value: mappedUsers.filter(u => u.role?.name === "staff").length.toString(),
             sub: "Dept leads",
             icon: ShieldAlert,
