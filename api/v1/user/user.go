@@ -24,7 +24,7 @@ func (User) TableName() string {
 }
 
 type Role struct {
-	ID       string `json:"id" gorm:"primaryKey;type:int;default:gen_random_uuid()"`
+	ID       string `json:"id" gorm:"primaryKey;type:int"`
 	RoleName string `json:"name" gorm:"column:roleName;not null"`
 }
 

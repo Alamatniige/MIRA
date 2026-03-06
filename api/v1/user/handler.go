@@ -1,14 +1,19 @@
 package user
 
 import (
+	"bytes"
+	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
+	"time"
 
 	"mira-api/internal/db"
-	"mira-api/v1/supabase"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/bcrypt"
 
 	"gorm.io/gorm"
 )
@@ -36,22 +41,58 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
-	inviteResp, err := supabase.AdminClient.Auth.InviteUserByEmail(ctx, req.Email)
+	// Generate a secure random temporary password
+	tempPassword, err := generateTempPassword()
 	if err != nil {
-		http.Error(w, "Error inviting user: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error generating temp password", http.StatusInternalServerError)
+		return
+	}
+
+	// Hash it before storing in the DB
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(tempPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Error hashing password", http.StatusInternalServerError)
 		return
 	}
 
 	newUser := User{
-		ID:          inviteResp.ID,
+		ID:          uuid.New().String(),
 		Email:       req.Email,
 		FullName:    req.FullName,
 		Department:  req.Department,
 		RoleID:      req.RoleID,
-		Password:    "TempPassword123!",
+		Password:    string(hashedPassword),
 		PhoneNumber: req.PhoneNumber,
 	}
+
+	// Trigger custom email invite via Next.js API asynchronously (pass plaintext password)
+	go func(u User, plainPw string) {
+		roleName := "Staff" // Default fallback
+		if u.RoleID == "1" {
+			roleName = "Admin"
+		}
+
+		payload := map[string]interface{}{
+			"email":        u.Email,
+			"name":         u.FullName,
+			"role":         roleName,
+			"department":   u.Department,
+			"tempPassword": plainPw,
+		}
+		payloadBytes, _ := json.Marshal(payload)
+
+		nextjsURL := os.Getenv("NEXT_PUBLIC_APP_URL")
+		if nextjsURL == "" {
+			nextjsURL = "http://localhost:3000"
+		}
+
+		req, err := http.NewRequest("POST", nextjsURL+"/api/emails/invite", bytes.NewBuffer(payloadBytes))
+		if err == nil {
+			req.Header.Set("Content-Type", "application/json")
+			client := &http.Client{Timeout: 10 * time.Second}
+			client.Do(req)
+		}
+	}(newUser, tempPassword)
 
 	if result := db.DB.Create(&newUser); result.Error != nil {
 		http.Error(w, "Error adding user to local DB: "+result.Error.Error(), http.StatusInternalServerError)
@@ -185,4 +226,17 @@ func GetRoles(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(roles)
+}
+
+// generateTempPassword creates a cryptographically random 12-character alphanumeric password.
+func generateTempPassword() (string, error) {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, 12)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	for i := range b {
+		b[i] = charset[int(b[i])%len(charset)]
+	}
+	return fmt.Sprintf("%s!", string(b)), nil
 }

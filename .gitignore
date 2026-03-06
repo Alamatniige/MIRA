@@ -1,0 +1,8 @@
+build-errors.log
+*.exe
+
+# Environment files - never commit secrets
+.env
+.env.*
+!.env.example
+!.env.local

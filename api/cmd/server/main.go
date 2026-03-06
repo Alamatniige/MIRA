@@ -46,7 +46,7 @@ func main() {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
-	// 4. Initialize Supabase client (for Auth only)
+	// 4. Initialize Supabase client (for storage / non-auth features)
 	supabase.Init()
 
 	r := mux.NewRouter()

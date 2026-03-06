@@ -33,17 +33,20 @@ export async function apiClient<T>(
         if (!response.ok) {
             let errorMessage = `API error: ${response.status}`;
             try {
-                const error = await response.json();
-                errorMessage = error.message || error.error || errorMessage;
-            } catch (e) {
-                // If it's not JSON, it might be plain text from http.Error
-                try {
-                    const text = await response.text();
-                    if (text) errorMessage = text;
-                } catch (textErr) {
-                    console.error('Failed to parse error response:', textErr);
-                    errorMessage = response.statusText;
+                // Read body as text ONCE, then try to parse as JSON
+                const rawText = await response.text();
+                if (rawText) {
+                    try {
+                        const error = JSON.parse(rawText);
+                        errorMessage = error.message || error.error || errorMessage;
+                    } catch {
+                        // Not JSON — use the raw text directly (e.g. plain http.Error from Go)
+                        errorMessage = rawText;
+                    }
                 }
+            } catch (readErr) {
+                console.error('Failed to read error response body:', readErr);
+                errorMessage = response.statusText;
             }
             throw new Error(errorMessage);
         }

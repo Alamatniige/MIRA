@@ -38,6 +38,15 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify(body),
         });
 
+        if (!response.ok) {
+            const text = await response.text();
+            try {
+                return NextResponse.json(JSON.parse(text), { status: response.status });
+            } catch {
+                return NextResponse.json({ message: text }, { status: response.status });
+            }
+        }
+
         const data = await response.json();
         return NextResponse.json(data, { status: response.status });
     } catch (error) {
