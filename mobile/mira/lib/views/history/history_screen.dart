@@ -14,6 +14,19 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   String _selectedFilter = 'all';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
 
   static const List<Map<String, String>> _filters = [
     {'id': 'all', 'label': 'All'},
@@ -96,43 +109,53 @@ class _HistoryScreenState extends State<HistoryScreen> {
               // Timeline
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                sliver: _filteredActivities.isEmpty
-                    ? SliverToBoxAdapter(
+                sliver: _isLoading
+                    ? const SliverToBoxAdapter(
                         child: Center(
                           child: Padding(
-                            padding: const EdgeInsets.all(48),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.history,
-                                  size: 64,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No activity yet',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            padding: EdgeInsets.all(48),
+                            child: CircularProgressIndicator(),
                           ),
                         ),
                       )
-                    : SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final item = _filteredActivities[index];
-                          final isLast =
-                              index == _filteredActivities.length - 1;
-                          return _TimelineItem(
-                            activity: item,
-                            isLast: isLast,
-                            onTap: () => _openAsset(context, item),
-                          );
-                        }, childCount: _filteredActivities.length),
-                      ),
+                    : _filteredActivities.isEmpty
+                        ? SliverToBoxAdapter(
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(48),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.history,
+                                      size: 64,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No activity yet',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        : SliverList(
+                            delegate:
+                                SliverChildBuilderDelegate((context, index) {
+                              final item = _filteredActivities[index];
+                              final isLast =
+                                  index == _filteredActivities.length - 1;
+                              return _TimelineItem(
+                                activity: item,
+                                isLast: isLast,
+                                onTap: () => _openAsset(context, item),
+                              );
+                            }, childCount: _filteredActivities.length),
+                          ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
             ],
