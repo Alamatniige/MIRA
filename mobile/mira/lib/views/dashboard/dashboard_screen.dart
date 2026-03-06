@@ -5,8 +5,27 @@ import '../../theme/app_theme.dart';
 import '../../widgets/status_badge.dart';
 
 /// Premium Dashboard - modern design with glassmorphism, refined cards, premium FAB
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +43,13 @@ class DashboardScreen extends StatelessWidget {
               : AppColors.tealBackgroundGradient,
         ),
         child: SafeArea(
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  slivers: [
               // Premium gradient header with decorative elements
               SliverToBoxAdapter(
                 child: Stack(

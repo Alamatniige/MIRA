@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Modal } from "@/components/ui/modal";
+import { QRCodeSVG } from "qrcode.react";
 
 /* ─────────────────────────────── mock data ─────────────────────────────── */
 
@@ -288,8 +289,13 @@ function getAvatarColor(initials: string) {
 
 export function AssetRegistry() {
   const [open, setOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [selectedQrAsset, setSelectedQrAsset] = useState<Asset | null>(assets[0]); // Default to first asset for demo
+  const [selectedViewAsset, setSelectedViewAsset] = useState<Asset | null>(null);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeneratingQr, setIsGeneratingQr] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -515,6 +521,10 @@ export function AssetRegistry() {
                           {/* View */}
                           <button
                             title="View"
+                            onClick={() => {
+                              setSelectedViewAsset(asset);
+                              setViewOpen(true);
+                            }}
                             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-primary hover:bg-primary/10 transition-colors"
                           >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
@@ -575,14 +585,77 @@ export function AssetRegistry() {
         </CardContent>
       </Card>
 
+      {/* ── Generate QR Modal ── */}
+      <Modal
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        className={open ? "translate-x-[52%] h-[480px]" : "h-[480px]"}   // Shift to the right if the other modal is open
+      >
+        <div className="space-y-4 text-xs flex flex-col h-[440px] pt-4">
+
+          {selectedQrAsset ? (
+            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 bg-slate-50 dark:bg-slate-900/50 p-6 text-center">
+              <div className="rounded-2xl bg-white p-5 shadow-sm dark:bg-white">
+                <QRCodeSVG
+                  value={JSON.stringify({ tag: selectedQrAsset.tag, name: selectedQrAsset.name, category: selectedQrAsset.category })}
+                  size={220}
+                  level="H"
+                />
+              </div>
+              <p className="mt-5 text-[15px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">{selectedQrAsset.tag}</p>
+              <p className="mt-1.5 text-[12px] text-slate-500">{selectedQrAsset.name}</p>
+            </div>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 text-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <rect x="7" y="7" width="3" height="3" />
+                <rect x="14" y="7" width="3" height="3" />
+                <rect x="7" y="14" width="3" height="3" />
+                <rect x="14" y="14" width="3" height="3" />
+              </svg>
+              <p className="text-[11px] text-slate-500">Select an asset above to view its QR code</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-2 pt-2 mt-auto">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-full border-slate-200 px-4 text-[11px]"
+              onClick={() => setQrOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={!selectedQrAsset}
+              className="h-8 rounded-full bg-slate-900 px-5 text-[11px] font-semibold text-white shadow-sm hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+              onClick={() => window.print()}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="mr-1.5 h-3.5 w-3.5">
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+              Print Tag
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* ── Add Asset Modal ── */}
       <Modal
         open={open}
         onClose={() => setOpen(false)}
         title="Add Asset"
         description="Register a new IT hardware asset into the MIRA registry."
+        overlayClassName={qrOpen ? "!bg-transparent dark:!bg-transparent !backdrop-blur-none pointer-events-none" : ""} // Remove double overlay
+        className={qrOpen ? "pointer-events-auto -translate-x-[52%] h-[480px]" : "h-[480px]"} // Shift to the left if QR modal is open
       >
-        <form className="space-y-4 text-xs">
+        <form className="space-y-4 text-xs flex flex-col h-[390px]">
           {/* Row 1: Tag + Name */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -637,20 +710,10 @@ export function AssetRegistry() {
 
 
 
-          {/* Notes */}
-          <div>
-            <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-              Notes
-              <span className="ml-1 font-normal text-slate-400">(optional)</span>
-            </label>
-            <textarea
-              className="min-h-[64px] w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 resize-none transition-colors"
-              placeholder="Any additional information relevant to IT or audit."
-            />
-          </div>
+          {/* Notes removed per request */}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2 pt-1">
+          <div className="flex items-center justify-end gap-2 pt-1 mt-auto">
             <Button
               type="button"
               variant="outline"
@@ -661,14 +724,143 @@ export function AssetRegistry() {
               Cancel
             </Button>
             <Button
-              type="submit"
+              type="button"
+              disabled={isGeneratingQr}
+              onClick={() => {
+                setIsGeneratingQr(true);
+                // Simulate saving logic and QR generation delay
+                setTimeout(() => {
+                  setIsGeneratingQr(false);
+                  setQrOpen(true);
+                }, 1000); // 1-second loading state
+              }}
               size="sm"
-              className="h-8 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-[11px] font-semibold shadow-sm hover:shadow-lg transition-all active:scale-95"
+              className="h-8 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-[11px] font-semibold text-white shadow-sm hover:shadow-lg transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-80 flex items-center justify-center gap-1.5"
             >
-              Save Asset
+              {isGeneratingQr ? (
+                <>
+                  <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                "Save & Generate QR"
+              )}
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* ── View Asset Modal ── */}
+      <Modal
+        open={viewOpen}
+        onClose={() => setViewOpen(false)}
+        title="View Asset Details"
+        description="Detailed information and QR code for this asset."
+        className="w-full max-w-lg"
+      >
+        {selectedViewAsset && (
+          <div className="space-y-4 text-xs flex flex-col pt-4 pr-1 pb-1">
+            <div className="flex gap-5">
+              <div className="flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 shrink-0">
+                <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-white mb-3">
+                  <QRCodeSVG
+                    value={JSON.stringify({ tag: selectedViewAsset.tag, name: selectedViewAsset.name, category: selectedViewAsset.category })}
+                    size={110}
+                    level="H"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 w-full rounded-full bg-slate-900 px-4 text-[11px] font-semibold text-white shadow-sm hover:bg-slate-800 transition-all active:scale-95 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+                  onClick={() => window.print()}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="mr-1.5 h-3.5 w-3.5">
+                    <polyline points="6 9 6 2 18 2 18 9" />
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                    <rect x="6" y="14" width="12" height="8" />
+                  </svg>
+                  Print QR
+                </Button>
+              </div>
+
+              <div className="flex-1 space-y-4 pt-1">
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Asset Tag</h4>
+                  <div className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 font-mono text-[13px] font-semibold text-slate-700 dark:text-slate-300 tracking-wide">
+                    {selectedViewAsset.tag}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Asset Name</h4>
+                  <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-tight">{selectedViewAsset.name}</p>
+                  <p className="text-[12px] text-slate-500 mt-1">{selectedViewAsset.brand} &nbsp;•&nbsp; {selectedViewAsset.category}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-1">
+              <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b]">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Status</h4>
+                <div className="flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${statusDot[selectedViewAsset.status] || 'bg-slate-400'}`}></span>
+                  <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">{selectedViewAsset.status}</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b]">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Location</h4>
+                <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-700 dark:text-slate-300">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4 text-slate-400">
+                    <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  {selectedViewAsset.location}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b] flex-1">
+              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Assignment Details</h4>
+              {selectedViewAsset.assignedTo ? (
+                <div className="flex items-center gap-3 mt-1">
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-full text-[12px] font-bold ${getAvatarColor(selectedViewAsset.assignedTo.initials)} shadow-sm`}>
+                    {selectedViewAsset.assignedTo.initials}
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-bold text-slate-800 dark:text-slate-200">{selectedViewAsset.assignedTo.name}</p>
+                    <p className="text-[11px] font-medium text-slate-500 mt-0.5">Current Assignee</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 mt-1">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <p className="text-[12px] font-medium text-slate-500 italic">This asset is not currently assigned to anyone.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 mt-auto">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-full border-slate-200 px-5 text-[11px] font-medium"
+                onClick={() => setViewOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

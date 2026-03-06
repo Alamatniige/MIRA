@@ -4,10 +4,29 @@ import '../../theme/theme_mode_scope.dart';
 import '../../data/mock_data.dart';
 
 /// Profile - minimal premium layout
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final VoidCallback onLogout;
 
   const ProfileScreen({super.key, required this.onLogout});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +39,11 @@ class ProfileScreen extends StatelessWidget {
               : AppColors.tealBackgroundGradient,
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
               children: [
                 const SizedBox(height: 32),
                 // Large circular avatar
@@ -170,7 +191,7 @@ class ProfileScreen extends StatelessWidget {
                             TextButton(
                               onPressed: () {
                                 Navigator.pop(ctx);
-                                onLogout();
+                                widget.onLogout();
                               },
                               child: const Text(
                                 'Log out',

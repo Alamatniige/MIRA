@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/mira_gradient_button.dart';
-import 'create_account_screen.dart';
 
 /// Login screen - updated with clean overlapping card layout and circular gradient background
 class LoginScreen extends StatefulWidget {
@@ -300,39 +299,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 label: _isLoading ? 'SIGNING IN...' : 'LOGIN',
                 isLoading: _isLoading,
                 onPressed: _isLoading ? null : _handleLogin,
-              ),
-              const SizedBox(height: 24),
-              Center(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CreateAccountScreen(),
-                      ),
-                    );
-                  },
-                  child: Text.rich(
-                    TextSpan(
-                      text: "Don't have an account? ",
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontSize: 13,
-                        color: AppColors.gray500,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'SIGN UP',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 13,
-                            color: AppColors.tealDark,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ),
               // Add extra blank space for scrolling padding
               const SizedBox(height: 40),

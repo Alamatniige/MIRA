@@ -4,16 +4,37 @@ import '../../theme/app_theme.dart';
 import '../../widgets/asset_card.dart';
 
 /// My Assets list - staff's assigned assets
-class MyAssetsScreen extends StatelessWidget {
+class MyAssetsScreen extends StatefulWidget {
   const MyAssetsScreen({super.key});
+
+  @override
+  State<MyAssetsScreen> createState() => _MyAssetsScreenState();
+}
+
+class _MyAssetsScreenState extends State<MyAssetsScreen> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final controller = AssetsController();
     return Scaffold(
       appBar: AppBar(title: const Text('My Assets')),
-      body: controller.myAssets.isEmpty
-          ? Center(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : controller.myAssets.isEmpty
+              ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
