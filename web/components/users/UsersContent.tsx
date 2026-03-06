@@ -88,7 +88,7 @@ export function UsersContent() {
         roleId: "",
     });
     const [isLoading, setIsLoading] = useState(true);
-    const { users: dynamicUsers, isLoading: isUsersLoading, refresh, addUser, getRoles, updateUser, deleteUser: apiDeleteUser } = useUsers();
+    const { users: dynamicUsers, isLoading: isUsersLoading, refresh, addUser, getRoles, updateUser, deleteUser: removeUser } = useUsers();
 
     useEffect(() => {
         if (editUser) {
@@ -125,7 +125,7 @@ export function UsersContent() {
         if (!deleteUser) return;
         setIsSubmitting(true);
         try {
-            await apiDeleteUser(deleteUser.id);
+            await removeUser(deleteUser.id);
             setDeleteUser(null);
             setViewUser(null);
         } catch (err) {
