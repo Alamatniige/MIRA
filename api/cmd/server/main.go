@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 
@@ -23,10 +24,18 @@ import (
 
 func main() {
 	// 1. Load environment variables
-	if err := godotenv.Load(".env.local"); err != nil {
-		if err := godotenv.Load("../../.env.local"); err != nil {
-			log.Println("Warning: Could not find .env.local file. Ensure it exists in 'api/'")
+	env := os.Getenv("APP_ENV")
+	envFile := ".env.local"
+	if env == "production" {
+		envFile = ".env.production"
+	}
+
+	if err := godotenv.Load(envFile); err != nil {
+		if err := godotenv.Load("../../" + envFile); err != nil {
+			log.Printf("Warning: Could not find %s file. Ensure it exists in 'api/'\n", envFile)
 		}
+	} else {
+		log.Printf("Loaded environment variables from %s\n", envFile)
 	}
 
 	// 2. Initialize Database (GORM)
