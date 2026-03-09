@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// Modern BottomNavigationBar with rounded top, shadow, animated active indicator
+/// Floating Modern BottomNavigationBar with prominent central Scan button
 class ModernBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -12,44 +12,89 @@ class ModernBottomNav extends StatelessWidget {
     required this.onTap,
   });
 
-  static const List<_NavItem> _items = [
-    _NavItem(icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard, label: 'Dashboard'),
-    _NavItem(icon: Icons.qr_code_scanner_outlined, activeIcon: Icons.qr_code_scanner, label: 'Scan'),
-    _NavItem(icon: Icons.history_outlined, activeIcon: Icons.history, label: 'History'),
-    _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : AppColors.navy.withOpacity(0.08),
-            blurRadius: 24,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(_items.length, (index) {
-              final item = _items[index];
-              final isSelected = currentIndex == index;
-              return _NavItemWidget(
-                icon: isSelected ? item.activeIcon : item.icon,
-                label: item.label,
-                isSelected: isSelected,
-                onTap: () => onTap(index),
-              );
-            }),
+    
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            height: 72,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : Colors.white,
+              borderRadius: BorderRadius.circular(36),
+              border: Border.all(
+                color: isDark ? Colors.white.withOpacity(0.08) : AppColors.gray200,
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.tealPrimary.withOpacity(isDark ? 0.3 : 0.15),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: isDark ? Colors.black.withOpacity(0.4) : AppColors.navy.withOpacity(0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Dashboard Tab
+                _NavItemWidget(
+                  icon: currentIndex == 0 ? Icons.space_dashboard_rounded : Icons.space_dashboard_outlined,
+                  isSelected: currentIndex == 0,
+                  onTap: () => onTap(0),
+                ),
+                
+                const SizedBox(width: 28),
+                
+                // Prominent Central Scan Button
+                GestureDetector(
+                  onTap: () => onTap(1),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.tealPrimary.withOpacity(0.5),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.qr_code_scanner_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(width: 28),
+                
+                // History Tab
+                _NavItemWidget(
+                  icon: currentIndex == 2 ? Icons.history_rounded : Icons.history,
+                  isSelected: currentIndex == 2,
+                  onTap: () => onTap(2),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -57,23 +102,13 @@ class ModernBottomNav extends StatelessWidget {
   }
 }
 
-class _NavItem {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-
-  const _NavItem({required this.icon, required this.activeIcon, required this.label});
-}
-
 class _NavItemWidget extends StatelessWidget {
   final IconData icon;
-  final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _NavItemWidget({
     required this.icon,
-    required this.label,
     required this.isSelected,
     required this.onTap,
   });
@@ -81,46 +116,27 @@ class _NavItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final primaryColor = isDark ? AppColors.tealLight : AppColors.tealPrimary;
     final unselectedColor = isDark ? AppColors.gray400 : AppColors.gray500;
     
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(
-              color: isSelected 
-                  ? (isDark ? primaryColor.withOpacity(0.15) : AppColors.tealMuted.withOpacity(0.5)) 
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 24,
-                  color: isSelected ? primaryColor : unselectedColor,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? primaryColor : unselectedColor,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected 
+                ? primaryColor.withOpacity(0.12) 
+                : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: isSelected ? 30 : 26, // Slightly larger when selected
+            color: isSelected ? primaryColor : unselectedColor,
           ),
         ),
       ),

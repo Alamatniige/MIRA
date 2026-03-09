@@ -132,22 +132,74 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
+  bool _isLoading = false;
+
+  Future<void> _onTabTapped(int index) async {
+    if (_currentIndex == index) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Artificial delay to show loading state
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    if (mounted) {
+      setState(() {
+        _currentIndex = index;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
+      body: Stack(
         children: [
-          const DashboardScreen(),
-          QrScannerScreen(onBack: () => setState(() => _currentIndex = 0)),
-          const HistoryScreen(),
-          ProfileScreen(onLogout: widget.onLogout),
+          // Background content
+          IndexedStack(
+            index: _currentIndex,
+            children: [
+              DashboardScreen(
+                onProfileTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ProfileScreen(onLogout: widget.onLogout),
+                    ),
+                  );
+                },
+              ),
+              QrScannerScreen(onBack: () => _onTabTapped(0)),
+              const HistoryScreen(),
+            ],
+          ),
+
+          // Loading Overlay
+          if (_isLoading)
+            Container(
+              color: isDark 
+                  ? AppColors.darkBackground 
+                  : AppColors.gray50,
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.tealPrimary,
+                ),
+              ),
+            ),
+          
+          // Floating Bottom Navigation Bar
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: ModernBottomNav(
+              currentIndex: _currentIndex,
+              onTap: _onTabTapped,
+            ),
+          ),
         ],
-      ),
-      bottomNavigationBar: ModernBottomNav(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
       ),
     );
   }
