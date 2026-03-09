@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/mira_gradient_button.dart';
+import 'forgot_password_screen.dart';
 
 /// Login screen - fully redesigned with premium inputs, glowing centerpiece, and beautiful gradients
 class LoginScreen extends StatefulWidget {
@@ -15,7 +17,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   // Define focus nodes to animate the borders when focused
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
@@ -31,6 +33,24 @@ class _LoginScreenState extends State<LoginScreen> {
     // Add listeners to trigger rebuilds on focus change and animate borders
     _emailFocus.addListener(() => setState(() {}));
     _passwordFocus.addListener(() => setState(() {}));
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('remembered_email');
+    final savedPassword = prefs.getString('remembered_password');
+    final rememberMe = prefs.getBool('remember_me') ?? false;
+
+    if (rememberMe && savedEmail != null) {
+      setState(() {
+        _emailController.text = savedEmail;
+        if (savedPassword != null) {
+          _passwordController.text = savedPassword;
+        }
+        _rememberMe = true;
+      });
+    }
   }
 
   @override
@@ -68,6 +88,18 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Save or clear credentials based on "Remember Me"
+    final prefs = await SharedPreferences.getInstance();
+    if (_rememberMe) {
+      await prefs.setBool('remember_me', true);
+      await prefs.setString('remembered_email', email);
+      await prefs.setString('remembered_password', password); // In a real app, use secure storage
+    } else {
+      await prefs.setBool('remember_me', false);
+      await prefs.remove('remembered_email');
+      await prefs.remove('remembered_password');
+    }
+
     setState(() => _isLoading = false);
     widget.onLoginSuccess();
   }
@@ -85,19 +117,16 @@ class _LoginScreenState extends State<LoginScreen> {
           // Background Gradient Base
           Container(
             decoration: BoxDecoration(
-              gradient: isDark 
-                  ? AppColors.darkTealBackgroundGradient 
+              gradient: isDark
+                  ? AppColors.darkTealBackgroundGradient
                   : const LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.tealDark,
-                        AppColors.tealPrimary,
-                      ],
+                      colors: [AppColors.tealDark, AppColors.tealPrimary],
                     ),
             ),
           ),
-          
+
           // Large floating orb 1 (Top Right)
           Positioned(
             top: -100,
@@ -117,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          
+
           // Large floating orb 2 (Bottom Left)
           Positioned(
             bottom: -80,
@@ -137,16 +166,14 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          
+
           // Main Content
           SafeArea(
             bottom: false,
             child: Column(
               children: [
                 _buildTopSection(context),
-                Expanded(
-                  child: _buildBottomSection(context),
-                ),
+                Expanded(child: _buildBottomSection(context)),
               ],
             ),
           ),
@@ -209,14 +236,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 child: const Center(
-                  child: Icon(Icons.hub_rounded, size: 36, color: Colors.white),
+                  child: Icon(
+                    Icons.email_rounded,
+                    size: 36,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           const Text(
             'Welcome Back',
             style: TextStyle(
@@ -282,9 +313,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   hintText: 'hello@company.com',
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 _buildModernTextField(
                   context: context,
                   label: 'Password',
@@ -294,9 +325,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   isPassword: true,
                   hintText: '••••••••',
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -307,13 +338,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 24,
                           child: Checkbox(
                             value: _rememberMe,
-                            onChanged: (value) => setState(
-                              () => _rememberMe = value ?? false,
-                            ),
-                            activeColor: isDark ? AppColors.tealLight : AppColors.tealPrimary,
-                            checkColor: isDark ? AppColors.darkSurface : Colors.white,
+                            onChanged: (value) =>
+                                setState(() => _rememberMe = value ?? false),
+                            activeColor: isDark
+                                ? AppColors.tealLight
+                                : AppColors.tealPrimary,
+                            checkColor: isDark
+                                ? AppColors.darkSurface
+                                : Colors.white,
                             side: BorderSide(
-                              color: isDark ? AppColors.gray600 : AppColors.gray400,
+                              color: isDark
+                                  ? AppColors.gray600
+                                  : AppColors.gray400,
                               width: 1.5,
                             ),
                             shape: RoundedRectangleBorder(
@@ -325,7 +361,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           'Remember me',
                           style: theme.textTheme.labelMedium?.copyWith(
-                            color: isDark ? AppColors.gray300 : AppColors.gray600,
+                            color: isDark
+                                ? AppColors.gray300
+                                : AppColors.gray600,
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
                           ),
@@ -333,17 +371,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen(),
+                          ),
+                        );
+                      },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        overlayColor: (isDark ? AppColors.tealLight : AppColors.tealPrimary).withOpacity(0.1),
+                        overlayColor:
+                            (isDark
+                                    ? AppColors.tealLight
+                                    : AppColors.tealPrimary)
+                                .withOpacity(0.1),
                       ),
                       child: Text(
                         'Forgot Password?',
                         style: theme.textTheme.labelMedium?.copyWith(
-                          color: isDark ? AppColors.tealLight : AppColors.tealPrimary,
+                          color: isDark
+                              ? AppColors.tealLight
+                              : AppColors.tealPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                         ),
@@ -351,12 +402,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                
+
                 if (_error != null) ...[
                   const SizedBox(height: 24),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.statusReported.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -368,7 +422,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
-                          Icons.error_outline_rounded, 
+                          Icons.error_outline_rounded,
                           color: AppColors.statusReported,
                           size: 18,
                         ),
@@ -385,15 +439,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ],
-                
+
                 const SizedBox(height: 48),
-                
+
                 MiraGradientButton(
                   label: _isLoading ? 'SIGNING IN...' : 'SIGN IN',
                   isLoading: _isLoading,
                   onPressed: _isLoading ? null : _handleLogin,
                 ),
-                
+
                 // Extra padding for keyboard/bottom screen area
                 const SizedBox(height: 60),
               ],
@@ -416,14 +470,14 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isFocused = node.hasFocus;
-    
+
     // Determine colors based on theme and focus state
     final primaryColor = isDark ? AppColors.tealLight : AppColors.tealPrimary;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.gray50;
-    
+
     // Border logic inside the elevated container
-    final borderColor = isFocused 
-        ? primaryColor 
+    final borderColor = isFocused
+        ? primaryColor
         : (isDark ? Colors.white.withOpacity(0.05) : AppColors.gray200);
 
     return Column(
@@ -447,13 +501,15 @@ class _LoginScreenState extends State<LoginScreen> {
               color: borderColor,
               width: isFocused ? 2 : 1, // Thicker border when focused
             ),
-            boxShadow: isFocused ? [
-              BoxShadow(
-                color: primaryColor.withOpacity(0.15),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              )
-            ] : [],
+            boxShadow: isFocused
+                ? [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -463,7 +519,7 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: isPassword ? _obscurePassword : false,
               keyboardType: keyboardType,
               style: TextStyle(
-                fontWeight: FontWeight.w600, 
+                fontWeight: FontWeight.w600,
                 fontSize: 16,
                 color: isDark ? Colors.white : AppColors.navy,
                 letterSpacing: isPassword && _obscurePassword ? 2 : null,
@@ -475,19 +531,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: isFocused ? primaryColor : AppColors.gray400,
                   size: 22,
                 ),
-                suffixIcon: isPassword 
-                  ? IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        color: isFocused ? primaryColor : AppColors.gray400,
-                        size: 22,
-                      ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                    )
-                  : null,
+                suffixIcon: isPassword
+                    ? IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: isFocused ? primaryColor : AppColors.gray400,
+                          size: 22,
+                        ),
+                        onPressed: () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
+                      )
+                    : null,
                 hintText: hintText,
                 hintStyle: TextStyle(
-                  color: AppColors.gray400, 
+                  color: AppColors.gray400,
                   fontWeight: FontWeight.w400,
                   letterSpacing: isPassword ? 2 : null,
                 ),

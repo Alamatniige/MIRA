@@ -37,7 +37,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   int _currentPage = 0;
   bool _ctaPressed = false;
 
-  final List<OnboardingData> _pages = [
+  List<OnboardingData> get _pages => [
     OnboardingData(
       title: 'Smart IT Inventory',
       subtitle: 'Turn your messy asset list into an organized, always up-to-date workspace with effortless tracking.',
@@ -48,13 +48,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       title: 'Real-time Visibility',
       subtitle: 'Monitor hardware status, assign items to team members, and manage lifecycle events in one glance.',
       illustration: 'assets/illustrations/scan.png', // Reusing same for now as per current assets
-      accentColor: AppColors.bluePrimary,
+      accentColor: AppColors.tealPrimary,
     ),
     OnboardingData(
       title: 'Seamless Reporting',
       subtitle: 'Generate detailed reports and history logs for compliance and internal audits without the headache.',
       illustration: 'assets/illustrations/scan.png',
-      accentColor: AppColors.tealBlue,
+      accentColor: AppColors.tealPrimary,
     ),
   ];
 
