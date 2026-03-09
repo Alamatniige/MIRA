@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useAssets } from "@/hooks/useAssets";
+import { Asset } from "@/types/mira"
 
 import { FullPageLoader } from "@/components/ui/loader";
 import {
@@ -18,124 +20,6 @@ import {
 } from "@/components/ui/table";
 import { Modal } from "@/components/ui/modal";
 import { QRCodeSVG } from "qrcode.react";
-
-/* ─────────────────────────────── mock data ─────────────────────────────── */
-
-type Asset = {
-  tag: string;
-  name: string;
-  brand: string;
-  category: string;
-
-  location: string;
-  status: "Assigned" | "Available" | "Under Maintenance" | "Retired";
-  statusVariant: "success" | "muted" | "warning" | "danger";
-  assignedTo: { name: string; initials: string } | null;
-
-};
-
-const assets: Asset[] = [
-  {
-    tag: "LPT-02318",
-    name: "ThinkPad T14 Gen 4",
-    brand: "Lenovo",
-    category: "Laptop",
-    location: "HQ – 8F IT",
-    status: "Assigned",
-    statusVariant: "success",
-    assignedTo: { name: "Santos, Mark", initials: "MS" },
-  },
-  {
-    tag: "MON-00872",
-    name: 'UltraSharp U2722D 27"',
-    brand: "Dell",
-    category: "Monitor",
-    location: "HQ – 7F Finance",
-    status: "Available",
-    statusVariant: "muted",
-    assignedTo: null,
-  },
-  {
-    tag: "SRV-00041",
-    name: "ProLiant DL380 Gen10",
-    brand: "HPE",
-    category: "Server",
-    location: "Data Center A",
-    status: "Under Maintenance",
-    statusVariant: "warning",
-    assignedTo: { name: "DC Rack A-03", initials: "DC" },
-  },
-  {
-    tag: "LPT-02101",
-    name: 'MacBook Pro 14"',
-    brand: "Apple",
-    category: "Laptop",
-    location: "HQ – 5F Design",
-    status: "Assigned",
-    statusVariant: "success",
-    assignedTo: { name: "Reyes, Ana", initials: "AR" },
-  },
-  {
-    tag: "NET-00310",
-    name: "Catalyst 2960X-48FPD",
-    brand: "Cisco",
-    category: "Network",
-    location: "Server Room B",
-    status: "Available",
-    statusVariant: "muted",
-    assignedTo: null,
-  },
-  {
-    tag: "PER-00554",
-    name: "MX Keys S",
-    brand: "Logitech",
-    category: "Peripheral",
-    location: "HQ – 3F Operations",
-    status: "Assigned",
-    statusVariant: "success",
-    assignedTo: { name: "Cruz, Lena", initials: "LC" },
-  },
-  {
-    tag: "DSK-00193",
-    name: "OptiPlex 7010 Tower",
-    brand: "Dell",
-    category: "Desktop",
-    location: "HQ – 6F HR",
-    status: "Assigned",
-    statusVariant: "success",
-    assignedTo: { name: "Garcia, Ben", initials: "BG" },
-  },
-  {
-    tag: "SRV-00058",
-    name: "PowerEdge R750",
-    brand: "Dell",
-    category: "Server",
-    location: "Data Center B",
-    status: "Available",
-    statusVariant: "muted",
-    assignedTo: null,
-  },
-  {
-    tag: "LPT-01984",
-    name: "EliteBook 840 G10",
-    brand: "HP",
-    category: "Laptop",
-    location: "HQ – 4F Finance",
-    status: "Under Maintenance",
-    statusVariant: "warning",
-    assignedTo: { name: "Tan, Joyce", initials: "JT" },
-  },
-  {
-    tag: "MON-00921",
-    name: "27GN950-B UltraGear 4K",
-    brand: "LG",
-    category: "Monitor",
-    location: "HQ – 5F Design",
-    status: "Retired",
-    statusVariant: "danger",
-    assignedTo: null,
-  },
-];
 
 /* ──────────────────────────────── helpers ──────────────────────────────── */
 
@@ -280,6 +164,7 @@ const avatarColors = [
   "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
   "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
 ];
+
 function getAvatarColor(initials: string) {
   const idx = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % avatarColors.length;
   return avatarColors[idx];
@@ -291,11 +176,16 @@ export function AssetRegistry() {
   const [open, setOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
-  const [selectedQrAsset, setSelectedQrAsset] = useState<Asset | null>(assets[0]); // Default to first asset for demo
+  const [editModal, setEditModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [selectedQrAsset, setSelectedQrAsset] = useState<Asset | null>(null); // Default to first asset for demo
   const [selectedViewAsset, setSelectedViewAsset] = useState<Asset | null>(null);
+  const [selectedEditAsset, setSelectedEditAsset] = useState<Asset | null>(null);
+  const [selectedDeleteAsset, setSelectedDeleteAsset] = useState<Asset | null>(null);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  const { assets, filterOptions, error, refresh } = useAssets();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -306,9 +196,9 @@ export function AssetRegistry() {
 
   const filtered = assets.filter(
     (a) =>
-      a.tag.toLowerCase().includes(search.toLowerCase()) ||
-      a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.location.toLowerCase().includes(search.toLowerCase())
+      a.assetName?.toLowerCase().includes(search.toLowerCase()) ||
+      a.roomRel?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      a.floorRel?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
   if (isLoading) {
@@ -387,15 +277,19 @@ export function AssetRegistry() {
               {[
                 {
                   label: "Status",
-                  options: ["All", "Assigned", "Available", "Under Maintenance", "Retired"],
+                  options: ["All", ...filterOptions.statuses],
                 },
                 {
                   label: "Category",
-                  options: ["All", "Laptop", "Desktop", "Monitor", "Server", "Network", "Peripheral"],
+                  options: ["All", ...filterOptions.categories],
                 },
                 {
-                  label: "Location",
-                  options: ["All", "HQ", "Data Center", "Branches"],
+                  label: "Room",
+                  options: ["All", ...filterOptions.rooms],
+                },
+                {
+                  label: "Floor",
+                  options: ["All", ...filterOptions.floors],
                 },
               ].map((f) => (
                 <select
@@ -464,7 +358,7 @@ export function AssetRegistry() {
                 </tr>
               ) : (
                 filtered.map((asset) => {
-                  const cat = categoryMeta[asset.category];
+                  const cat = asset.assetTypeRel?.name ? categoryMeta[asset.assetTypeRel.name] : undefined;
                   return (
                     <TableRow
                       key={asset.tag}
@@ -481,10 +375,10 @@ export function AssetRegistry() {
                       <TableCell className="pl-4 py-3">
                         <div>
                           <p className="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 leading-tight truncate">
-                            {asset.name}
+                            {asset.assetName}
                           </p>
                           <p className="mt-0.5 text-[10.5px] text-slate-400 dark:text-slate-500">
-                            {asset.brand}
+                            {asset.serialNumber}
                           </p>
                         </div>
                       </TableCell>
@@ -494,10 +388,10 @@ export function AssetRegistry() {
                         {cat ? (
                           <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${cat.bg} ${cat.text}`}>
                             {cat.icon}
-                            {asset.category}
+                            {asset.assetTypeRel?.name}
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-500">{asset.category}</span>
+                          <span className="text-xs text-slate-500">{asset.assetTypeRel?.name || "Uncategorized"}</span>
                         )}
                       </TableCell>
 
@@ -509,7 +403,7 @@ export function AssetRegistry() {
                             <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
                             <circle cx="12" cy="10" r="3" />
                           </svg>
-                          {asset.location}
+                          {asset.roomRel?.name} {asset.floorRel ? `– ${asset.floorRel.name}` : ""}
                         </span>
                       </TableCell>
 
@@ -535,6 +429,10 @@ export function AssetRegistry() {
                           {/* Edit */}
                           <button
                             title="Edit"
+                            onClick={() => {
+                              setEditModal(true);
+                              setSelectedEditAsset(asset);
+                            }}
                             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                           >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
@@ -545,6 +443,10 @@ export function AssetRegistry() {
                           {/* Delete */}
                           <button
                             title="Delete"
+                            onClick={() => {
+                              setDeleteModal(true);
+                              setSelectedDeleteAsset(asset);
+                            }}
                             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 transition-colors"
                           >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
@@ -597,13 +499,13 @@ export function AssetRegistry() {
             <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 bg-slate-50 dark:bg-slate-900/50 p-6 text-center">
               <div className="rounded-2xl bg-white p-5 shadow-sm dark:bg-white">
                 <QRCodeSVG
-                  value={JSON.stringify({ tag: selectedQrAsset.tag, name: selectedQrAsset.name, category: selectedQrAsset.category })}
+                  value={JSON.stringify({ tag: selectedQrAsset.id, name: selectedQrAsset.assetName, category: selectedQrAsset.assetTypeRel?.name })}
                   size={220}
                   level="H"
                 />
               </div>
-              <p className="mt-5 text-[15px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">{selectedQrAsset.tag}</p>
-              <p className="mt-1.5 text-[12px] text-slate-500">{selectedQrAsset.name}</p>
+              <p className="mt-5 text-[15px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">{selectedQrAsset.id ? `${selectedQrAsset.id.slice(0, 8)}...` : ""}</p>
+              <p className="mt-1.5 text-[12px] text-slate-500">{selectedQrAsset.assetName}</p>
             </div>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 text-center">
@@ -767,7 +669,7 @@ export function AssetRegistry() {
               <div className="flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 shrink-0">
                 <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-white mb-3">
                   <QRCodeSVG
-                    value={JSON.stringify({ tag: selectedViewAsset.tag, name: selectedViewAsset.name, category: selectedViewAsset.category })}
+                    value={JSON.stringify({ tag: selectedViewAsset.id, name: selectedViewAsset.assetName, category: selectedViewAsset.assetTypeRel?.name })}
                     size={110}
                     level="H"
                   />
@@ -791,13 +693,13 @@ export function AssetRegistry() {
                 <div>
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Asset Tag</h4>
                   <div className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 font-mono text-[13px] font-semibold text-slate-700 dark:text-slate-300 tracking-wide">
-                    {selectedViewAsset.tag}
+                    {selectedViewAsset.id}
                   </div>
                 </div>
                 <div>
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Asset Name</h4>
-                  <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-tight">{selectedViewAsset.name}</p>
-                  <p className="text-[12px] text-slate-500 mt-1">{selectedViewAsset.brand} &nbsp;•&nbsp; {selectedViewAsset.category}</p>
+                  <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-tight">{selectedViewAsset.assetName}</p>
+                  <p className="text-[12px] text-slate-500 mt-1">{selectedViewAsset.serialNumber} &nbsp;•&nbsp; {selectedViewAsset.assetTypeRel?.name}</p>
                 </div>
               </div>
             </div>
@@ -806,8 +708,8 @@ export function AssetRegistry() {
               <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b]">
                 <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Status</h4>
                 <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${statusDot[selectedViewAsset.status] || 'bg-slate-400'}`}></span>
-                  <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">{selectedViewAsset.status}</span>
+                  <span className={`h-2.5 w-2.5 rounded-full ${statusDot[selectedViewAsset.currentStatus] || 'bg-slate-400'}`}></span>
+                  <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">{selectedViewAsset.currentStatus}</span>
                 </div>
               </div>
 
@@ -818,7 +720,7 @@ export function AssetRegistry() {
                     <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  {selectedViewAsset.location}
+                  {selectedViewAsset.roomRel?.name} {selectedViewAsset.floorRel ? `– ${selectedViewAsset.floorRel.name}` : ""}
                 </div>
               </div>
             </div>
@@ -827,11 +729,11 @@ export function AssetRegistry() {
               <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Assignment Details</h4>
               {selectedViewAsset.assignedTo ? (
                 <div className="flex items-center gap-3 mt-1">
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-full text-[12px] font-bold ${getAvatarColor(selectedViewAsset.assignedTo.initials)} shadow-sm`}>
-                    {selectedViewAsset.assignedTo.initials}
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-full text-[12px] font-bold ${getAvatarColor(selectedViewAsset.assignedTo.slice(0, 2).toUpperCase())} shadow-sm`}>
+                    {selectedViewAsset.assignedTo.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-[13px] font-bold text-slate-800 dark:text-slate-200">{selectedViewAsset.assignedTo.name}</p>
+                    <p className="text-[13px] font-bold text-slate-800 dark:text-slate-200">{selectedViewAsset.assignedTo}</p>
                     <p className="text-[11px] font-medium text-slate-500 mt-0.5">Current Assignee</p>
                   </div>
                 </div>
@@ -857,6 +759,64 @@ export function AssetRegistry() {
                 onClick={() => setViewOpen(false)}
               >
                 Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ── Edit Asset Modal ── */}
+      <Modal
+        open={editModal}
+        onClose={() => setEditModal(false)}
+        title="Edit Asset"
+        description="Update asset details"
+      >
+        {selectedEditAsset && (
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="assetName" className="text-[12px] font-medium text-slate-500">Asset Name</label>
+                <input
+                  type="text"
+                  id="assetName"
+                  value={selectedEditAsset.assetName}
+                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, assetName: e.target.value })}
+                  className="border border-slate-200 dark:border-teal-800/25 rounded-md px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="assetType" className="text-[12px] font-medium text-slate-500">Asset Type</label>
+                <input
+                  type="text"
+                  id="assetType"
+                  value={selectedEditAsset.assetTypeRel?.name}
+                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, assetTypeRel: { name: e.target.value } })}
+                  className="border border-slate-200 dark:border-teal-800/25 rounded-md px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-full border-slate-200 px-5 text-[11px] font-medium"
+                onClick={() => setEditModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className="h-8 rounded-full px-5 text-[11px] font-medium"
+                onClick={() => {
+                  // Handle edit logic here
+                  setEditModal(false);
+                }}
+              >
+                Save
               </Button>
             </div>
           </div>

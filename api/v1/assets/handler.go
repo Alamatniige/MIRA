@@ -17,7 +17,7 @@ import (
 // Fetch all registered assets
 func GetAssets(w http.ResponseWriter, r *http.Request) {
 	var assets []Asset
-	if result := db.DB.Preload("AssetTypeRel").Find(&assets); result.Error != nil {
+	if result := db.DB.Preload("AssetTypeRel").Preload("RoomRel").Preload("FloorRel").Find(&assets); result.Error != nil {
 		http.Error(w, "Error fetching assets: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -32,7 +32,7 @@ func GetAssetDetails(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	var asset Asset
 
-	if result := db.DB.Preload("AssetTypeRel").First(&asset, "id = ?", id); result.Error != nil {
+	if result := db.DB.Preload("AssetTypeRel").Preload("RoomRel").Preload("FloorRel").First(&asset, "id = ?", id); result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			http.Error(w, "Asset not found", http.StatusNotFound)
 		} else {
@@ -58,7 +58,8 @@ func AddAsset(w http.ResponseWriter, r *http.Request) {
 		AssetType:     req.AssetType,
 		SerialNumber:  req.SerialNumber,
 		Specification: req.Specification,
-		Location:      req.Location,
+		Room:          req.Room,
+		Floor:         req.Floor,
 		CurrentStatus: req.CurrentStatus,
 	}
 
@@ -112,6 +113,50 @@ func AddAssetType(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newAssetType)
 }
 
+// Add asset floor
+func AddAssetFloor(w http.ResponseWriter, r *http.Request) {
+	var req CreateAssetFloorRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	newAssetFloor := AssetFloor{
+		Name: req.Name,
+	}
+
+	if result := db.DB.Create(&newAssetFloor); result.Error != nil {
+		http.Error(w, "Error adding asset floor: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(newAssetFloor)
+}
+
+// Add asset room
+func AddAssetRoom(w http.ResponseWriter, r *http.Request) {
+	var req CreateAssetRoomRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	newAssetRoom := AssetRoom{
+		Name: req.Name,
+	}
+
+	if result := db.DB.Create(&newAssetRoom); result.Error != nil {
+		http.Error(w, "Error adding asset room: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(newAssetRoom)
+}
+
 // Update asset
 func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -137,7 +182,8 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 	asset.AssetType = req.AssetType
 	asset.SerialNumber = req.SerialNumber
 	asset.Specification = req.Specification
-	asset.Location = req.Location
+	asset.Room = req.Room
+	asset.Floor = req.Floor
 
 	if result := db.DB.Save(&asset); result.Error != nil {
 		http.Error(w, "Error updating asset: "+result.Error.Error(), http.StatusInternalServerError)

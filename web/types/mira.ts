@@ -12,19 +12,44 @@ export type Department =
   | "OTHER"
   | string;
 
+export interface AssetType {
+  id: number;
+  name: string;
+  createdAt: string;
+}
+
+export interface AssetRoom {
+  id: number;
+  name: string;
+  createdAt: string;
+}
+
+export interface AssetFloor {
+  id: number;
+  name: string;
+  createdAt: string;
+}
+
 export interface Asset {
   id: string;
   tag: string;
-  name: string;
-  category: string;
-  specifications?: string;
-  location: string;
-  status: AssetStatus;
-  assignedTo?: string;
-  department?: Department;
-  qrCodeUrl?: string;
+  assetName: string;
+  assetType: number | null;
+  assetTypeRel?: AssetType;
+  serialNumber: string;
+  specification: string;
+  room: number | null;
+  roomRel?: AssetRoom;
+  floor: number | null;
+  floorRel?: AssetFloor;
+  currentStatus: AssetStatus | string;
+  isAssigned: boolean;
   createdAt: string;
-  updatedAt: string;
+
+  // Optional fields for UI state or relations not directly present in the base table
+  assignedTo?: string;
+  qrCodeUrl?: string;
+  updatedAt?: string;
 }
 
 export interface Assignment {
