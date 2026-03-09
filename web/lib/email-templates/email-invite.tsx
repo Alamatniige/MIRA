@@ -27,7 +27,7 @@ export const EmailInvite = ({
     department = "General",
     tempPassword = "TempPassword123!",
 }: EmailInviteProps) => {
-    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}`;
+    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/setup-password?email=${encodeURIComponent(email)}`;
 
     return (
         <Html>
@@ -60,13 +60,12 @@ export const EmailInvite = ({
                                                 </Section>
 
                                                 < Text style = { paragraph } >
-                                                    Please use your temporary password to log in.You will be prompted to
-            change this password upon your first successful login(if implemented).
+                                                    Please use your temporary password to set up your new permanent password.
           </Text>
 
         < Section style = { btnContainer } >
             <Button style={ button } href = { loginUrl } >
-                Log in to MIRA
+                Setup Password
                     </Button>
                     </Section>
 

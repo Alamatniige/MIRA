@@ -89,3 +89,63 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		"message": "Logout successful",
 	})
 }
+
+type SetupPasswordRequest struct {
+	Email        string `json:"email"`
+	TempPassword string `json:"tempPassword"`
+	NewPassword  string `json:"newPassword"`
+}
+
+// SetupPassword allows a newly invited user to set their password.
+func SetupPassword(w http.ResponseWriter, r *http.Request) {
+	var req SetupPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// 1. Look up user by email
+	var targetUser user.User
+	if result := db.DB.Where("email = ?", req.Email).Preload("Role").First(&targetUser); result.Error != nil {
+		// Generic message to avoid email enumeration
+		http.Error(w, "Invalid email or temporary password", http.StatusUnauthorized)
+		return
+	}
+
+	// 2. Verify temporary password
+	if err := bcrypt.CompareHashAndPassword([]byte(targetUser.Password), []byte(req.TempPassword)); err != nil {
+		http.Error(w, "Invalid email or temporary password", http.StatusUnauthorized)
+		return
+	}
+
+	// 3. Hash the new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Error computing new password hash", http.StatusInternalServerError)
+		return
+	}
+
+	// 4. Update the user with the new password
+	if result := db.DB.Model(&targetUser).Update("password", string(hashedPassword)); result.Error != nil {
+		http.Error(w, "Error saving new password", http.StatusInternalServerError)
+		return
+	}
+
+	// 5. Generate a JWT token to log them in automatically (if needed by the frontend)
+	tokenStr, err := generateToken(targetUser)
+	if err != nil {
+		http.Error(w, "Password updated, but failed to generate login token", http.StatusInternalServerError)
+		return
+	}
+
+	// 6. Return success with user data
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Password setup successful",
+		"data": LoginResponse{
+			AccessToken: tokenStr,
+			User:        targetUser,
+		},
+	})
+}

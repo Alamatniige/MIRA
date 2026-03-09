@@ -82,15 +82,30 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		payloadBytes, _ := json.Marshal(payload)
 
 		nextjsURL := os.Getenv("NEXT_PUBLIC_APP_URL")
-		if nextjsURL == "" {
-			nextjsURL = "http://localhost:3000"
+		if nextjsURL == "" || nextjsURL == "http://localhost:3000" {
+			// Force 127.0.0.1 for local dev to avoid IPv6 "connection refused" issues
+			nextjsURL = "http://127.0.0.1:3000"
 		}
 
 		req, err := http.NewRequest("POST", nextjsURL+"/api/emails/invite", bytes.NewBuffer(payloadBytes))
-		if err == nil {
-			req.Header.Set("Content-Type", "application/json")
-			client := &http.Client{Timeout: 10 * time.Second}
-			client.Do(req)
+		if err != nil {
+			fmt.Printf("Error creating request for email invite: %v\n", err)
+			return
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+		client := &http.Client{Timeout: 10 * time.Second}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Printf("Error sending email invite request to Next.js: %v\n", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			fmt.Printf("Received non-OK status %d from Next.js email invite endpoint\n", resp.StatusCode)
+		} else {
+			fmt.Printf("Successfully triggered email invite via Next.js api\n")
 		}
 	}(newUser, tempPassword)
 
