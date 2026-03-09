@@ -1,4 +1,3 @@
-import { id } from "date-fns/locale";
 import { NextRequest, NextResponse } from "next/server";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -63,6 +62,8 @@ export async function PUT(req: NextRequest) {
     const authHeader = req.headers.get("authorization");
     const body = await req.json();
 
+    const id = req.nextUrl.pathname.split("/").pop();
+
     try {
         const response = await fetch(`${API_URL}/assets/${id}`, {
             method: "PUT",
@@ -94,6 +95,8 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
     const authHeader = req.headers.get("authorization");
     const body = await req.json();
+
+    const id = req.nextUrl.pathname.split("/").pop();
 
     try {
         const response = await fetch(`${API_URL}/assets/${id}`, {

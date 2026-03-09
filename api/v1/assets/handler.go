@@ -157,6 +157,42 @@ func AddAssetRoom(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newAssetRoom)
 }
 
+// Fetch all asset types
+func GetAssetTypes(w http.ResponseWriter, r *http.Request) {
+	var types []AssetType
+	if result := db.DB.Find(&types); result.Error != nil {
+		http.Error(w, "Error fetching asset types: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(types)
+}
+
+// Fetch all asset floors
+func GetAssetFloors(w http.ResponseWriter, r *http.Request) {
+	var floors []AssetFloor
+	if result := db.DB.Find(&floors); result.Error != nil {
+		http.Error(w, "Error fetching asset floors: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(floors)
+}
+
+// Fetch all asset rooms
+func GetAssetRooms(w http.ResponseWriter, r *http.Request) {
+	var rooms []AssetRoom
+	if result := db.DB.Find(&rooms); result.Error != nil {
+		http.Error(w, "Error fetching asset rooms: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(rooms)
+}
+
 // Update asset
 func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

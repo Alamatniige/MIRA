@@ -3,10 +3,8 @@
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { ShieldCheck, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function SetupPasswordForm() {
     const searchParams = useSearchParams();
@@ -21,6 +19,9 @@ function SetupPasswordForm() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [showTempPassword, setShowTempPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [successMessage, setSuccessMessage] = useState("");
     const [isStaff, setIsStaff] = useState(false);
@@ -73,10 +74,9 @@ function SetupPasswordForm() {
                 throw new Error(result.error || result.message || "Failed to setup password");
             }
 
-            const roleName = result.data?.User?.Role?.name || "Staff"; // Fallback to Staff
+            const roleName = result.data?.User?.Role?.name || "Staff";
 
             if (roleName === "Admin" || roleName === "Super Admin") {
-                // Determine Admin, log them in automatically
                 login(result.data.accessToken, result.data.User);
                 setIsStaff(false);
                 setSuccessMessage("Password set successfully! Redirecting to dashboard...");
@@ -84,7 +84,6 @@ function SetupPasswordForm() {
                     router.push("/admin/dashboard");
                 }, 2000);
             } else {
-                // If they are regular Staff, prompt them to use the app
                 setIsStaff(true);
             }
         } catch (err: any) {
@@ -96,119 +95,197 @@ function SetupPasswordForm() {
 
     if (isStaff) {
         return (
-            <Card className="w-[400px] border-none shadow-xl">
-                <CardHeader className="text-center space-y-4 pt-8">
-                    <div className="mx-auto bg-green-100 p-4 rounded-full w-20 h-20 flex items-center justify-center">
-                        <ShieldCheck className="w-10 h-10 text-green-600" />
-                    </div>
-                    <CardTitle className="text-2xl font-bold tracking-tight">Setup Complete</CardTitle>
-                    <CardDescription className="text-base">
-                        Your password has been successfully set.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="text-center pb-8 p-6 space-y-6">
-                    <div className="bg-slate-50 border p-4 rounded-lg">
-                        <p className="text-slate-700 text-sm">
-                            As a Staff member, please log in at the <strong>MIRA Mobile Application</strong> using your email and new password.
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="bg-white/80 backdrop-blur-xl border border-[#0F766E]/10 p-8 rounded-3xl shadow-[0_8px_32px_rgba(15,118,110,0.06)] relative overflow-hidden text-center max-w-md w-full animate-in fade-in zoom-in-95 duration-500">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0F766E] to-[#2dd4bf]" />
+
+                <div className="mx-auto bg-[#0F766E]/10 p-4 rounded-2xl w-20 h-20 flex items-center justify-center mb-6">
+                    <ShieldCheck className="w-10 h-10 text-[#0F766E]" />
+                </div>
+
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">Setup Complete</h2>
+                <p className="text-slate-500 font-medium mb-8">Your password has been successfully set.</p>
+
+                <div className="bg-slate-50 border border-slate-100 p-6 rounded-2xl">
+                    <p className="text-slate-600 text-sm leading-relaxed">
+                        As a Staff member, please log in at the <strong className="text-[#0F766E]">MIRA Mobile Application</strong> using your email and new password.
+                    </p>
+                </div>
+            </div>
         );
     }
 
     return (
-        <Card className="w-[400px] border-none shadow-xl">
-            <CardHeader className="text-center space-y-2 pt-8">
-                <CardTitle className="text-2xl font-bold tracking-tight">Setup Password</CardTitle>
-                <CardDescription>
-                    Enter your temporary password and choose a new one.
-                </CardDescription>
-            </CardHeader>
-            <form onSubmit={handleSetup}>
-                <CardContent className="space-y-4">
-                    {error && (
-                        <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm border border-red-100">
-                            {error}
-                        </div>
-                    )}
-                    {successMessage && (
-                        <div className="bg-green-50 text-green-600 p-3 rounded-md text-sm border border-green-100">
-                            {successMessage}
+        <div className="w-full max-w-5xl relative z-10 animate-in fade-in zoom-in-95 duration-500 flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-24">
+            {/* Logo Section / Left Side */}
+            <div className="flex flex-col items-center lg:items-start text-center lg:text-left flex-1">
+                <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#0F766E] to-[#0E7490] shadow-[0_4px_20px_rgba(15,118,110,0.2)] mb-8">
+                    <ShieldCheck className="w-10 h-10 text-white" />
+                </div>
+                <h1 className="text-4xl lg:text-5xl font-bold text-slate-800 tracking-widest mb-4">MIRA</h1>
+                <p className="text-[#0F766E] text-base lg:text-lg uppercase tracking-[0.2em] font-bold mb-4">
+                    Setup Password
+                </p>
+                <p className="text-slate-500 text-sm lg:text-base leading-relaxed font-medium max-w-md">
+                    Please provide your temporary password and choose a secure new password to activate your account.
+                </p>
+            </div>
+
+            {/* Form Card / Right Side */}
+            <div className="w-full max-w-md flex-1">
+                <div className="bg-white/80 backdrop-blur-xl border border-[#0F766E]/10 p-8 rounded-3xl shadow-[0_8px_32px_rgba(15,118,110,0.06)] relative overflow-hidden">
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0F766E] to-[#2dd4bf]" />
+
+                    <div className="mb-8">
+                        <h2 className="text-xl font-bold text-slate-800">Secure your account</h2>
+                        <p className="text-sm text-slate-500 mt-1 font-medium">Activate your MIRA administrative credentials.</p>
+                    </div>
+
+                    {(error || successMessage) && (
+                        <div className={cn(
+                            "mb-6 p-4 rounded-xl text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300 border",
+                            error ? "bg-red-50 border-red-100 text-red-600" : "bg-green-50 border-green-100 text-green-600"
+                        )}>
+                            {error || successMessage}
                         </div>
                     )}
 
-                    <div className="space-y-2">
-                        <label htmlFor="email" className="text-sm font-medium leading-none">Email</label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="name@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            readOnly={!!emailFromUrl}
-                            className={emailFromUrl ? "bg-slate-100" : ""}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label htmlFor="tempPassword" className="text-sm font-medium leading-none">Temporary Password</label>
-                        <Input
-                            id="tempPassword"
-                            type="password"
-                            placeholder="Enter the password from your email"
-                            value={tempPassword}
-                            onChange={(e) => setTempPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label htmlFor="newPassword" className="text-sm font-medium leading-none">New Password</label>
-                        <Input
-                            id="newPassword"
-                            type="password"
-                            placeholder="Ensure it is at least 8 characters"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label htmlFor="confirmPassword" className="text-sm font-medium leading-none">Confirm New Password</label>
-                        <Input
-                            id="confirmPassword"
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                </CardContent>
-                <div className="flex items-center p-5 pt-0 pb-8">
-                    <Button
-                        type="submit"
-                        className="w-full bg-slate-900 hover:bg-slate-800"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Setting up...
-                            </>
-                        ) : (
-                            "Setup Password"
-                        )}
-                    </Button>
+                    <form onSubmit={handleSetup} className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">
+                                Email Address
+                            </label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Mail className="h-5 w-5 text-slate-400 group-focus-within:text-[#0F766E] transition-colors" />
+                                </div>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="admin@mira.com"
+                                    className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl pl-11 pr-4 py-3 outline-none focus:border-[#0F766E] focus:ring-4 focus:ring-[#0F766E]/10 transition-all font-medium shadow-sm"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">
+                                Temporary Password
+                            </label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-[#0F766E] transition-colors" />
+                                </div>
+                                <input
+                                    type={showTempPassword ? "text" : "password"}
+                                    value={tempPassword}
+                                    onChange={(e) => setTempPassword(e.target.value)}
+                                    placeholder="From your email"
+                                    required
+                                    className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl pl-11 pr-12 py-3 outline-none focus:border-[#0F766E] focus:ring-4 focus:ring-[#0F766E]/10 transition-all font-medium shadow-sm"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTempPassword(!showTempPassword)}
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-[#0F766E] focus:outline-none transition-colors"
+                                >
+                                    {showTempPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">
+                                New Password
+                            </label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-[#0F766E] transition-colors" />
+                                </div>
+                                <input
+                                    type={showNewPassword ? "text" : "password"}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="Min. 8 characters"
+                                    required
+                                    className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl pl-11 pr-12 py-3 outline-none focus:border-[#0F766E] focus:ring-4 focus:ring-[#0F766E]/10 transition-all font-medium shadow-sm"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-[#0F766E] focus:outline-none transition-colors"
+                                >
+                                    {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">
+                                Confirm New Password
+                            </label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-[#0F766E] transition-colors" />
+                                </div>
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Repeat new password"
+                                    required
+                                    className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl pl-11 pr-12 py-3 outline-none focus:border-[#0F766E] focus:ring-4 focus:ring-[#0F766E]/10 transition-all font-medium shadow-sm"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-[#0F766E] focus:outline-none transition-colors"
+                                >
+                                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="pt-4">
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className={cn(
+                                    "w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-semibold text-sm transition-all relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed",
+                                    "bg-gradient-to-r from-[#0F766E] to-[#0E7490] hover:from-[#115e59] hover:to-[#155e75] shadow-[0_4px_14px_rgba(15,118,110,0.25)]"
+                                )}
+                            >
+                                {isLoading ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <>
+                                        Finish Setup
+                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
+                                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shimmer" />
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
-        </Card>
+            </div>
+        </div>
     );
 }
 
 export default function SetupPasswordPage() {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
-            <Suspense fallback={<div>Loading...</div>}>
+        <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(15,118,110,0.1),rgba(248,250,252,1))] p-4 relative overflow-hidden">
+            {/* Background accents */}
+            <div className="absolute top-1/4 -left-64 w-96 h-96 bg-[#0F766E]/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-1/4 -right-64 w-96 h-96 bg-[#0E7490]/10 rounded-full blur-[120px] pointer-events-none" />
+
+            <Suspense fallback={
+                <div className="flex flex-col items-center gap-4 animate-pulse">
+                    <Loader2 className="w-8 h-8 text-[#0F766E] animate-spin" />
+                    <p className="text-slate-400 font-medium">Preparing secure setup...</p>
+                </div>
+            }>
                 <SetupPasswordForm />
             </Suspense>
         </div>

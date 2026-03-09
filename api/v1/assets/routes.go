@@ -8,6 +8,9 @@ import (
 
 func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/assets", middleware.AuthMiddleware(GetAssets)).Methods("GET")
+	r.HandleFunc("/assets/types", middleware.AuthMiddleware(GetAssetTypes)).Methods("GET")
+	r.HandleFunc("/assets/rooms", middleware.AuthMiddleware(GetAssetRooms)).Methods("GET")
+	r.HandleFunc("/assets/floors", middleware.AuthMiddleware(GetAssetFloors)).Methods("GET")
 	r.HandleFunc("/assets/{id}", middleware.AuthMiddleware(GetAssetDetails)).Methods("GET")
 	r.HandleFunc("/assets", middleware.AuthMiddleware(AddAsset)).Methods("POST")
 	r.HandleFunc("/assets/types", middleware.AuthMiddleware(AddAssetType)).Methods("POST")

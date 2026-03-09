@@ -185,6 +185,9 @@ export function AssetRegistry() {
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  const [isAddingType, setIsAddingType] = useState(false);
+  const [newType, setNewType] = useState("");
+  const [localCategories, setLocalCategories] = useState<string[]>([]);
   const { assets, filterOptions, error, refresh } = useAssets();
 
   useEffect(() => {
@@ -576,38 +579,88 @@ export function AssetRegistry() {
 
           {/* Row 2: Category + Status */}
           <div className="grid grid-cols-2 gap-3">
-            {[
-              {
-                label: "Category",
-                opts: ["Laptop", "Desktop", "Monitor", "Server", "Network", "Peripheral"],
-                ph: "Select category",
-              },
-              {
-                label: "Status",
-                opts: ["Active", "Available", "Under Maintenance", "Retired"],
-                ph: "Select status",
-              },
-            ].map((f) => (
-              <div key={f.label}>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  {f.label}
-                </label>
-                <select className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 outline-none transition-colors">
-                  <option value="">{f.ph}</option>
-                  {f.opts.map((o) => (
-                    <option key={o}>{o}</option>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Category
+              </label>
+              {!isAddingType ? (
+                <select
+                  className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 outline-none transition-colors"
+                  onChange={(e) => {
+                    if (e.target.value === "Add another category") {
+                      setIsAddingType(true);
+                      e.target.value = "";
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>Select category</option>
+                  {["Laptop", "Desktop", "Monitor", "Server", "Network", "Peripheral", ...localCategories].map((o) => (
+                    <option key={o} value={o}>{o}</option>
                   ))}
+                  <option value="Add another category" className="font-semibold text-primary">Add another category</option>
                 </select>
-              </div>
-            ))}
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="New category..."
+                    className="h-8 text-[11px] flex-1"
+                    value={newType}
+                    onChange={(e) => setNewType(e.target.value)}
+                    autoFocus
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2"
+                    onClick={() => {
+                      if (newType.trim()) {
+                        if (!["Laptop", "Desktop", "Monitor", "Server", "Network", "Peripheral", ...localCategories].includes(newType.trim())) {
+                          setLocalCategories(prev => [...prev, newType.trim()]);
+                        }
+                        setIsAddingType(false);
+                        setNewType("");
+                      } else {
+                        setIsAddingType(false);
+                      }
+                    }}
+                  >
+                    OK
+                  </Button>
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Status
+              </label>
+              <select
+                className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 outline-none transition-colors"
+                defaultValue=""
+              >
+                <option value="" disabled>Select status</option>
+                {["Active", "Available", "Under Maintenance", "Retired"].map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Row 3: Location */}
-          <div>
-            <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-              Location
-            </label>
-            <Input placeholder="e.g. HQ – 8F IT" className="h-8 text-[11px]" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Room
+              </label>
+              <Input placeholder="e.g. 8F IT" className="h-8 text-[11px]" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Floor
+              </label>
+              <Input placeholder="e.g. 8th Floor" className="h-8 text-[11px]" />
+            </div>
           </div>
 
 
@@ -692,9 +745,7 @@ export function AssetRegistry() {
               <div className="flex-1 space-y-4 pt-1">
                 <div>
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Asset Tag</h4>
-                  <div className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 font-mono text-[13px] font-semibold text-slate-700 dark:text-slate-300 tracking-wide">
-                    {selectedViewAsset.id}
-                  </div>
+                  {selectedViewAsset.tag}
                 </div>
                 <div>
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Asset Name</h4>
@@ -768,41 +819,125 @@ export function AssetRegistry() {
       {/* ── Edit Asset Modal ── */}
       <Modal
         open={editModal}
-        onClose={() => setEditModal(false)}
+        onClose={() => {
+          setEditModal(false);
+          setIsAddingType(false);
+          setNewType("");
+        }}
         title="Edit Asset"
         description="Update asset details"
+        className="w-full max-w-[600px]" // Make it slightly wider since there are more fields
       >
         {selectedEditAsset && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5 pt-2">
+
+            {/* Tag (Read-only) & Initial Category block header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-teal-800/25 pb-3">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2">Asset Tag</span>
+                <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 font-mono text-[13px] font-semibold text-slate-700 dark:text-slate-300 tracking-wide">{selectedEditAsset.tag}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${statusDot[selectedEditAsset.currentStatus] || 'bg-slate-400'}`}></span>
+                <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">{selectedEditAsset.currentStatus}</span>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="assetName" className="text-[12px] font-medium text-slate-500">Asset Name</label>
+              {/* Asset Name */}
+              <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                <label htmlFor="edit-assetName" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Asset Name</label>
                 <input
                   type="text"
-                  id="assetName"
-                  value={selectedEditAsset.assetName}
+                  id="edit-assetName"
+                  value={selectedEditAsset.assetName || ""}
                   onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, assetName: e.target.value })}
-                  className="border border-slate-200 dark:border-teal-800/25 rounded-md px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
                 />
               </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="assetType" className="text-[12px] font-medium text-slate-500">Asset Type</label>
+
+              {/* Serial Number */}
+              <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                <label htmlFor="edit-serialNumber" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Serial Number</label>
                 <input
                   type="text"
-                  id="assetType"
-                  value={selectedEditAsset.assetTypeRel?.name}
-                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, assetTypeRel: { name: e.target.value } })}
-                  className="border border-slate-200 dark:border-teal-800/25 rounded-md px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary"
+                  id="edit-serialNumber"
+                  value={selectedEditAsset.serialNumber || ""}
+                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, serialNumber: e.target.value })}
+                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2">
+
+            <div className="grid grid-cols-1 gap-4">
+              {/* Status */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Status</label>
+                <select
+                  value={selectedEditAsset.currentStatus || ""}
+                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, currentStatus: e.target.value as any })}
+                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                >
+                  <option value="" disabled>Select Status</option>
+                  {["Active", "Available", "Under Maintenance", "Retired"].map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Room */}
+              <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                <label htmlFor="edit-room" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Room</label>
+                <input
+                  type="text"
+                  id="edit-room"
+                  value={selectedEditAsset.roomRel?.name || ""}
+                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, roomRel: { ...selectedEditAsset.roomRel, name: e.target.value } as any })}
+                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                />
+              </div>
+
+              {/* Floor */}
+              <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                <label htmlFor="edit-floor" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Floor</label>
+                <input
+                  type="text"
+                  id="edit-floor"
+                  value={selectedEditAsset.floorRel?.name || ""}
+                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, floorRel: { ...selectedEditAsset.floorRel, name: e.target.value } as any })}
+                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {/* Assigned To */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="edit-assignedTo" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Assigned To</label>
+                <input
+                  type="text"
+                  id="edit-assignedTo"
+                  value={selectedEditAsset.assignedTo || ""}
+                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, assignedTo: e.target.value })}
+                  placeholder="e.g. John Doe, or leave blank"
+                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-teal-800/25 mt-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="h-8 rounded-full border-slate-200 px-5 text-[11px] font-medium"
-                onClick={() => setEditModal(false)}
+                onClick={() => {
+                  setEditModal(false);
+                  setIsAddingType(false);
+                  setNewType("");
+                }}
               >
                 Cancel
               </Button>
@@ -810,13 +945,15 @@ export function AssetRegistry() {
                 type="button"
                 variant="default"
                 size="sm"
-                className="h-8 rounded-full px-5 text-[11px] font-medium"
+                className="h-8 rounded-full px-6 text-[11px] font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm"
                 onClick={() => {
-                  // Handle edit logic here
+                  // Currently just front-end ready, simulation of saving
                   setEditModal(false);
+                  setIsAddingType(false);
+                  setNewType("");
                 }}
               >
-                Save
+                Save Changes
               </Button>
             </div>
           </div>
