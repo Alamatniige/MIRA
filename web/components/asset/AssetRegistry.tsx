@@ -147,6 +147,37 @@ const categoryMeta: Record<string, CategoryMeta> = {
     bg: "bg-orange-50 dark:bg-orange-950/40",
     text: "text-orange-700 dark:text-orange-300",
   },
+  Printer: {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-3.5 w-3.5">
+        <polyline points="6 9 6 2 18 2 18 9" />
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+        <rect x="6" y="14" width="12" height="8" />
+      </svg>
+    ),
+    bg: "bg-pink-50 dark:bg-pink-950/40",
+    text: "text-pink-700 dark:text-pink-300",
+  },
+  Mobile: {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-3.5 w-3.5">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+        <line x1="12" y1="18" x2="12.01" y2="18" />
+      </svg>
+    ),
+    bg: "bg-rose-50 dark:bg-rose-950/40",
+    text: "text-rose-700 dark:text-rose-300",
+  },
+  Default: {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-3.5 w-3.5">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <line x1="9" y1="3" x2="9" y2="21" />
+      </svg>
+    ),
+    bg: "bg-slate-100 dark:bg-slate-800",
+    text: "text-slate-700 dark:text-slate-300",
+  },
 };
 
 const statusDot: Record<string, string> = {
@@ -183,6 +214,10 @@ export function AssetRegistry() {
   const [selectedEditAsset, setSelectedEditAsset] = useState<Asset | null>(null);
   const [selectedDeleteAsset, setSelectedDeleteAsset] = useState<Asset | null>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [roomFilter, setRoomFilter] = useState("");
+  const [floorFilter, setFloorFilter] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
 
@@ -335,12 +370,21 @@ export function AssetRegistry() {
     return () => clearTimeout(timer);
   }, []);
 
-  const filtered = assets.filter(
-    (a) =>
+  const filtered = assets.filter((a) => {
+    const matchesSearch =
+      search === "" ||
       a.assetName?.toLowerCase().includes(search.toLowerCase()) ||
       a.roomRel?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      a.floorRel?.name?.toLowerCase().includes(search.toLowerCase())
-  );
+      a.floorRel?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      a.tag?.toLowerCase().includes(search.toLowerCase());
+      
+    const matchesStatus = !statusFilter || a.currentStatus === statusFilter;
+    const matchesCategory = !categoryFilter || a.assetTypeRel?.name === categoryFilter;
+    const matchesRoom = !roomFilter || a.roomRel?.name === roomFilter;
+    const matchesFloor = !floorFilter || a.floorRel?.name === floorFilter;
+
+    return matchesSearch && matchesStatus && matchesCategory && matchesRoom && matchesFloor;
+  });
 
   const handleUpdateAsset = async () => {
     if (!selectedEditAsset) return;
@@ -540,27 +584,37 @@ export function AssetRegistry() {
                 {
                   label: "Status",
                   options: ["All", ...filterOptions.statuses],
+                  value: statusFilter,
+                  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)
                 },
                 {
                   label: "Category",
                   options: ["All", ...filterOptions.categories],
+                  value: categoryFilter,
+                  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => setCategoryFilter(e.target.value)
                 },
                 {
                   label: "Room",
                   options: ["All", ...filterOptions.rooms],
+                  value: roomFilter,
+                  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => setRoomFilter(e.target.value)
                 },
                 {
                   label: "Floor",
                   options: ["All", ...filterOptions.floors],
+                  value: floorFilter,
+                  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => setFloorFilter(e.target.value)
                 },
               ].map((f) => (
                 <select
                   key={f.label}
+                  value={f.value}
+                  onChange={f.onChange}
                   className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2.5 text-[11px] text-slate-700 dark:text-slate-300 focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 outline-none transition-colors"
                 >
                   <option value="">{f.label}: All</option>
                   {f.options.slice(1).map((o) => (
-                    <option key={o}>{o}</option>
+                    <option key={o} value={o}>{o}</option>
                   ))}
                 </select>
               ))}
@@ -620,7 +674,12 @@ export function AssetRegistry() {
                 </tr>
               ) : (
                 filtered.map((asset) => {
-                  const cat = asset.assetTypeRel?.name ? categoryMeta[asset.assetTypeRel.name] : undefined;
+                  const categoryName = asset.assetTypeRel?.name;
+                  const found = categoryName 
+                    ? Object.entries(categoryMeta).find(([k]) => k.toLowerCase() === categoryName.toLowerCase()) 
+                    : undefined;
+                  const cat = found ? found[1] : categoryMeta.Default;
+                  const displayCategory = categoryName || "Uncategorized";
                   return (
                     <TableRow
                       key={asset.tag}
@@ -647,14 +706,10 @@ export function AssetRegistry() {
 
                       {/* Category chip */}
                       <TableCell className="pl-4 py-3 whitespace-nowrap">
-                        {cat ? (
-                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${cat.bg} ${cat.text}`}>
-                            {cat.icon}
-                            {asset.assetTypeRel?.name}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-slate-500">{asset.assetTypeRel?.name || "Uncategorized"}</span>
-                        )}
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${cat.bg} ${cat.text}`}>
+                          {cat.icon}
+                          {displayCategory}
+                        </span>
                       </TableCell>
 
 
