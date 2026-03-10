@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import type { Asset, AssetType } from "@/types/mira";
+import type { Asset, AssetType, AssetRoom, AssetFloor } from "@/types/mira";
 
 export function useAssets() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetsTypes, setAssetTypes] = useState<AssetType[]>([]);
+  const [assetRooms, setAssetRooms] = useState<AssetRoom[]>([]);
+  const [assetFloors, setAssetFloors] = useState<AssetFloor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,28 +37,32 @@ export function useAssets() {
   }, []);
 
   const fetchAssetTypes = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
     try {
-      const response = await fetch(`/api/assets/types`, {
-        headers: getHeaders(),
-      });
-      const data = await response.json();
-      setAssetTypes(data || []);
-
+      const response = await fetch(`/api/assets/types`, { headers: getHeaders() });
+      setAssetTypes((await response.json()) || []);
     } catch (err: any) {
       console.error("Failed to fetch asset types:", err);
-      setError(err.message || "Failed to load asset types");
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+  }, [getHeaders]);
+
+  const fetchRoomsAndFloors = useCallback(async () => {
+    try {
+      const [rRes, fRes] = await Promise.all([
+        fetch(`/api/assets/rooms`, { headers: getHeaders() }),
+        fetch(`/api/assets/floors`, { headers: getHeaders() })
+      ]);
+      setAssetRooms((await rRes.json()) || []);
+      setAssetFloors((await fRes.json()) || []);
+    } catch (err: any) {
+      console.error("Failed to fetch rooms/floors:", err);
+    }
+  }, [getHeaders]);
 
   useEffect(() => {
     fetchAssets();
     fetchAssetTypes();
-  }, [fetchAssets, fetchAssetTypes]);
+    fetchRoomsAndFloors();
+  }, [fetchAssets, fetchAssetTypes, fetchRoomsAndFloors]);
 
   const filterOptions = useMemo(() => {
     return {
@@ -72,13 +78,15 @@ export function useAssets() {
   return {
     assets,
     assetsTypes,
+    assetRooms,
+    assetFloors,
     isLoading,
     error,
     refresh: fetchAssets,
     total: assets.length,
-    active: assets.filter((a) => a.currentStatus === "ACTIVE").length,
-    available: assets.filter((a) => a.currentStatus === "AVAILABLE").length,
-    underMaintenance: assets.filter((a) => a.currentStatus === "UNDER_MAINTENANCE").length,
+    active: assets.filter((a) => a.currentStatus === "Active").length,
+    available: assets.filter((a) => a.currentStatus === "Available").length,
+    underMaintenance: assets.filter((a) => a.currentStatus === "Under Maintenance").length,
     filterOptions,
   };
 }

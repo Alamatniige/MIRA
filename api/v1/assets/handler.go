@@ -61,6 +61,7 @@ func AddAsset(w http.ResponseWriter, r *http.Request) {
 		Room:          req.Room,
 		Floor:         req.Floor,
 		CurrentStatus: req.CurrentStatus,
+		Tag:           req.Tag,
 	}
 
 	// Save the new asset to generate UUID

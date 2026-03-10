@@ -185,10 +185,148 @@ export function AssetRegistry() {
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+
+  // States for dynamic dropdowns
   const [isAddingType, setIsAddingType] = useState(false);
   const [newType, setNewType] = useState("");
-  const [localCategories, setLocalCategories] = useState<string[]>([]);
-  const { assets, filterOptions, error, refresh } = useAssets();
+  const [localCategories, setLocalCategories] = useState<Record<string, number>>({});
+
+  const [isAddingRoom, setIsAddingRoom] = useState(false);
+  const [newRoom, setNewRoom] = useState("");
+  const [localRooms, setLocalRooms] = useState<Record<string, number>>({});
+
+  const [isAddingFloor, setIsAddingFloor] = useState(false);
+  const [newFloor, setNewFloor] = useState("");
+  const [localFloors, setLocalFloors] = useState<Record<string, number>>({});
+
+  const [formData, setFormData] = useState({
+    tag: "",
+    assetName: "",
+    assetType: "",
+    currentStatus: "Available",
+    room: "",
+    floor: "",
+  });
+
+  const { assets, assetsTypes, assetRooms, assetFloors, filterOptions, error, refresh } = useAssets();
+
+  // Handle setting incrementing Tag when Modal opens
+  useEffect(() => {
+    if (open) {
+      let maxNum = 0;
+      assets.forEach(a => {
+        if (a.tag?.toUpperCase().startsWith("AS-")) {
+          const num = parseInt(a.tag.slice(3), 10);
+          if (!isNaN(num) && num > maxNum) maxNum = num;
+        }
+      });
+      const nextNum = maxNum + 1;
+      const nextTag = `AS-${nextNum.toString().padStart(2, '0')}`;
+      setFormData(prev => ({ ...prev, tag: nextTag }));
+    }
+  }, [open, assets]);
+
+  const handleSaveAsset = async () => {
+    setIsGeneratingQr(true);
+    try {
+      const token = localStorage.getItem("mira_token");
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
+
+      // 1. Resolve Category ID
+      let typeId: number | null = null;
+      if (formData.assetType) {
+        const existing = assetsTypes.find(t => t.name.toLowerCase() === formData.assetType.toLowerCase());
+        if (existing) {
+          typeId = existing.id;
+        } else {
+          const res = await fetch("/api/assets/types", { method: "POST", headers, body: JSON.stringify({ name: formData.assetType }) });
+          if (res.ok) {
+            const data = await res.json();
+            typeId = data.id;
+          }
+        }
+      }
+
+      // 2. Resolve Room ID
+      let roomId: number | null = null;
+      if (formData.room) {
+        const existing = assetRooms.find(r => r.name.toLowerCase() === formData.room.toLowerCase());
+        if (existing) {
+          roomId = existing.id;
+        } else {
+          const res = await fetch("/api/assets/rooms", { method: "POST", headers, body: JSON.stringify({ name: formData.room }) });
+          if (res.ok) {
+            const data = await res.json();
+            roomId = data.id;
+          }
+        }
+      }
+
+      // 3. Resolve Floor ID
+      let floorId: number | null = null;
+      if (formData.floor) {
+        const existing = assetFloors.find(f => f.name.toLowerCase() === formData.floor.toLowerCase());
+        if (existing) {
+          floorId = existing.id;
+        } else {
+          const res = await fetch("/api/assets/floors", { method: "POST", headers, body: JSON.stringify({ name: formData.floor }) });
+          if (res.ok) {
+            const data = await res.json();
+            floorId = data.id;
+          }
+        }
+      }
+
+      // 4. Save Asset
+      const payload = {
+        assetName: formData.assetName,
+        assetType: typeId,
+        serialNumber: "",
+        specification: "",
+        room: roomId,
+        floor: floorId,
+        tag: formData.tag,
+        currentStatus: formData.currentStatus || "Available"
+      };
+
+      const res = await fetch("/api/assets", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error("Failed to save asset");
+
+      const resData = await res.json();
+
+      refresh();
+
+      setSelectedQrAsset({ ...resData.asset, assetTypeRel: { name: formData.assetType } });
+      setOpen(false);
+      setQrOpen(true);
+
+      // Reset form
+      setFormData({
+        tag: "", assetName: "", assetType: "", currentStatus: "Available", room: "", floor: ""
+      });
+      setIsAddingType(false);
+      setIsAddingRoom(false);
+      setIsAddingFloor(false);
+      setNewType("");
+      setNewRoom("");
+      setNewFloor("");
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save asset. Please try again.");
+    } finally {
+      setIsGeneratingQr(false);
+    }
+  };
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -203,6 +341,127 @@ export function AssetRegistry() {
       a.roomRel?.name?.toLowerCase().includes(search.toLowerCase()) ||
       a.floorRel?.name?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleUpdateAsset = async () => {
+    if (!selectedEditAsset) return;
+    try {
+      const token = localStorage.getItem("mira_token");
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
+
+      // Resolve Category ID
+      let typeId: number | null = selectedEditAsset.assetType;
+      if (selectedEditAsset.assetTypeRel?.name) {
+        const existing = assetsTypes.find(t => t.name.toLowerCase() === selectedEditAsset.assetTypeRel!.name.toLowerCase());
+        if (existing) {
+          typeId = existing.id;
+        } else {
+          try {
+            const res = await fetch("/api/assets/types", { method: "POST", headers, body: JSON.stringify({ name: selectedEditAsset.assetTypeRel.name }) });
+            if (res.ok) {
+              const data = await res.json();
+              typeId = data.id;
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+
+      // Resolve Room ID
+      let roomId: number | null = selectedEditAsset.room;
+      if (selectedEditAsset.roomRel?.name) {
+        const existing = assetRooms.find(r => r.name.toLowerCase() === selectedEditAsset.roomRel!.name.toLowerCase());
+        if (existing) {
+          roomId = existing.id;
+        } else {
+          try {
+            const res = await fetch("/api/assets/rooms", { method: "POST", headers, body: JSON.stringify({ name: selectedEditAsset.roomRel.name }) });
+            if (res.ok) {
+              const data = await res.json();
+              roomId = data.id;
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+
+      // Resolve Floor ID
+      let floorId: number | null = selectedEditAsset.floor;
+      if (selectedEditAsset.floorRel?.name) {
+        const existing = assetFloors.find(f => f.name.toLowerCase() === selectedEditAsset.floorRel!.name.toLowerCase());
+        if (existing) {
+          floorId = existing.id;
+        } else {
+          try {
+            const res = await fetch("/api/assets/floors", { method: "POST", headers, body: JSON.stringify({ name: selectedEditAsset.floorRel.name }) });
+            if (res.ok) {
+              const data = await res.json();
+              floorId = data.id;
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+
+      const payload = {
+        assetName: selectedEditAsset.assetName,
+        assetType: typeId,
+        serialNumber: selectedEditAsset.serialNumber,
+        specification: selectedEditAsset.specification,
+        room: roomId,
+        floor: floorId,
+        currentStatus: selectedEditAsset.currentStatus,
+      };
+
+      const res = await fetch(`/api/assets/${selectedEditAsset.id}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error("Failed to update asset");
+
+      refresh();
+      setEditModal(false);
+      setIsAddingType(false);
+      setNewType("");
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update asset. Please try again.");
+    }
+  };
+
+  const handleDeleteAsset = async () => {
+    if (!selectedDeleteAsset) return;
+    try {
+      const token = localStorage.getItem("mira_token");
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
+
+      const res = await fetch(`/api/assets/${selectedDeleteAsset.id}`, {
+        method: "DELETE",
+        headers
+      });
+
+      if (!res.ok) throw new Error("Failed to delete asset");
+
+      refresh();
+      setDeleteModal(false);
+      setSelectedDeleteAsset(null);
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete asset. Please try again.");
+    }
+  };
 
   if (isLoading) {
     return <FullPageLoader label="Loading asset registry..." />;
@@ -502,7 +761,7 @@ export function AssetRegistry() {
             <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 bg-slate-50 dark:bg-slate-900/50 p-6 text-center">
               <div className="rounded-2xl bg-white p-5 shadow-sm dark:bg-white">
                 <QRCodeSVG
-                  value={JSON.stringify({ tag: selectedQrAsset.id, name: selectedQrAsset.assetName, category: selectedQrAsset.assetTypeRel?.name })}
+                  value={`MIRA Asset\nTag: ${selectedQrAsset.tag || selectedQrAsset.id}\nName: ${selectedQrAsset.assetName}\nCategory: ${selectedQrAsset.assetTypeRel?.name}`}
                   size={220}
                   level="H"
                 />
@@ -560,20 +819,20 @@ export function AssetRegistry() {
         overlayClassName={qrOpen ? "!bg-transparent dark:!bg-transparent !backdrop-blur-none pointer-events-none" : ""} // Remove double overlay
         className={qrOpen ? "pointer-events-auto -translate-x-[52%] h-[480px]" : "h-[480px]"} // Shift to the left if QR modal is open
       >
-        <form className="space-y-4 text-xs flex flex-col h-[390px]">
+        <form className="space-y-4 text-xs flex flex-col h-[400px]">
           {/* Row 1: Tag + Name */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Asset Tag
               </label>
-              <Input placeholder="e.g. LPT-02319" className="h-8 text-[11px]" />
+              <Input placeholder="e.g. AS-01" className="h-8 text-[11px]" disabled value={formData.tag} />
             </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Asset Name
               </label>
-              <Input placeholder="e.g. Lenovo ThinkPad T14 Gen 3" className="h-8 text-[11px]" />
+              <Input placeholder="e.g. Lenovo ThinkPad T14 Gen 3" className="h-8 text-[11px]" value={formData.assetName} onChange={(e) => setFormData(p => ({ ...p, assetName: e.target.value }))} />
             </div>
           </div>
 
@@ -585,49 +844,34 @@ export function AssetRegistry() {
               </label>
               {!isAddingType ? (
                 <select
-                  className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 outline-none transition-colors"
+                  className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
+                  value={formData.assetType}
                   onChange={(e) => {
                     if (e.target.value === "Add another category") {
                       setIsAddingType(true);
-                      e.target.value = "";
+                      setFormData(p => ({ ...p, assetType: "" }));
+                    } else {
+                      setFormData(p => ({ ...p, assetType: e.target.value }));
                     }
                   }}
-                  defaultValue=""
                 >
                   <option value="" disabled>Select category</option>
-                  {["Laptop", "Desktop", "Monitor", "Server", "Network", "Peripheral", ...localCategories].map((o) => (
+                  {Array.from(new Set([...assetsTypes.map(t => t.name), ...Object.keys(localCategories)])).map((o) => (
                     <option key={o} value={o}>{o}</option>
                   ))}
                   <option value="Add another category" className="font-semibold text-primary">Add another category</option>
                 </select>
               ) : (
                 <div className="flex gap-2">
-                  <Input
-                    placeholder="New category..."
-                    className="h-8 text-[11px] flex-1"
-                    value={newType}
-                    onChange={(e) => setNewType(e.target.value)}
-                    autoFocus
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-2"
-                    onClick={() => {
-                      if (newType.trim()) {
-                        if (!["Laptop", "Desktop", "Monitor", "Server", "Network", "Peripheral", ...localCategories].includes(newType.trim())) {
-                          setLocalCategories(prev => [...prev, newType.trim()]);
-                        }
-                        setIsAddingType(false);
-                        setNewType("");
-                      } else {
-                        setIsAddingType(false);
-                      }
-                    }}
-                  >
-                    OK
-                  </Button>
+                  <Input placeholder="New category..." className="h-8 text-[11px] flex-1" value={newType} onChange={(e) => setNewType(e.target.value)} autoFocus />
+                  <Button type="button" size="sm" variant="outline" className="h-8 px-2" onClick={() => {
+                    if (newType.trim()) {
+                      setLocalCategories(p => ({ ...p, [newType.trim()]: 0 }));
+                      setFormData(p => ({ ...p, assetType: newType.trim() }));
+                    }
+                    setIsAddingType(false);
+                    setNewType("");
+                  }}>OK</Button>
                 </div>
               )}
             </div>
@@ -636,8 +880,9 @@ export function AssetRegistry() {
                 Status
               </label>
               <select
-                className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 outline-none transition-colors"
-                defaultValue=""
+                className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
+                value={formData.currentStatus}
+                onChange={(e) => setFormData(p => ({ ...p, currentStatus: e.target.value }))}
               >
                 <option value="" disabled>Select status</option>
                 {["Active", "Available", "Under Maintenance", "Retired"].map((s) => (
@@ -653,42 +898,92 @@ export function AssetRegistry() {
               <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Room
               </label>
-              <Input placeholder="e.g. 8F IT" className="h-8 text-[11px]" />
+              {!isAddingRoom ? (
+                <select
+                  className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
+                  value={formData.room}
+                  onChange={(e) => {
+                    if (e.target.value === "Add another room") {
+                      setIsAddingRoom(true);
+                      setFormData(p => ({ ...p, room: "" }));
+                    } else {
+                      setFormData(p => ({ ...p, room: e.target.value }));
+                    }
+                  }}
+                >
+                  <option value="" disabled>Select room</option>
+                  {Array.from(new Set([...filterOptions.rooms, ...Object.keys(localRooms)])).map((o) => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                  <option value="Add another room" className="font-semibold text-primary">Add another room</option>
+                </select>
+              ) : (
+                <div className="flex gap-2">
+                  <Input placeholder="New room..." className="h-8 text-[11px] flex-1" value={newRoom} onChange={(e) => setNewRoom(e.target.value)} autoFocus />
+                  <Button type="button" size="sm" variant="outline" className="h-8 px-2" onClick={() => {
+                    if (newRoom.trim()) {
+                      setLocalRooms(p => ({ ...p, [newRoom.trim()]: 0 }));
+                      setFormData(p => ({ ...p, room: newRoom.trim() }));
+                    }
+                    setIsAddingRoom(false);
+                    setNewRoom("");
+                  }}>OK</Button>
+                </div>
+              )}
             </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Floor
               </label>
-              <Input placeholder="e.g. 8th Floor" className="h-8 text-[11px]" />
+              {!isAddingFloor ? (
+                <select
+                  className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
+                  value={formData.floor}
+                  onChange={(e) => {
+                    if (e.target.value === "Add another floor") {
+                      setIsAddingFloor(true);
+                      setFormData(p => ({ ...p, floor: "" }));
+                    } else {
+                      setFormData(p => ({ ...p, floor: e.target.value }));
+                    }
+                  }}
+                >
+                  <option value="" disabled>Select floor</option>
+                  {Array.from(new Set([...filterOptions.floors, ...Object.keys(localFloors)])).map((o) => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                  <option value="Add another floor" className="font-semibold text-primary">Add another floor</option>
+                </select>
+              ) : (
+                <div className="flex gap-2">
+                  <Input placeholder="New floor..." className="h-8 text-[11px] flex-1" value={newFloor} onChange={(e) => setNewFloor(e.target.value)} autoFocus />
+                  <Button type="button" size="sm" variant="outline" className="h-8 px-2" onClick={() => {
+                    if (newFloor.trim()) {
+                      setLocalFloors(p => ({ ...p, [newFloor.trim()]: 0 }));
+                      setFormData(p => ({ ...p, floor: newFloor.trim() }));
+                    }
+                    setIsAddingFloor(false);
+                    setNewFloor("");
+                  }}>OK</Button>
+                </div>
+              )}
             </div>
           </div>
 
-
-
-          {/* Notes removed per request */}
-
-          {/* Actions */}
           <div className="flex items-center justify-end gap-2 pt-1 mt-auto">
             <Button
               type="button"
               variant="outline"
               size="sm"
               className="h-8 rounded-full border-slate-200 px-4 text-[11px]"
-              onClick={() => setOpen(false)}
+              onClick={() => { setOpen(false); setIsAddingType(false); setIsAddingRoom(false); setIsAddingFloor(false); }}
             >
               Cancel
             </Button>
             <Button
               type="button"
-              disabled={isGeneratingQr}
-              onClick={() => {
-                setIsGeneratingQr(true);
-                // Simulate saving logic and QR generation delay
-                setTimeout(() => {
-                  setIsGeneratingQr(false);
-                  setQrOpen(true);
-                }, 1000); // 1-second loading state
-              }}
+              disabled={isGeneratingQr || !formData.assetName || !formData.tag}
+              onClick={handleSaveAsset}
               size="sm"
               className="h-8 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-[11px] font-semibold text-white shadow-sm hover:shadow-lg transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-80 flex items-center justify-center gap-1.5"
             >
@@ -722,7 +1017,7 @@ export function AssetRegistry() {
               <div className="flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 shrink-0">
                 <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-white mb-3">
                   <QRCodeSVG
-                    value={JSON.stringify({ tag: selectedViewAsset.id, name: selectedViewAsset.assetName, category: selectedViewAsset.assetTypeRel?.name })}
+                    value={`MIRA Asset\nTag: ${selectedViewAsset.tag || selectedViewAsset.id}\nName: ${selectedViewAsset.assetName}\nCategory: ${selectedViewAsset.assetTypeRel?.name}`}
                     size={110}
                     level="H"
                   />
@@ -759,7 +1054,7 @@ export function AssetRegistry() {
               <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b]">
                 <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Status</h4>
                 <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${statusDot[selectedViewAsset.currentStatus] || 'bg-slate-400'}`}></span>
+                  <span className={`h- 2.5 w-2.5 rounded-full ${statusDot[selectedViewAsset.currentStatus] || 'bg-slate-400'}`}></span>
                   <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">{selectedViewAsset.currentStatus}</span>
                 </div>
               </div>
@@ -869,14 +1164,51 @@ export function AssetRegistry() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Category */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Category</label>
+                {!isAddingType ? (
+                  <select
+                    value={selectedEditAsset.assetTypeRel?.name || ""}
+                    onChange={(e) => {
+                      if (e.target.value === "Add another category") {
+                        setIsAddingType(true);
+                        setSelectedEditAsset(p => ({ ...p!, assetTypeRel: { id: 0, name: "", createdAt: "" } } as any));
+                      } else {
+                        setSelectedEditAsset(p => ({ ...p!, assetTypeRel: { id: 0, name: e.target.value, createdAt: "" } } as any));
+                      }
+                    }}
+                    className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                  >
+                    <option value="" disabled>Select category</option>
+                    {Array.from(new Set([...assetsTypes.map(t => t.name), ...Object.keys(localCategories)])).map((o) => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                    <option value="Add another category" className="font-semibold text-primary">Add another category</option>
+                  </select>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input placeholder="New category..." className="h-8 text-[11px] flex-1" value={newType} onChange={(e) => setNewType(e.target.value)} autoFocus />
+                    <Button type="button" size="sm" variant="outline" className="h-8 px-2" onClick={() => {
+                      if (newType.trim()) {
+                        setLocalCategories(p => ({ ...p, [newType.trim()]: 0 }));
+                        setSelectedEditAsset(p => ({ ...p!, assetTypeRel: { id: 0, name: newType.trim(), createdAt: "" } } as any));
+                      }
+                      setIsAddingType(false);
+                      setNewType("");
+                    }}>OK</Button>
+                  </div>
+                )}
+              </div>
+
               {/* Status */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Status</label>
                 <select
                   value={selectedEditAsset.currentStatus || ""}
                   onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, currentStatus: e.target.value as any })}
-                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                  className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
                 >
                   <option value="" disabled>Select Status</option>
                   {["Active", "Available", "Under Maintenance", "Retired"].map((s) => (
@@ -890,40 +1222,77 @@ export function AssetRegistry() {
               {/* Room */}
               <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
                 <label htmlFor="edit-room" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Room</label>
-                <input
-                  type="text"
-                  id="edit-room"
-                  value={selectedEditAsset.roomRel?.name || ""}
-                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, roomRel: { ...selectedEditAsset.roomRel, name: e.target.value } as any })}
-                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                />
+                {!isAddingRoom ? (
+                  <select
+                    id="edit-room"
+                    value={selectedEditAsset.roomRel?.name || ""}
+                    onChange={(e) => {
+                      if (e.target.value === "Add another room") {
+                        setIsAddingRoom(true);
+                        setSelectedEditAsset(p => ({ ...p!, roomRel: { id: 0, name: "", createdAt: "" } } as any));
+                      } else {
+                        setSelectedEditAsset(p => ({ ...p!, roomRel: { id: 0, name: e.target.value, createdAt: "" } } as any));
+                      }
+                    }}
+                    className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                  >
+                    <option value="" disabled>Select room</option>
+                    {Array.from(new Set([...filterOptions.rooms, ...Object.keys(localRooms)])).map((o) => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                    <option value="Add another room" className="font-semibold text-primary">Add another room</option>
+                  </select>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input placeholder="New room..." className="h-8 text-[11px] flex-1" value={newRoom} onChange={(e) => setNewRoom(e.target.value)} autoFocus />
+                    <Button type="button" size="sm" variant="outline" className="h-8 px-2" onClick={() => {
+                      if (newRoom.trim()) {
+                        setLocalRooms(p => ({ ...p, [newRoom.trim()]: 0 }));
+                        setSelectedEditAsset(p => ({ ...p!, roomRel: { id: 0, name: newRoom.trim(), createdAt: "" } } as any));
+                      }
+                      setIsAddingRoom(false);
+                      setNewRoom("");
+                    }}>OK</Button>
+                  </div>
+                )}
               </div>
 
               {/* Floor */}
               <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
                 <label htmlFor="edit-floor" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Floor</label>
-                <input
-                  type="text"
-                  id="edit-floor"
-                  value={selectedEditAsset.floorRel?.name || ""}
-                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, floorRel: { ...selectedEditAsset.floorRel, name: e.target.value } as any })}
-                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
-              {/* Assigned To */}
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="edit-assignedTo" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Assigned To</label>
-                <input
-                  type="text"
-                  id="edit-assignedTo"
-                  value={selectedEditAsset.assignedTo || ""}
-                  onChange={(e) => setSelectedEditAsset({ ...selectedEditAsset, assignedTo: e.target.value })}
-                  placeholder="e.g. John Doe, or leave blank"
-                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                />
+                {!isAddingFloor ? (
+                  <select
+                    id="edit-floor"
+                    value={selectedEditAsset.floorRel?.name || ""}
+                    onChange={(e) => {
+                      if (e.target.value === "Add another floor") {
+                        setIsAddingFloor(true);
+                        setSelectedEditAsset(p => ({ ...p!, floorRel: { id: 0, name: "", createdAt: "" } } as any));
+                      } else {
+                        setSelectedEditAsset(p => ({ ...p!, floorRel: { id: 0, name: e.target.value, createdAt: "" } } as any));
+                      }
+                    }}
+                    className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                  >
+                    <option value="" disabled>Select floor</option>
+                    {Array.from(new Set([...filterOptions.floors, ...Object.keys(localFloors)])).map((o) => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                    <option value="Add another floor" className="font-semibold text-primary">Add another floor</option>
+                  </select>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input placeholder="New floor..." className="h-8 text-[11px] flex-1" value={newFloor} onChange={(e) => setNewFloor(e.target.value)} autoFocus />
+                    <Button type="button" size="sm" variant="outline" className="h-8 px-2" onClick={() => {
+                      if (newFloor.trim()) {
+                        setLocalFloors(p => ({ ...p, [newFloor.trim()]: 0 }));
+                        setSelectedEditAsset(p => ({ ...p!, floorRel: { id: 0, name: newFloor.trim(), createdAt: "" } } as any));
+                      }
+                      setIsAddingFloor(false);
+                      setNewFloor("");
+                    }}>OK</Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -946,18 +1315,55 @@ export function AssetRegistry() {
                 variant="default"
                 size="sm"
                 className="h-8 rounded-full px-6 text-[11px] font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm"
-                onClick={() => {
-                  // Currently just front-end ready, simulation of saving
-                  setEditModal(false);
-                  setIsAddingType(false);
-                  setNewType("");
-                }}
+                onClick={handleUpdateAsset}
               >
                 Save Changes
               </Button>
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* ── Delete Asset Modal ── */}
+      <Modal
+        open={deleteModal}
+        onClose={() => {
+          setDeleteModal(false);
+          setSelectedDeleteAsset(null);
+        }}
+        title="Delete Asset"
+        description="Are you sure you want to delete this asset?"
+        className="w-full max-w-[400px]"
+      >
+        <div className="flex flex-col gap-6 pt-4">
+          <p className="text-[13px] text-slate-600 dark:text-slate-400">
+            This action cannot be undone. This will permanently delete the asset{" "}
+            <span className="font-bold text-slate-900 dark:text-slate-100">{selectedDeleteAsset?.assetName}</span> and remove all associated data.
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-teal-800/25">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-full border-slate-200 px-5 text-[11px] font-medium"
+              onClick={() => {
+                setDeleteModal(false);
+                setSelectedDeleteAsset(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="h-8 rounded-full px-5 text-[11px] font-semibold bg-red-600 hover:bg-red-700 text-white shadow-sm"
+              onClick={handleDeleteAsset}
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
