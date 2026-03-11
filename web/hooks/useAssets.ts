@@ -26,7 +26,12 @@ export function useAssets() {
         headers: getHeaders(),
       });
       const data = await response.json();
-      setAssets(data || []);
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch assets");
+      }
+
+      setAssets(Array.isArray(data) ? data : []);
 
     } catch (err: any) {
       console.error("Failed to fetch assets:", err);
@@ -39,9 +44,14 @@ export function useAssets() {
   const fetchAssetTypes = useCallback(async () => {
     try {
       const response = await fetch(`/api/assets/types`, { headers: getHeaders() });
-      setAssetTypes((await response.json()) || []);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch asset types");
+      }
+      setAssetTypes(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error("Failed to fetch asset types:", err);
+      setAssetTypes([]);
     }
   }, [getHeaders]);
 
@@ -51,10 +61,19 @@ export function useAssets() {
         fetch(`/api/assets/rooms`, { headers: getHeaders() }),
         fetch(`/api/assets/floors`, { headers: getHeaders() })
       ]);
-      setAssetRooms((await rRes.json()) || []);
-      setAssetFloors((await fRes.json()) || []);
+      const rData = await rRes.json();
+      const fData = await fRes.json();
+      
+      if (!rRes.ok || !fRes.ok) {
+        throw new Error("Failed to fetch rooms/floors");
+      }
+      
+      setAssetRooms(Array.isArray(rData) ? rData : []);
+      setAssetFloors(Array.isArray(fData) ? fData : []);
     } catch (err: any) {
       console.error("Failed to fetch rooms/floors:", err);
+      setAssetRooms([]);
+      setAssetFloors([]);
     }
   }, [getHeaders]);
 

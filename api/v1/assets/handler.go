@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"mira-api/internal/db"
 	"mira-api/v1/qr"
+	"mira-api/v1/supabase"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/skip2/go-qrcode"
 	"gorm.io/gorm"
@@ -62,6 +66,7 @@ func AddAsset(w http.ResponseWriter, r *http.Request) {
 		Floor:         req.Floor,
 		CurrentStatus: req.CurrentStatus,
 		Tag:           req.Tag,
+		Image:         req.Image,
 	}
 
 	// Save the new asset to generate UUID
@@ -221,6 +226,7 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 	asset.Specification = req.Specification
 	asset.Room = req.Room
 	asset.Floor = req.Floor
+	asset.Image = req.Image
 
 	if result := db.DB.Save(&asset); result.Error != nil {
 		http.Error(w, "Error updating asset: "+result.Error.Error(), http.StatusInternalServerError)
@@ -303,3 +309,50 @@ func DeleteAsset(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)
 }
+
+// Upload asset images
+func UploadAssetImage(w http.ResponseWriter, r *http.Request) {
+	// Parse multipart form (max 50MB for multiple files)
+	if err := r.ParseMultipartForm(50 << 20); err != nil {
+		http.Error(w, "Failed to parse form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	files := r.MultipartForm.File["images"]
+	if len(files) == 0 {
+		http.Error(w, "No images found in request", http.StatusBadRequest)
+		return
+	}
+
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	var uploadedUrls []string
+
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			http.Error(w, "Error retrieving file: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Generate unique filename
+		ext := filepath.Ext(fileHeader.Filename)
+		filename := uuid.New().String() + ext
+
+		// Upload to Supabase storage bucket "asset"
+		resp := supabase.Client.Storage.From("asset").Upload(filename, file, nil)
+		file.Close() // Close immediately after upload
+
+		if resp.Message != "" {
+			http.Error(w, "Failed to upload image: "+resp.Message, http.StatusInternalServerError)
+			return
+		}
+
+		// Construct public URL
+		publicURL := fmt.Sprintf("%s/storage/v1/object/public/asset/%s", supabaseURL, filename)
+		uploadedUrls = append(uploadedUrls, publicURL)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"imageUrls": uploadedUrls})
+}
+

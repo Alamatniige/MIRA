@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAssets } from "@/hooks/useAssets";
-import { Asset } from "@/types/mira"
+import { Asset, AssetType } from "@/types/mira"
 
 import { FullPageLoader } from "@/components/ui/loader";
 import {
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Modal } from "@/components/ui/modal";
 import { QRCodeSVG } from "qrcode.react";
+import Image from "next/image";
 
 /* ──────────────────────────────── helpers ──────────────────────────────── */
 
@@ -220,6 +221,7 @@ export function AssetRegistry() {
   const [floorFilter, setFloorFilter] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   // States for dynamic dropdowns
   const [isAddingType, setIsAddingType] = useState(false);
@@ -315,7 +317,29 @@ export function AssetRegistry() {
         }
       }
 
-      // 4. Save Asset
+      // 4. Upload Image if selected
+      let uploadedImageUrls: string[] = [];
+      if (imageFiles && imageFiles.length > 0) {
+        const imgData = new FormData();
+        imageFiles.forEach(file => {
+          imgData.append("images", file);
+        });
+        const uploadRes = await fetch("/api/assets/upload", {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: imgData,
+        });
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          uploadedImageUrls = uploadData.imageUrls || [];
+        } else {
+          const errData = await uploadRes.json();
+          console.error("Failed to upload image.", errData);
+          alert("Image upload failed: " + errData.error);
+        }
+      }
+
+      // 5. Save Asset
       const payload = {
         assetName: formData.assetName,
         assetType: typeId,
@@ -324,7 +348,8 @@ export function AssetRegistry() {
         room: roomId,
         floor: floorId,
         tag: formData.tag,
-        currentStatus: formData.currentStatus || "Available"
+        currentStatus: formData.currentStatus || "Available",
+        image: uploadedImageUrls
       };
 
       const res = await fetch("/api/assets", {
@@ -353,6 +378,7 @@ export function AssetRegistry() {
       setNewType("");
       setNewRoom("");
       setNewFloor("");
+      setImageFiles([]);
 
     } catch (err) {
       console.error(err);
@@ -377,7 +403,7 @@ export function AssetRegistry() {
       a.roomRel?.name?.toLowerCase().includes(search.toLowerCase()) ||
       a.floorRel?.name?.toLowerCase().includes(search.toLowerCase()) ||
       a.tag?.toLowerCase().includes(search.toLowerCase());
-      
+
     const matchesStatus = !statusFilter || a.currentStatus === statusFilter;
     const matchesCategory = !categoryFilter || a.assetTypeRel?.name === categoryFilter;
     const matchesRoom = !roomFilter || a.roomRel?.name === roomFilter;
@@ -452,6 +478,27 @@ export function AssetRegistry() {
         }
       }
 
+      let uploadedImageUrls = selectedEditAsset.image || [];
+      if (imageFiles && imageFiles.length > 0) {
+        const imgData = new FormData();
+        imageFiles.forEach(file => {
+          imgData.append("images", file);
+        });
+        const uploadRes = await fetch("/api/assets/upload", {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: imgData,
+        });
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          uploadedImageUrls = uploadData.imageUrls || [];
+        } else {
+          const errData = await uploadRes.json();
+          console.error("Failed to upload image.", errData);
+          alert("Image upload failed: " + errData.error);
+        }
+      }
+
       const payload = {
         assetName: selectedEditAsset.assetName,
         assetType: typeId,
@@ -459,7 +506,9 @@ export function AssetRegistry() {
         specification: selectedEditAsset.specification,
         room: roomId,
         floor: floorId,
+        tag: selectedEditAsset.tag,
         currentStatus: selectedEditAsset.currentStatus,
+        image: uploadedImageUrls
       };
 
       const res = await fetch(`/api/assets/${selectedEditAsset.id}`, {
@@ -469,6 +518,19 @@ export function AssetRegistry() {
       });
 
       if (!res.ok) throw new Error("Failed to update asset");
+
+      const updatedAssetType = assetsTypes.find((t: AssetType) => t.id === payload.assetType);
+
+      // Reconstruct updated asset using map payload
+      const newlyUpdatedAsset = {
+        ...selectedEditAsset,
+        ...payload,
+        assetTypeRel: updatedAssetType
+      } as any;
+
+      setSelectedEditAsset(newlyUpdatedAsset);
+      setSelectedViewAsset(newlyUpdatedAsset);
+      setImageFiles([]);
 
       refresh();
       setEditModal(false);
@@ -675,8 +737,8 @@ export function AssetRegistry() {
               ) : (
                 filtered.map((asset) => {
                   const categoryName = asset.assetTypeRel?.name;
-                  const found = categoryName 
-                    ? Object.entries(categoryMeta).find(([k]) => k.toLowerCase() === categoryName.toLowerCase()) 
+                  const found = categoryName
+                    ? Object.entries(categoryMeta).find(([k]) => k.toLowerCase() === categoryName.toLowerCase())
                     : undefined;
                   const cat = found ? found[1] : categoryMeta.Default;
                   const displayCategory = categoryName || "Uncategorized";
@@ -1025,6 +1087,31 @@ export function AssetRegistry() {
             </div>
           </div>
 
+          {/* Row 4: Image */}
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Asset Image
+              </label>
+              <Input
+                type="file"
+                multiple
+                accept="image/*"
+                className="h-8 text-[11px] py-1.5 cursor-pointer file:cursor-pointer file:mr-3 file:border-0 file:bg-primary/10 file:text-primary file:rounded-md file:px-3 file:py-0.5"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setImageFiles(Array.from(e.target.files));
+                  }
+                }}
+              />
+              {imageFiles.length > 0 && (
+                <div className="mt-2 text-[10px] text-slate-500">
+                  {imageFiles.length} file(s) selected
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="flex items-center justify-end gap-2 pt-1 mt-auto">
             <Button
               type="button"
@@ -1064,10 +1151,11 @@ export function AssetRegistry() {
         onClose={() => setViewOpen(false)}
         title="View Asset Details"
         description="Detailed information and QR code for this asset."
-        className="w-full max-w-lg"
+        className="w-full max-w-lg h-full overflow-y-auto"
       >
         {selectedViewAsset && (
-          <div className="space-y-4 text-xs flex flex-col pt-4 pr-1 pb-1">
+          <div className="space-y-4 text-xs flex flex-col pt-4 pr-1 pb-1 ">
+            {/* QR Code */}
             <div className="flex gap-5">
               <div className="flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 shrink-0">
                 <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-white mb-3">
@@ -1105,6 +1193,7 @@ export function AssetRegistry() {
               </div>
             </div>
 
+            {/* Status and Location */}
             <div className="grid grid-cols-2 gap-3 mt-1">
               <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b]">
                 <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Status</h4>
@@ -1126,6 +1215,7 @@ export function AssetRegistry() {
               </div>
             </div>
 
+            {/* Assignment Details */}
             <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b] flex-1">
               <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Assignment Details</h4>
               {selectedViewAsset.assignedTo ? (
@@ -1151,6 +1241,32 @@ export function AssetRegistry() {
               )}
             </div>
 
+            {/* Images */}
+            {selectedViewAsset.image && selectedViewAsset.image.length > 0 && (
+              <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b] flex-1">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Images</h4>
+                <div className="grid grid-cols-3 gap-3">
+                  {selectedViewAsset.image.map((img, index) => (
+                    <a key={index} href={img} target="_blank" rel="noreferrer" className="group relative block aspect-square overflow-hidden rounded-lg border border-slate-200 dark:border-teal-800/30">
+                      <img
+                        src={img}
+                        alt={`Asset image ${index + 1}`}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 text-white">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                          <polyline points="15 3 21 3 21 9" />
+                          <line x1="10" x2="21" y1="14" y2="3" />
+                        </svg>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Close Button */}
             <div className="flex items-center justify-end gap-2 pt-2 mt-auto">
               <Button
                 type="button"
@@ -1164,10 +1280,10 @@ export function AssetRegistry() {
             </div>
           </div>
         )}
-      </Modal>
+      </Modal >
 
       {/* ── Edit Asset Modal ── */}
-      <Modal
+      < Modal
         open={editModal}
         onClose={() => {
           setEditModal(false);
@@ -1351,6 +1467,29 @@ export function AssetRegistry() {
               </div>
             </div>
 
+            {/* Image */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="edit-image" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Asset Image (Optional)</label>
+              <input
+                type="file"
+                id="edit-image"
+                multiple
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setImageFiles(Array.from(e.target.files));
+                  }
+                }}
+                className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors file:cursor-pointer file:mr-3 file:border-0 file:bg-primary/10 file:text-primary file:font-semibold file:rounded-md file:px-2 file:py-0.5 cursor-pointer"
+              />
+              {selectedEditAsset.image && selectedEditAsset.image.length > 0 && imageFiles.length === 0 && (
+                <p className="text-[10px] text-slate-400 mt-1">Current images will be kept if no new files are selected. ({selectedEditAsset.image.length} saved)</p>
+              )}
+              {imageFiles.length > 0 && (
+                <p className="text-[10px] text-slate-700 dark:text-slate-300 font-semibold mt-1">New files to upload: {imageFiles.length}</p>
+              )}
+            </div>
+
             <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-teal-800/25 mt-2">
               <Button
                 type="button"
@@ -1377,10 +1516,10 @@ export function AssetRegistry() {
             </div>
           </div>
         )}
-      </Modal>
+      </Modal >
 
       {/* ── Delete Asset Modal ── */}
-      <Modal
+      < Modal
         open={deleteModal}
         onClose={() => {
           setDeleteModal(false);
@@ -1419,7 +1558,7 @@ export function AssetRegistry() {
             </Button>
           </div>
         </div>
-      </Modal>
-    </div>
+      </Modal >
+    </div >
   );
 }

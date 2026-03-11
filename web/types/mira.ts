@@ -45,6 +45,7 @@ export interface Asset {
   currentStatus: AssetStatus | string;
   isAssigned: boolean;
   createdAt: string;
+  image?: string[];
 
   // Optional fields for UI state or relations not directly present in the base table
   assignedTo?: string;

@@ -1,6 +1,8 @@
 package asset
 
-import "time"
+import (
+	"time"
+)
 
 // Asset struct mirrors the 'assets' table
 type Asset struct {
@@ -16,8 +18,9 @@ type Asset struct {
 	Floor         *int        `json:"floor" gorm:"column:floor;type:integer;null"`
 	FloorRel      *AssetFloor `json:"floorRel,omitempty" gorm:"foreignKey:Floor;references:ID"`
 	CurrentStatus string      `json:"currentStatus" gorm:"column:currentStatus;not null"`
-	IsAssigned    bool        `json:"isAssigned" gorm:"column:isAssigned;default:false;not null"`
-	CreatedAt     time.Time   `json:"createdAt" gorm:"column:createdAt;autoCreateTime"`
+	IsAssigned    bool           `json:"isAssigned" gorm:"column:isAssigned;default:false;not null"`
+	Image         []string       `json:"image" gorm:"column:image;type:jsonb;serializer:json"`
+	CreatedAt     time.Time      `json:"createdAt" gorm:"column:createdAt;autoCreateTime"`
 }
 
 type AssetType struct {
@@ -57,8 +60,9 @@ type CreateAssetRequest struct {
 	Specification string `json:"specification"`
 	Room          *int   `json:"room"`
 	Floor         *int   `json:"floor"`
-	Tag           string `json:"tag"`
-	CurrentStatus string `json:"currentStatus"`
+	Tag           string   `json:"tag"`
+	CurrentStatus string   `json:"currentStatus"`
+	Image         []string `json:"image"`
 }
 
 type CreateAssetTypeRequest struct {
