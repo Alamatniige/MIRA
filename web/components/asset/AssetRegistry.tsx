@@ -208,6 +208,7 @@ export function AssetRegistry() {
   const [open, setOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [showAllImages, setShowAllImages] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [selectedQrAsset, setSelectedQrAsset] = useState<Asset | null>(null); // Default to first asset for demo
@@ -263,7 +264,7 @@ export function AssetRegistry() {
     }
   }, [open, assets]);
 
-  const handleSaveAsset = async () => {
+  const handleSaveAsset = async (showQr: boolean = true) => {
     setIsGeneratingQr(true);
     try {
       const token = localStorage.getItem("mira_token");
@@ -364,9 +365,11 @@ export function AssetRegistry() {
 
       refresh();
 
-      setSelectedQrAsset({ ...resData.asset, assetTypeRel: { name: formData.assetType } });
+      if (showQr) {
+        setSelectedQrAsset({ ...resData.asset, assetTypeRel: { name: formData.assetType } });
+        setQrOpen(true);
+      }
       setOpen(false);
-      setQrOpen(true);
 
       // Reset form
       setFormData({
@@ -556,7 +559,6 @@ export function AssetRegistry() {
         method: "DELETE",
         headers
       });
-
       if (!res.ok) throw new Error("Failed to delete asset");
 
       refresh();
@@ -574,28 +576,27 @@ export function AssetRegistry() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* ── Page header ── */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            Asset Registry
-          </h1>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Centralized view of all IT hardware assets managed by the department.
-          </p>
+    <>
+      <div className="space-y-6 print:hidden">
+        {/* ── Page header ── */}
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              Asset Registry
+            </h1>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Centralized view of all IT hardware assets managed by the department.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="h-9 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-xs font-semibold shadow-sm hover:shadow-lg transition-all active:scale-95"
+            onClick={() => setOpen(true)}
+          >
+            <span className="mr-1.5 text-sm leading-none">+</span>
+            Add Asset
+          </Button>
         </div>
-        <Button
-          size="sm"
-          className="h-9 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-xs font-semibold shadow-sm hover:shadow-lg transition-all active:scale-95"
-          onClick={() => setOpen(true)}
-        >
-          <span className="mr-1.5 text-sm leading-none">+</span>
-          Add Asset
-        </Button>
-      </div>
-
-      {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {statCards.map((card) => (
           <div
@@ -934,9 +935,9 @@ export function AssetRegistry() {
         title="Add Asset"
         description="Register a new IT hardware asset into the MIRA registry."
         overlayClassName={qrOpen ? "!bg-transparent dark:!bg-transparent !backdrop-blur-none pointer-events-none" : ""} // Remove double overlay
-        className={qrOpen ? "pointer-events-auto -translate-x-[52%] h-[480px]" : "h-[480px]"} // Shift to the left if QR modal is open
+        className={qrOpen ? "pointer-events-auto -translate-x-[52%]" : ""} // Shift to the left if QR modal is open
       >
-        <form className="space-y-4 text-xs flex flex-col h-[400px]">
+        <form className="space-y-4 text-xs flex flex-col">
           {/* Row 1: Tag + Name */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -1112,7 +1113,7 @@ export function AssetRegistry() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-1 mt-auto">
+          <div className="flex items-center justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
@@ -1120,14 +1121,14 @@ export function AssetRegistry() {
               className="h-8 rounded-full border-slate-200 px-4 text-[11px]"
               onClick={() => { setOpen(false); setIsAddingType(false); setIsAddingRoom(false); setIsAddingFloor(false); }}
             >
-              Cancel
+              Close
             </Button>
             <Button
               type="button"
               disabled={isGeneratingQr || !formData.assetName || !formData.tag}
-              onClick={handleSaveAsset}
+              onClick={() => handleSaveAsset(true)}
               size="sm"
-              className="h-8 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-[11px] font-semibold text-white shadow-sm hover:shadow-lg transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-80 flex items-center justify-center gap-1.5"
+              className="h-8 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-5 text-[11px] font-semibold text-white shadow-sm hover:bg-slate-800 hover:shadow-lg transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-80 flex items-center justify-center gap-1.5"
             >
               {isGeneratingQr ? (
                 <>
@@ -1148,135 +1149,192 @@ export function AssetRegistry() {
       {/* ── View Asset Modal ── */}
       <Modal
         open={viewOpen}
-        onClose={() => setViewOpen(false)}
+        onClose={() => { setViewOpen(false); setShowAllImages(false); }}
         title="View Asset Details"
         description="Detailed information and QR code for this asset."
-        className="w-full max-w-lg h-full overflow-y-auto"
+        className="w-full max-w-3xl"
+        contentClassName="p-0"
       >
         {selectedViewAsset && (
-          <div className="space-y-4 text-xs flex flex-col pt-4 pr-1 pb-1 ">
-            {/* QR Code */}
-            <div className="flex gap-5">
-              <div className="flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 shrink-0">
-                <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-white mb-3">
-                  <QRCodeSVG
-                    value={`MIRA Asset\nTag: ${selectedViewAsset.tag || selectedViewAsset.id}\nName: ${selectedViewAsset.assetName}\nCategory: ${selectedViewAsset.assetTypeRel?.name}`}
-                    size={110}
-                    level="H"
-                  />
+          <div className="text-xs flex flex-col">
+            <div className="p-6 space-y-6">
+            {/* Top Section: Three Columns */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+              
+              <div className="flex flex-col gap-3">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Asset QR</h4>
+                <div className="group relative flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 aspect-square w-full overflow-hidden">
+                  <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-white mb-0 transition-transform duration-300 group-hover:scale-95">
+                    <QRCodeSVG
+                      value={`MIRA Asset\nTag: ${selectedViewAsset.tag || selectedViewAsset.id}\nName: ${selectedViewAsset.assetName}\nCategory: ${selectedViewAsset.assetTypeRel?.name}`}
+                      size={135}
+                      level="H"
+                    />
+                  </div>
+                  
+                  {/* Hover Overlay for Print */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100 backdrop-blur-[1px]">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-10 rounded-full bg-white px-5 text-[12px] font-bold text-slate-900 shadow-xl hover:bg-slate-50 transition-all active:scale-95 flex items-center gap-2"
+                      onClick={() => window.print()}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-4 w-4">
+                        <polyline points="6 9 6 2 18 2 18 9" />
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                        <rect x="6" y="14" width="12" height="8" />
+                      </svg>
+                      Print Tag
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="h-8 w-full rounded-full bg-slate-900 px-4 text-[11px] font-semibold text-white shadow-sm hover:bg-slate-800 transition-all active:scale-95 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
-                  onClick={() => window.print()}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="mr-1.5 h-3.5 w-3.5">
-                    <polyline points="6 9 6 2 18 2 18 9" />
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                    <rect x="6" y="14" width="12" height="8" />
-                  </svg>
-                  Print QR
-                </Button>
               </div>
 
-              <div className="flex-1 space-y-4 pt-1">
+              {/* Column 2: Info (Tag, Name, Status, Location) */}
+              <div className="space-y-4 pt-1">
                 <div>
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Asset Tag</h4>
-                  {selectedViewAsset.tag}
+                  <p className="text-[14px] font-semibold text-slate-700 dark:text-slate-300 font-mono tracking-tight">{selectedViewAsset.tag}</p>
                 </div>
                 <div>
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Asset Name</h4>
-                  <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-tight">{selectedViewAsset.assetName}</p>
-                  <p className="text-[12px] text-slate-500 mt-1">{selectedViewAsset.serialNumber} &nbsp;•&nbsp; {selectedViewAsset.assetTypeRel?.name}</p>
+                  <p className="text-[16px] font-bold text-slate-900 dark:text-slate-100 leading-tight">{selectedViewAsset.assetName}</p>
+                  <p className="text-[12px] text-slate-500 mt-1">{selectedViewAsset.serialNumber || "No Serial"} &nbsp;•&nbsp; {selectedViewAsset.assetTypeRel?.name}</p>
                 </div>
-              </div>
-            </div>
-
-            {/* Status and Location */}
-            <div className="grid grid-cols-2 gap-3 mt-1">
-              <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b]">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Status</h4>
-                <div className="flex items-center gap-2">
-                  <span className={`h- 2.5 w-2.5 rounded-full ${statusDot[selectedViewAsset.currentStatus] || 'bg-slate-400'}`}></span>
-                  <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">{selectedViewAsset.currentStatus}</span>
-                </div>
-              </div>
-
-              <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b]">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Location</h4>
-                <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-700 dark:text-slate-300">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4 text-slate-400">
-                    <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  {selectedViewAsset.roomRel?.name} {selectedViewAsset.floorRel ? `– ${selectedViewAsset.floorRel.name}` : ""}
-                </div>
-              </div>
-            </div>
-
-            {/* Assignment Details */}
-            <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b] flex-1">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Assignment Details</h4>
-              {selectedViewAsset.assignedTo ? (
-                <div className="flex items-center gap-3 mt-1">
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-full text-[12px] font-bold ${getAvatarColor(selectedViewAsset.assignedTo.slice(0, 2).toUpperCase())} shadow-sm`}>
-                    {selectedViewAsset.assignedTo.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-bold text-slate-800 dark:text-slate-200">{selectedViewAsset.assignedTo}</p>
-                    <p className="text-[11px] font-medium text-slate-500 mt-0.5">Current Assignee</p>
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-slate-400/80">Status</h4>
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-full ${statusDot[selectedViewAsset.currentStatus] || 'bg-slate-400'}`}></span>
+                    <p className="text-[16px] font-bold text-slate-900 dark:text-slate-100 leading-tight">{selectedViewAsset.currentStatus}</p>
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-center gap-3 mt-1">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-slate-400/80">Location</h4>
+                  <div className="flex items-center gap-1.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-4 w-4 text-slate-500">
+                      <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+                      <circle cx="12" cy="10" r="3" />
                     </svg>
+                    <p className="text-[16px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                      {selectedViewAsset.roomRel?.name || "N/A"} {selectedViewAsset.floorRel ? `– ${selectedViewAsset.floorRel.name}` : ""}
+                    </p>
                   </div>
-                  <p className="text-[12px] font-medium text-slate-500 italic">This asset is not currently assigned to anyone.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Images */}
-            {selectedViewAsset.image && selectedViewAsset.image.length > 0 && (
-              <div className="p-3.5 border border-slate-100 dark:border-teal-800/25 rounded-xl bg-slate-50/50 dark:bg-[#09090b] flex-1">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Images</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  {selectedViewAsset.image.map((img, index) => (
-                    <a key={index} href={img} target="_blank" rel="noreferrer" className="group relative block aspect-square overflow-hidden rounded-lg border border-slate-200 dark:border-teal-800/30">
-                      <img
-                        src={img}
-                        alt={`Asset image ${index + 1}`}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 text-white">
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                          <polyline points="15 3 21 3 21 9" />
-                          <line x1="10" x2="21" y1="14" y2="3" />
-                        </svg>
-                      </div>
-                    </a>
-                  ))}
                 </div>
               </div>
-            )}
 
-            {/* Close Button */}
-            <div className="flex items-center justify-end gap-2 pt-2 mt-auto">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 rounded-full border-slate-200 px-5 text-[11px] font-medium"
-                onClick={() => setViewOpen(false)}
-              >
-                Close
-              </Button>
+              {/* Column 3: Images */}
+              <div className="flex flex-col">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Asset Images</h4>
+                {selectedViewAsset.image && selectedViewAsset.image.length > 0 ? (
+                  <div className="space-y-3">
+                    {!showAllImages ? (
+                      <button 
+                        onClick={() => setShowAllImages(true)}
+                        className="group relative block aspect-square w-full overflow-hidden rounded-xl border border-slate-200 dark:border-teal-800/30 bg-slate-100 dark:bg-slate-900"
+                      >
+                        <img
+                          src={selectedViewAsset.image[0]}
+                          alt="Asset preview"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="mb-1 h-6 w-6 text-white">
+                            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                          </svg>
+                          <span className="text-[10px] font-bold text-white uppercase tracking-wider">
+                            View All {selectedViewAsset.image.length > 1 ? `(${selectedViewAsset.image.length})` : ""}
+                          </span>
+                        </div>
+                      </button>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        {selectedViewAsset.image.map((img, index) => (
+                          <a key={index} href={img} target="_blank" rel="noreferrer" className="group relative block aspect-square overflow-hidden rounded-lg border border-slate-200 dark:border-teal-800/30">
+                            <img
+                              src={img}
+                              alt={`Asset image ${index + 1}`}
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4 text-white">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                              </svg>
+                            </div>
+                          </a>
+                        ))}
+                        <button 
+                          onClick={() => setShowAllImages(false)}
+                          className="col-span-2 mt-1 text-[10px] font-bold text-primary hover:underline uppercase text-center"
+                        >
+                          Show Less
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 bg-slate-50 dark:bg-slate-900/30">
+                    <p className="text-[10px] text-slate-400 italic">No images</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Section: Assignment & Specs - Two Column Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Left Column: Assignment Details */}
+              <div className="p-4 border border-slate-100 dark:border-teal-800/25 rounded-2xl bg-slate-50/50 dark:bg-[#09090b]">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Assignment Details</h4>
+                {selectedViewAsset.assignedTo ? (
+                  <div className="flex items-center gap-4">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-bold ${getAvatarColor(selectedViewAsset.assignedTo.slice(0, 2).toUpperCase())} shadow-sm`}>
+                      {selectedViewAsset.assignedTo.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-[14px] font-bold text-slate-800 dark:text-slate-200">{selectedViewAsset.assignedTo}</p>
+                      <p className="text-[11px] font-medium text-slate-500 mt-0.5">Current Assignee</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 py-1">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    </div>
+                    <p className="text-[12px] font-medium text-slate-500 italic">This asset is not currently assigned to anyone.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Asset Specs */}
+              <div className="p-4 border border-slate-100 dark:border-teal-800/25 rounded-2xl bg-slate-50/50 dark:bg-[#09090b]">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Asset Specs</h4>
+                {selectedViewAsset.specification ? (
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2.5">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-3.5 w-3.5 mt-0.5 text-slate-400">
+                        <path d="m21 16-4 4-4-4" /><path d="M17 20V4" /><path d="m3 8 4-4 4 4" /><path d="M7 4v16" />
+                      </svg>
+                      <p className="text-[12px] font-medium text-slate-600 dark:text-slate-400 leading-snug">
+                        {selectedViewAsset.specification}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 py-1">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                        <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                    </div>
+                    <p className="text-[12px] font-medium text-slate-500 italic">No specifications provided for this asset.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             </div>
           </div>
         )}
@@ -1559,6 +1617,24 @@ export function AssetRegistry() {
           </div>
         </div>
       </Modal >
-    </div >
-  );
+    </div>
+
+    {/* ── Print-only QR Code Section ── */}
+    <div className="hidden print:flex fixed inset-0 items-center justify-center bg-white z-[99999]">
+      {selectedViewAsset && (
+        <div className="flex flex-col items-center">
+          <QRCodeSVG
+            value={`MIRA Asset\nTag: ${selectedViewAsset.tag || selectedViewAsset.id}\nName: ${selectedViewAsset.assetName}\nCategory: ${selectedViewAsset.assetTypeRel?.name}`}
+            size={320}
+            level="H"
+          />
+          <div className="mt-8 text-center">
+            <p className="text-4xl font-black text-black leading-tight">{selectedViewAsset.assetName}</p>
+            <p className="text-2xl font-mono text-slate-800 mt-3 border-t-2 border-slate-100 pt-3">{selectedViewAsset.tag}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  </>
+);
 }
