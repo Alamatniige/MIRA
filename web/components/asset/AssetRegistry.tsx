@@ -208,7 +208,6 @@ export function AssetRegistry() {
   const [open, setOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
-  const [showAllImages, setShowAllImages] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [selectedQrAsset, setSelectedQrAsset] = useState<Asset | null>(null); // Default to first asset for demo
@@ -223,6 +222,11 @@ export function AssetRegistry() {
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [gallerySource, setGallerySource] = useState<"add" | "edit" | "view" | null>(null);
 
   // States for dynamic dropdowns
   const [isAddingType, setIsAddingType] = useState(false);
@@ -244,7 +248,93 @@ export function AssetRegistry() {
     currentStatus: "Available",
     room: "",
     floor: "",
+    serialNumber: "",
+    specification: "",
   });
+
+  // Cleanup object URLs to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [imagePreviews]);
+
+  const handleImageChange = (files: FileList | null) => {
+    if (files) {
+      const newFiles = Array.from(files);
+      setImageFiles(prev => [...prev, ...newFiles]);
+      
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setImagePreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const newFiles = [...imageFiles];
+    newFiles.splice(index, 1);
+    setImageFiles(newFiles);
+
+    const newPreviews = [...imagePreviews];
+    URL.revokeObjectURL(newPreviews[index]);
+    newPreviews.splice(index, 1);
+    setImagePreviews(newPreviews);
+  };
+
+  const removeExistingImage = (index: number) => {
+    if (selectedEditAsset && selectedEditAsset.image) {
+      const newExistingImages = [...selectedEditAsset.image];
+      newExistingImages.splice(index, 1);
+      setSelectedEditAsset({ ...selectedEditAsset, image: newExistingImages });
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleImageChange(e.dataTransfer.files);
+  };
+
+  const allImages =
+    gallerySource === "edit"
+      ? [...(selectedEditAsset?.image || []), ...imagePreviews]
+      : gallerySource === "view"
+        ? selectedViewAsset?.image || []
+        : imagePreviews;
+
+  const openGallery = (idx: number) => {
+    setGalleryIndex(idx);
+    setGalleryOpen(true);
+  };
+
+  const galleryPrev = () => setGalleryIndex(i => (i - 1 + allImages.length) % allImages.length);
+  const galleryNext = () => setGalleryIndex(i => (i + 1) % allImages.length);
+
+  const removeImageFromGallery = (idx: number) => {
+    if (editModal) {
+      const existingCount = selectedEditAsset?.image?.length || 0;
+      if (idx < existingCount) {
+        removeExistingImage(idx);
+      } else {
+        removeImage(idx - existingCount);
+      }
+    } else {
+      removeImage(idx);
+    }
+    
+    if (galleryIndex >= allImages.length - 1) {
+      setGalleryIndex(Math.max(0, allImages.length - 2));
+    }
+  };
 
   const { assets, assetsTypes, assetRooms, assetFloors, filterOptions, error, refresh } = useAssets();
 
@@ -344,8 +434,8 @@ export function AssetRegistry() {
       const payload = {
         assetName: formData.assetName,
         assetType: typeId,
-        serialNumber: "",
-        specification: "",
+        serialNumber: formData.serialNumber,
+        specification: formData.specification,
         room: roomId,
         floor: floorId,
         tag: formData.tag,
@@ -373,7 +463,7 @@ export function AssetRegistry() {
 
       // Reset form
       setFormData({
-        tag: "", assetName: "", assetType: "", currentStatus: "Available", room: "", floor: ""
+        tag: "", assetName: "", assetType: "", currentStatus: "Available", room: "", floor: "", serialNumber: "", specification: ""
       });
       setIsAddingType(false);
       setIsAddingRoom(false);
@@ -382,6 +472,7 @@ export function AssetRegistry() {
       setNewRoom("");
       setNewFloor("");
       setImageFiles([]);
+      setImagePreviews([]);
 
     } catch (err) {
       console.error(err);
@@ -413,6 +504,9 @@ export function AssetRegistry() {
     const matchesFloor = !floorFilter || a.floorRel?.name === floorFilter;
 
     return matchesSearch && matchesStatus && matchesCategory && matchesRoom && matchesFloor;
+  }).sort((a, b) => {
+    // Sort by tag ascending (e.g. AS-01, AS-02)
+    return (a.tag || "").localeCompare(b.tag || "", undefined, { numeric: true, sensitivity: 'base' });
   });
 
   const handleUpdateAsset = async () => {
@@ -534,6 +628,7 @@ export function AssetRegistry() {
       setSelectedEditAsset(newlyUpdatedAsset);
       setSelectedViewAsset(newlyUpdatedAsset);
       setImageFiles([]);
+      setImagePreviews([]);
 
       refresh();
       setEditModal(false);
@@ -938,8 +1033,8 @@ export function AssetRegistry() {
         className={qrOpen ? "pointer-events-auto -translate-x-[52%]" : ""} // Shift to the left if QR modal is open
       >
         <form className="space-y-4 text-xs flex flex-col">
-          {/* Row 1: Tag + Name */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Row 1: Tag + Name + Category */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Asset Tag
@@ -952,10 +1047,6 @@ export function AssetRegistry() {
               </label>
               <Input placeholder="e.g. Lenovo ThinkPad T14 Gen 3" className="h-8 text-[11px]" value={formData.assetName} onChange={(e) => setFormData(p => ({ ...p, assetName: e.target.value }))} />
             </div>
-          </div>
-
-          {/* Row 2: Category + Status */}
-          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Category
@@ -993,6 +1084,10 @@ export function AssetRegistry() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Row 2: Status + Room + Floor */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Status
@@ -1008,10 +1103,6 @@ export function AssetRegistry() {
                 ))}
               </select>
             </div>
-          </div>
-
-          {/* Row 3: Location */}
-          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Room
@@ -1088,26 +1179,135 @@ export function AssetRegistry() {
             </div>
           </div>
 
-          {/* Row 4: Image */}
-          <div className="grid grid-cols-1 gap-3">
+          {/* Row 3: Specs */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                Asset Image
+                Serial Number
               </label>
               <Input
+                placeholder="e.g. SN-123456"
+                className="h-8 text-[11px]"
+                value={formData.serialNumber}
+                onChange={(e) => setFormData(p => ({ ...p, serialNumber: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Specifications
+              </label>
+              <Input
+                placeholder="e.g. Intel i7, 16GB RAM, 512GB SSD"
+                className="h-8 text-[11px]"
+                value={formData.specification}
+                onChange={(e) => setFormData(p => ({ ...p, specification: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Asset Images
+              </label>
+              {imagePreviews.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGallerySource("add");
+                    openGallery(0);
+                  }}
+                  className="text-[10px] font-semibold text-primary hover:underline"
+                >
+                  View All ({imagePreviews.length})
+                </button>
+              )}
+            </div>
+
+            <div
+              className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${
+                isDragging
+                  ? "border-primary bg-primary/5 dark:bg-teal-900/10"
+                  : "border-slate-200 dark:border-teal-800/30"
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              {/* Invisible file input - only top layer when no images */}
+              <input
                 type="file"
                 multiple
                 accept="image/*"
-                className="h-8 text-[11px] py-1.5 cursor-pointer file:cursor-pointer file:mr-3 file:border-0 file:bg-primary/10 file:text-primary file:rounded-md file:px-3 file:py-0.5"
-                onChange={(e) => {
-                  if (e.target.files) {
-                    setImageFiles(Array.from(e.target.files));
-                  }
-                }}
+                className={`absolute inset-0 h-full w-full cursor-pointer opacity-0 ${imagePreviews.length === 0 ? 'z-10' : 'z-0'}`}
+                onChange={(e) => handleImageChange(e.target.files)}
               />
-              {imageFiles.length > 0 && (
-                <div className="mt-2 text-[10px] text-slate-500">
-                  {imageFiles.length} file(s) selected
+
+              {imagePreviews.length === 0 ? (
+                /* Empty state */
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${
+                    isDragging ? "bg-primary/20 text-primary" : "bg-white dark:bg-slate-800 text-slate-400 shadow-sm"
+                  }`}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                  </div>
+                  <p className="mb-1 text-[12px] font-semibold text-slate-700 dark:text-slate-200">
+                    Click to upload <span className="font-normal text-slate-500">or drag and drop</span>
+                  </p>
+                  <p className="text-[10px] text-slate-500">SVG, PNG, JPG or GIF (max. 5MB)</p>
+                </div>
+              ) : (
+                <div 
+                  className="relative z-20 h-36 bg-slate-100 dark:bg-slate-900 group cursor-pointer"
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
+                    setGallerySource("add");
+                    openGallery(0); 
+                  }}
+                >
+                  <img
+                    src={imagePreviews[0]}
+                    alt="Preview"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  {/* dark overlay for readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  
+                  {/* [NEW] Hover Overlay with Plus Sign */}
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 shadow-xl transform scale-75 group-hover:scale-100 transition-transform focus:outline-none">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="h-6 w-6">
+                        <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Count badge (simplified) */}
+                  {imagePreviews.length > 1 && (
+                    <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} className="h-3 w-3">
+                        <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
+                      </svg>
+                      {imagePreviews.length} photos
+                    </div>
+                  )}
+
+                  {/* Remove first image - Stop propagation so it doesn't open gallery */}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeImage(0); }}
+                    className="absolute right-2 top-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-500 transition-all hover:scale-110 active:scale-95 shadow-lg"
+                    title="Remove image"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-3.5 w-3.5">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
                 </div>
               )}
             </div>
@@ -1149,7 +1349,7 @@ export function AssetRegistry() {
       {/* ── View Asset Modal ── */}
       <Modal
         open={viewOpen}
-        onClose={() => { setViewOpen(false); setShowAllImages(false); }}
+        onClose={() => { setViewOpen(false); }}
         title="View Asset Details"
         description="Detailed information and QR code for this asset."
         className="w-full max-w-3xl"
@@ -1227,48 +1427,39 @@ export function AssetRegistry() {
               <div className="flex flex-col">
                 <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Asset Images</h4>
                 {selectedViewAsset.image && selectedViewAsset.image.length > 0 ? (
-                  <div className="space-y-3">
-                    {!showAllImages ? (
-                      <button 
-                        onClick={() => setShowAllImages(true)}
-                        className="group relative block aspect-square w-full overflow-hidden rounded-xl border border-slate-200 dark:border-teal-800/30 bg-slate-100 dark:bg-slate-900"
-                      >
-                        <img
-                          src={selectedViewAsset.image[0]}
-                          alt="Asset preview"
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="mb-1 h-6 w-6 text-white">
-                            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                          </svg>
-                          <span className="text-[10px] font-bold text-white uppercase tracking-wider">
-                            View All {selectedViewAsset.image.length > 1 ? `(${selectedViewAsset.image.length})` : ""}
-                          </span>
-                        </div>
-                      </button>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2">
-                        {selectedViewAsset.image.map((img, index) => (
-                          <a key={index} href={img} target="_blank" rel="noreferrer" className="group relative block aspect-square overflow-hidden rounded-lg border border-slate-200 dark:border-teal-800/30">
-                            <img
-                              src={img}
-                              alt={`Asset image ${index + 1}`}
-                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4 text-white">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                              </svg>
-                            </div>
-                          </a>
-                        ))}
-                        <button 
-                          onClick={() => setShowAllImages(false)}
-                          className="col-span-2 mt-1 text-[10px] font-bold text-primary hover:underline uppercase text-center"
-                        >
-                          Show Less
-                        </button>
+                  <div 
+                    className="relative z-20 aspect-square w-full overflow-hidden rounded-xl border border-slate-200 dark:border-teal-800/30 bg-slate-100 dark:bg-slate-900 group cursor-pointer"
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      e.stopPropagation(); 
+                      setGallerySource("view");
+                      openGallery(0); 
+                    }}
+                  >
+                    <img
+                      src={selectedViewAsset.image[0]}
+                      alt="Asset preview"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    
+                    {/* Hover Overlay with Eye Icon */}
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 shadow-xl transform scale-75 group-hover:scale-100 transition-transform">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+                          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Photo Count Badge */}
+                    {selectedViewAsset.image.length > 1 && (
+                      <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} className="h-3 w-3">
+                          <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
+                        </svg>
+                        {selectedViewAsset.image.length} photos
                       </div>
                     )}
                   </div>
@@ -1525,27 +1716,119 @@ export function AssetRegistry() {
               </div>
             </div>
 
-            {/* Image */}
+            {/* Image section simplified to match Add modal */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="edit-image" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Asset Image (Optional)</label>
-              <input
-                type="file"
-                id="edit-image"
-                multiple
-                accept="image/*"
-                onChange={(e) => {
-                  if (e.target.files) {
-                    setImageFiles(Array.from(e.target.files));
-                  }
-                }}
-                className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors file:cursor-pointer file:mr-3 file:border-0 file:bg-primary/10 file:text-primary file:font-semibold file:rounded-md file:px-2 file:py-0.5 cursor-pointer"
-              />
-              {selectedEditAsset.image && selectedEditAsset.image.length > 0 && imageFiles.length === 0 && (
-                <p className="text-[10px] text-slate-400 mt-1">Current images will be kept if no new files are selected. ({selectedEditAsset.image.length} saved)</p>
-              )}
-              {imageFiles.length > 0 && (
-                <p className="text-[10px] text-slate-700 dark:text-slate-300 font-semibold mt-1">New files to upload: {imageFiles.length}</p>
-              )}
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  Asset Images
+                </label>
+                {allImages.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGallerySource("edit");
+                      openGallery(0);
+                    }}
+                    className="text-[10px] font-semibold text-primary hover:underline"
+                  >
+                    View All ({allImages.length})
+                  </button>
+                )}
+              </div>
+              
+              <div 
+                className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${
+                  isDragging 
+                    ? "border-primary bg-primary/5 dark:bg-teal-900/10" 
+                    : "border-slate-200 dark:border-teal-800/30"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className={`absolute inset-0 h-full w-full cursor-pointer opacity-0 ${allImages.length === 0 ? 'z-10' : 'z-0'}`}
+                  onChange={(e) => handleImageChange(e.target.files)}
+                />
+
+                {allImages.length === 0 ? (
+                  <div className="flex items-center gap-4 text-left p-5 pointer-events-none">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isDragging ? "bg-primary/20 text-primary" : "bg-white dark:bg-slate-800 text-slate-400 shadow-sm"}`}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">
+                        Click or drag and drop to add images
+                      </p>
+                      <p className="text-[10px] text-slate-500">SVG, PNG, JPG or GIF (max. 5MB)</p>
+                    </div>
+                  </div>
+                ) : (
+                  /* Single stacked preview with first image (existing or new) */
+                  <div 
+                    className="relative z-20 h-32 bg-slate-100 dark:bg-slate-900 group cursor-pointer"
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      e.stopPropagation(); 
+                      setGallerySource("edit");
+                      openGallery(0); 
+                    }}
+                  >
+                    <img 
+                      src={allImages[0]} 
+                      alt="Preview" 
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    
+                    {/* Hover Overlay with Plus Sign */}
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 shadow-xl transform scale-75 group-hover:scale-100 transition-transform">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="h-6 w-6">
+                          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Badge for "Saved" or "New" if it's the only one, or photo count */}
+                    <div className="absolute bottom-2 left-2 z-20 flex items-center gap-2">
+                      {allImages.length > 1 ? (
+                        <div className="flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3 w-3">
+                            <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
+                          </svg>
+                          {allImages.length} photos
+                        </div>
+                      ) : (
+                        <div className={`rounded-full px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm ${
+                          selectedEditAsset.image && selectedEditAsset.image.length > 0 ? "bg-black/60" : "bg-primary"
+                        }`}>
+                          {selectedEditAsset.image && selectedEditAsset.image.length > 0 ? "Saved" : "New"}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quick remove for the shown image - stop propagation to prevent opening gallery */}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeImageFromGallery(0); }}
+                      className="absolute right-2 top-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-500 transition-all hover:scale-110 active:scale-95 shadow-lg"
+                      title="Delete this image"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-3.5 w-3.5">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-teal-800/25 mt-2">
@@ -1618,6 +1901,118 @@ export function AssetRegistry() {
         </div>
       </Modal >
     </div>
+
+    {/* ── Image Lightbox Modal ── */}
+    {galleryOpen && allImages.length > 0 && (
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm"
+        onClick={() => { 
+          setGalleryOpen(false); 
+          setGallerySource(null);
+        }}
+      >
+        {/* Modal container – stop propagation so clicking inside doesn't close */}
+        <div
+          className="relative flex flex-col items-center w-full max-w-2xl px-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Explicit Close Button at top-right of container */}
+          <button
+            onClick={() => { 
+              setGalleryOpen(false); 
+              setGallerySource(null);
+            }}
+            className="absolute -right-4 -top-8 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition-all active:scale-90"
+            title="Close Gallery"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-6 w-6">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
+          {/* Counter */}
+          <p className="mb-3 text-[12px] font-semibold text-white/70 tracking-widest uppercase">
+            {galleryIndex + 1} / {allImages.length}
+          </p>
+
+          {/* Main image */}
+          <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black">
+            <img
+              src={allImages[galleryIndex]}
+              alt={`Image ${galleryIndex + 1}`}
+              className="w-full max-h-[60vh] object-contain"
+            />
+
+            {/* Left arrow */}
+            {allImages.length > 1 && (
+              <button
+                onClick={galleryPrev}
+                className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+                title="Previous image"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-5 w-5">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+            )}
+
+            {/* Right arrow */}
+            {allImages.length > 1 && (
+              <button
+                onClick={galleryNext}
+                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+                title="Next image"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-5 w-5">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            )}
+
+            {/* Navigation and Close only as per user request */}
+          </div>
+
+          {/* Thumbnail strip */}
+          {allImages.length > 1 && (
+            <div className="mt-4 flex gap-2 overflow-x-auto pb-1 max-w-full">
+              {allImages.map((url, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setGalleryIndex(idx)}
+                  className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                    idx === galleryIndex ? "border-primary scale-110" : "border-transparent opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img src={url} alt={`Thumb ${idx}`} className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Delete button for Add Asset uploads */}
+          {gallerySource === "add" && (
+            <button
+              onClick={() => removeImageFromGallery(galleryIndex)}
+              className="mt-4 h-9 rounded-full bg-red-600 hover:bg-red-700 px-5 text-[12px] font-semibold text-white shadow-sm self-start"
+            >
+              Delete this photo
+            </button>
+          )}
+
+          {/* Close / Done */}
+          <button
+            onClick={() => { 
+              setGalleryOpen(false); 
+              setGallerySource(null);
+            }}
+            className="mt-5 h-9 rounded-full bg-white/10 hover:bg-white/20 px-6 text-[12px] font-semibold text-white transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    )}
+
 
     {/* ── Print-only QR Code Section ── */}
     <div className="hidden print:flex fixed inset-0 items-center justify-center bg-white z-[99999]">
