@@ -1,49 +1,55 @@
 import type { Assignment } from "@/types/mira";
+import { useCallback, useEffect, useState } from "react";
 
-const MOCK_ASSIGNMENTS: Assignment[] = [
-  {
-    id: "asgmt-1",
-    assetId: "asset-lpt-02318",
-    assetTag: "LPT-02318",
-    assetName: "Lenovo ThinkPad T14",
-    assignee: "Santos, Mark",
-    department: "IT",
-    status: "ASSIGNED",
-    notes: "Primary workstation for IT Operations.",
-    assignedAt: "2026-03-04T09:32:00Z",
-  },
-  {
-    id: "asgmt-2",
-    assetId: "asset-lpt-02197",
-    assetTag: "LPT-02197",
-    assetName: 'MacBook Pro 14"',
-    assignee: "Dela Cruz, Ana",
-    department: "FINANCE",
-    status: "ASSIGNED",
-    notes: "Finance lead; requires mobility.",
-    assignedAt: "2026-03-02T11:47:00Z",
-  },
-  {
-    id: "asgmt-3",
-    assetId: "asset-mon-00872",
-    assetTag: "MON-00872",
-    assetName: 'Dell UltraSharp 27"',
-    assignee: "Unassigned",
-    department: "OTHER",
-    status: "RETURNED",
-    notes: "Returned to central inventory.",
-    assignedAt: "2025-12-15T09:00:00Z",
-    returnedAt: "2026-03-03T17:10:00Z",
-  },
-];
 
 export function useAssignments() {
-  const assignments = MOCK_ASSIGNMENTS;
+  const [assignments, setAssignments] = useState<Assignment[]>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const getHeaders = useCallback(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("mira_token") : null;
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }, []);
+
+  const fetchAssignments = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/assign`, {
+        headers: getHeaders(),
+      });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch assignments");
+      }
+
+      setAssignments(Array.isArray(data) ? data : []);
+
+    } catch (err: unknown) {
+      console.error("Failed to fetch assignments:", err);
+      setError(err instanceof Error ? err.message : "Failed to load assignments");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getHeaders]);
+
+
+  useEffect(() => {
+    fetchAssignments();
+  }, [fetchAssignments]);
 
   return {
     assignments,
-    activeAssignments: assignments.filter((a) => a.status === "ASSIGNED"),
-    returnedAssignments: assignments.filter((a) => a.status === "RETURNED"),
+    isLoading,
+    error,
+    refresh: fetchAssignments,
+
   };
 }
 
