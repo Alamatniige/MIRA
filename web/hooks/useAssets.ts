@@ -113,7 +113,7 @@ export function useAssets() {
     // Stats and Filters
     assigned: assets.filter((a) => Boolean(a.isAssigned)).length,
     total: assets.length,
-    active: assets.filter((a) => a.currentStatus === "Active").length,
+    unavailable: assets.filter((a) => a.currentStatus === "Unavailable").length,
     available: assets.filter((a) => a.currentStatus === "Available").length,
     underMaintenance: assets.filter((a) => a.currentStatus === "Under Maintenance").length,
     filterOptions,

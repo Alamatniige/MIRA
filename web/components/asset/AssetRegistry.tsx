@@ -38,7 +38,7 @@ const statCards = [
     valueColor: "text-teal-800 dark:text-teal-200",
   },
   {
-    label: "Assigned",
+    label: "Unavailable",
     value: "896",
     sub: "69.8% utilization",
     icon: (
@@ -181,10 +181,9 @@ const categoryMeta: Record<string, CategoryMeta> = {
 };
 
 const statusDot: Record<string, string> = {
-  Assigned: "bg-emerald-500",
+  Unavailable: "bg-emerald-500",
   Available: "bg-slate-400",
   "Under Maintenance": "bg-amber-400",
-  Retired: "bg-red-400",
 };
 
 const avatarColors = [
@@ -392,24 +391,23 @@ export function AssetRegistry() {
     filterOptions,
     refresh,
     total,
-    assigned,
+    unavailable,
     available,
     underMaintenance,
   } = useAssets();
 
   const safeTotal = total || 0;
-  const safeAssigned = assigned || 0;
+  const safeUnavailable = unavailable || 0;
   const safeAvailable = available || 0;
   const safeUnderMaintenance = underMaintenance || 0;
-  const utilization = safeTotal > 0 ? ((safeAssigned / safeTotal) * 100).toFixed(1) : "0.0";
   const statCardValues: Record<string, { value: string; sub: string }> = {
     "Total Assets": {
       value: safeTotal.toLocaleString(),
       sub: safeTotal > 0 ? "Live inventory count" : "No assets registered yet",
     },
-    Assigned: {
-      value: safeAssigned.toLocaleString(),
-      sub: `${utilization}% utilization`,
+    Unavailable: {
+      value: safeUnavailable.toLocaleString(),
+      sub: safeUnavailable > 0 ? `currently in use` : "All assets are available",
     },
     Available: {
       value: safeAvailable.toLocaleString(),
@@ -1188,7 +1186,7 @@ export function AssetRegistry() {
                 onChange={(e) => setFormData(p => ({ ...p, currentStatus: e.target.value }))}
               >
                 <option value="" disabled>Select status</option>
-                {["Active", "Available", "Under Maintenance", "Retired"].map((s) => (
+                {["Available", "Unavailable", "Under Maintenance"].map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
@@ -1720,7 +1718,7 @@ export function AssetRegistry() {
                   className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
                 >
                   <option value="" disabled>Select Status</option>
-                  {["Active", "Available", "Under Maintenance", "Retired"].map((s) => (
+                  {["Available", "Unavailable", "Under Maintenance"].map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>

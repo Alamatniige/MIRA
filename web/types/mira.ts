@@ -1,8 +1,7 @@
 export type AssetStatus =
-  | "ACTIVE"
   | "AVAILABLE"
-  | "UNDER_MAINTENANCE"
-  | "RETIRED";
+  | "UNAVAILABLE"
+  | "UNDER_MAINTENANCE";
 
 export type Department =
   | "IT"
