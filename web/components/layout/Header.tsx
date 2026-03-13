@@ -7,6 +7,7 @@ import { useRef, useState, useEffect } from "react";
 import { Bell, Moon, Sun, Package, Wrench, UserCheck, X, CheckCheck } from "lucide-react";
 import { User as UserType } from "@/types/mira";
 import { useUsers } from "@/hooks/useUsers";
+import { Button } from "../ui/button";
 
 const NOTIFICATIONS = [
   {
@@ -84,21 +85,25 @@ export function Header() {
 
       <div className="flex items-center gap-5">
         {/* Theme Toggle */}
-        <button
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           aria-label="Toggle Dark Mode"
-          className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 shadow-sm transition-all hover:border-[#0F766E]/30 hover:bg-[#0F766E]/5 hover:text-[#0F766E] dark:hover:text-teal-400"
+          className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 shadow-sm transition-all hover:border-[#0F766E]/30 hover:bg-[#0F766E]/5 hover:text-[#0F766E] dark:hover:text-teal-400"
         >
           <Sun className="h-4.5 w-4.5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-4.5 w-4.5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        </button>
+        </Button>
 
         {/* Notification Bell */}
         <div className="relative" ref={panelRef}>
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             aria-label="Notifications"
             onClick={() => setNotifOpen((v) => !v)}
-            className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 shadow-sm transition-all hover:border-[#0F766E]/30 hover:bg-[#0F766E]/5 hover:text-[#0F766E] dark:hover:text-teal-400"
+            className="relative rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 shadow-sm transition-all hover:border-[#0F766E]/30 hover:bg-[#0F766E]/5 hover:text-[#0F766E] dark:hover:text-teal-400"
           >
             <Bell className="h-4.5 w-4.5" />
             {unreadCount > 0 && (
@@ -107,7 +112,7 @@ export function Header() {
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 border border-white" />
               </span>
             )}
-          </button>
+          </Button>
 
           {/* Dropdown Panel */}
           {notifOpen && (
@@ -132,12 +137,14 @@ export function Header() {
                       Mark all read
                     </button>
                   )}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
                     onClick={() => setNotifOpen(false)}
                     className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
                   >
                     <X className="h-3.5 w-3.5" />
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -171,9 +178,9 @@ export function Header() {
 
               {/* Footer */}
               <div className="border-t border-slate-100 dark:border-slate-800 px-4 py-2.5">
-                <button className="w-full rounded-lg py-1.5 text-xs font-medium text-[#0F766E] dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 transition-colors">
+                <Button variant="ghost" className="w-full rounded-lg py-1.5 text-xs font-medium text-[#0F766E] dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 transition-colors">
                   View all notifications
-                </button>
+                </Button>
               </div>
             </div>
           )}

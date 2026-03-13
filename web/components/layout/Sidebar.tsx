@@ -68,13 +68,15 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       </div>
 
       {/* Collapse Toggle */}
-      <button
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="absolute -right-3 top-24 z-50 flex items-center justify-center w-6 h-6 rounded-full bg-teal-50 dark:bg-[#0F766E] text-teal-700 dark:text-white border border-teal-200 dark:border-[#041112] hover:bg-teal-100 dark:hover:bg-[#0E7490] hover:text-[#0F766E] dark:hover:text-white hover:scale-110 transition-all shadow-sm dark:shadow-[0_0_10px_rgba(15,118,110,0.5)]"
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {isCollapsed ? <ChevronRight className="w-3.5 h-3.5 ml-0.5" /> : <ChevronLeft className="w-3.5 h-3.5 mr-0.5" />}
-      </button>
+      </Button>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-6 space-y-2">

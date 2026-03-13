@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FullPageLoader } from "@/components/ui/loader";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -338,9 +339,9 @@ export function DashboardContent() {
                 Latest movements handled by IT
               </p>
             </div>
-            <button className="absolute right-6 top-6 flex items-center gap-1 text-xs font-semibold text-teal-600 transition-colors hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300">
+            <Button variant="ghost" size="sm" className="absolute right-6 top-6 flex items-center gap-1 text-xs font-semibold text-teal-600 transition-colors hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300">
               View All <ChevronRight className="h-3 w-3" />
-            </button>
+            </Button>
           </CardHeader>
           <CardContent className="p-0">
             <Table>

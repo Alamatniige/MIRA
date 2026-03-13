@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ShieldCheck, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
 
 export function LoginForm() {
     const { login } = useAuth();
@@ -130,17 +131,19 @@ export function LoginForm() {
                                         onChange={handleChange}
                                         className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl pl-11 pr-12 py-3.5 outline-none focus:border-[#0F766E] focus:ring-4 focus:ring-[#0F766E]/10 transition-all placeholder:text-slate-400 font-medium tracking-wider shadow-sm"
                                     />
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="ghost"
+                                        size="icon-xs"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-[#0F766E] focus:outline-none transition-colors"
+                                        className="absolute inset-y-0 right-2 h-full flex items-center text-slate-400 hover:text-[#0F766E] focus:outline-none transition-colors"
                                     >
                                         {showPassword ? (
-                                            <EyeOff className="h-5 w-5" />
+                                            <EyeOff className="h-4 w-4" />
                                         ) : (
-                                            <Eye className="h-5 w-5" />
+                                            <Eye className="h-4 w-4" />
                                         )}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
 
@@ -158,11 +161,12 @@ export function LoginForm() {
                             </div>
 
                             <div className="pt-2">
-                                <button
+                                <Button
                                     type="submit"
                                     disabled={isLoading}
+                                    size="lg"
                                     className={cn(
-                                        "w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-semibold text-sm transition-all relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed",
+                                        "w-full flex items-center justify-center gap-2 py-6 rounded-xl text-white font-semibold text-sm transition-all relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed",
                                         "bg-gradient-to-r from-[#0F766E] to-[#0E7490] hover:from-[#115e59] hover:to-[#155e75] shadow-[0_4px_14px_rgba(15,118,110,0.25)]"
                                     )}
                                 >
@@ -177,7 +181,7 @@ export function LoginForm() {
 
                                     {/* Button shine effect */}
                                     <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shimmer" />
-                                </button>
+                                </Button>
                             </div>
                         </form>
 
