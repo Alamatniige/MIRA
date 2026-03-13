@@ -23,6 +23,8 @@ import {
   Search,
   CalendarDays,
   SlidersHorizontal,
+  Check,
+  Eye
 } from 'lucide-react';
 
 import { useAssignments } from '@/hooks/useAssignments';
@@ -67,7 +69,7 @@ const stats = [
   },
 ];
 
-const history = [
+const INITIAL_HISTORY = [
   {
     asset: 'LPT-02318',
     name: 'Lenovo ThinkPad T14',
@@ -75,7 +77,7 @@ const history = [
     initials: 'MS',
     department: 'IT Operations',
     date: 'Mar 4, 2026 · 09:32',
-    status: 'Active',
+    status: 'Confirmed',
     statusVariant: 'success' as const,
   },
   {
@@ -85,7 +87,7 @@ const history = [
     initials: 'AD',
     department: 'Finance',
     date: 'Mar 2, 2026 · 11:47',
-    status: 'Active',
+    status: 'Confirmed',
     statusVariant: 'success' as const,
   },
   {
@@ -95,8 +97,8 @@ const history = [
     initials: '–',
     department: 'Inventory',
     date: 'Mar 3, 2026 · 17:10',
-    status: 'Returned',
-    statusVariant: 'muted' as const,
+    status: 'Pending',
+    statusVariant: 'warning' as const,
   },
   {
     asset: 'SRV-00041',
@@ -105,7 +107,7 @@ const history = [
     initials: 'DC',
     department: 'Infrastructure',
     date: 'Mar 1, 2026 · 14:05',
-    status: 'Under Maintenance',
+    status: 'Pending',
     statusVariant: 'warning' as const,
   },
 ];
@@ -119,7 +121,51 @@ const badgeStyles: Record<string, string> = {
 export function AssignmentView() {
   const [viewTimeline, setViewTimeline] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMorOpen, setIsMorOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [history, setHistory] = useState(INITIAL_HISTORY);
+  const [assignmentToConfirm, setAssignmentToConfirm] = useState<typeof INITIAL_HISTORY[0] | null>(null);
+  const [viewingAssignment, setViewingAssignment] = useState<typeof INITIAL_HISTORY[0] | null>(null);
+  
+  const [assignmentData, setAssignmentData] = useState({
+    asset: '',
+    assignee: '',
+    department: '',
+    date: '',
+    status: 'Confirmed',
+    notes: ''
+  });
   const { isLoading } = useAssignments();
+
+  const handleConfirmAssignment = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In a real app, this would be an API call
+    const newRecord = {
+      asset: assignmentData.asset.split(' · ')[0],
+      name: assignmentData.asset.split(' · ')[1],
+      assignee: assignmentData.assignee,
+      initials: assignmentData.assignee.split(' ').map(n => n[0]).join('').toUpperCase(),
+      department: assignmentData.department,
+      date: new Date(assignmentData.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      status: assignmentData.status,
+      statusVariant: assignmentData.status === 'Confirmed' ? 'success' as const : 'warning' as const,
+    };
+    setHistory([newRecord, ...history]);
+    setIsModalOpen(false);
+    setIsMorOpen(true);
+  };
+
+  const handleFinalConfirm = () => {
+    if (!assignmentToConfirm) return;
+    setHistory(history.map(item => 
+      item.asset === assignmentToConfirm.asset 
+        ? { ...item, status: 'Confirmed', statusVariant: 'success' as const } 
+        : item
+    ));
+    setIsConfirmModalOpen(false);
+    setAssignmentToConfirm(null);
+  };
 
   if (isLoading) {
     return <FullPageLoader label="Loading assignments..." />;
@@ -165,9 +211,9 @@ export function AssignmentView() {
         </div>
 
         {/* Main Grid */}
-        <div className="flex flex-col gap-8 lg:flex-row min-w-auto">
+        <div className="w-full">
           {/* Assignment History */}
-          <Card className="overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#09090b]">
+          <Card className="w-full overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#09090b]">
             <CardHeader className="relative border-b border-slate-100 pb-4 dark:border-white/5">
               <div className="pr-32">
                 <CardTitle className="text-base">Assignment History</CardTitle>
@@ -221,12 +267,38 @@ export function AssignmentView() {
                               {item.name}
                             </p>
                           </div>
-                          <Badge
-                            variant={item.statusVariant}
-                            className={`mt-0.5 shrink-0 text-[10px] ${badgeStyles[item.statusVariant]}`}
-                          >
-                            {item.status}
-                          </Badge>
+                          <div className="flex flex-col items-end gap-1.5">
+                            <Badge
+                              variant={item.statusVariant}
+                              className={`shrink-0 text-[10px] ${badgeStyles[item.statusVariant]}`}
+                            >
+                              {item.status}
+                            </Badge>
+                            <div className="flex gap-2">
+                              {item.status === 'Pending' && (
+                                <button 
+                                  onClick={() => {
+                                    setAssignmentToConfirm(item);
+                                    setIsConfirmModalOpen(true);
+                                  }}
+                                  className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600/10 text-teal-600 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
+                                  title="Confirm Assignment"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => {
+                                  setViewingAssignment(item);
+                                  setIsViewModalOpen(true);
+                                }}
+                                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                         <div className="mt-1.5 flex items-center gap-3">
                           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-linear-to-br from-slate-100 to-slate-200 text-[9px] font-bold text-slate-600 dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
@@ -248,7 +320,8 @@ export function AssignmentView() {
                 </div>
               ) : (
                 /* Table View */
-                <Table>
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader className="bg-slate-50/50 dark:bg-black/50">
                     <TableRow className="border-slate-100 hover:bg-transparent dark:border-white/5">
                       <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
@@ -310,14 +383,36 @@ export function AssignmentView() {
                           </Badge>
                         </TableCell>
                         <TableCell className="p-3 sm:p-4">
-                          <button className="flex items-center gap-0.5 text-[11px] font-semibold text-[#0F766E] transition-colors hover:text-[#0E7490] dark:text-teal-400 dark:hover:text-teal-300">
-                            View trail <ChevronRight className="h-3 w-3" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {item.status === 'Pending' && (
+                              <button 
+                                onClick={() => {
+                                  setAssignmentToConfirm(item);
+                                  setIsConfirmModalOpen(true);
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600/10 text-teal-700 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
+                                title="Confirm Assignment"
+                              >
+                                <Check className="h-4 w-4" />
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => {
+                                setViewingAssignment(item);
+                                setIsViewModalOpen(true);
+                              }}
+                              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-500 dark:hover:bg-zinc-700"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -330,113 +425,350 @@ export function AssignmentView() {
         title="New Asset Assignment"
         description="Capture a new asset assignment or reassignment."
       >
-        <div className="space-y-0 divide-y divide-slate-100 dark:divide-white/5">
-          <Card className="overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#09090b]">
-            <div className="absolute top-0 left-0 right-0 h-0.75 bg-linear-to-r from-[#0F766E] to-[#0E7490] rounded-t-xl" />
-            <CardHeader className="pb-3 pt-6">
-              <CardTitle className="text-base">New Assignment</CardTitle>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                Capture a new asset assignment or reassignment.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4">
-                {/* Select Asset */}
-                <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Select Asset
-                  </label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                    <select className="h-9 w-full rounded-lg border border-slate-200 bg-white/80 pl-8 pr-3 text-[11px] text-slate-700 shadow-sm focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300">
-                      <option>Search or select asset…</option>
-                      <option>LPT-02318 · Lenovo ThinkPad T14</option>
-                      <option>LPT-02197 · MacBook Pro 14&quot;</option>
-                      <option>MON-00872 · Dell UltraSharp 27&quot;</option>
-                      <option>SRV-00041 · HPE ProLiant DL380</option>
-                    </select>
-                  </div>
-                </div>
+        <form className="space-y-5 py-2" onSubmit={handleConfirmAssignment}>
+          {/* Select Asset */}
+          <div>
+            <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+              Select Asset
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <select 
+                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3 text-[12px] text-slate-700 shadow-sm focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-200 outline-none transition-all"
+                value={assignmentData.asset}
+                onChange={(e) => setAssignmentData({ ...assignmentData, asset: e.target.value })}
+                required
+              >
+                <option value="">Search or select asset…</option>
+                <option value="LPT-02318 · Lenovo ThinkPad T14">LPT-02318 · Lenovo ThinkPad T14</option>
+                <option value="LPT-02197 · MacBook Pro 14&quot;">LPT-02197 · MacBook Pro 14&quot;</option>
+                <option value="MON-00872 · Dell UltraSharp 27&quot;">MON-00872 · Dell UltraSharp 27&quot;</option>
+                <option value="SRV-00041 · HPE ProLiant DL380">SRV-00041 · HPE ProLiant DL380</option>
+              </select>
+            </div>
+          </div>
 
-                {/* Assignee + Department */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Assign To
-                    </label>
-                    <Input
-                      placeholder="Staff full name"
-                      className="h-8 border-slate-200 bg-white/80 text-[11px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Department
-                    </label>
-                    <Input
-                      placeholder="e.g. Finance, IT"
-                      className="h-8 border-slate-200 bg-white/80 text-[11px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
-                    />
-                  </div>
-                </div>
+          {/* Assignee + Department */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Assign To
+              </label>
+              <Input
+                placeholder="Staff full name"
+                className="h-9 rounded-xl border-slate-200 bg-slate-50/50 text-[12px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-200"
+                value={assignmentData.assignee}
+                onChange={(e) => setAssignmentData({ ...assignmentData, assignee: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Department
+              </label>
+              <Input
+                placeholder="e.g. Finance, IT"
+                className="h-9 rounded-xl border-slate-200 bg-slate-50/50 text-[12px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-200"
+                value={assignmentData.department}
+                onChange={(e) => setAssignmentData({ ...assignmentData, department: e.target.value })}
+                required
+              />
+            </div>
+          </div>
 
-                {/* Date + Status */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <CalendarDays className="h-3 w-3" /> Date
-                    </label>
-                    <Input
-                      type="date"
-                      className="h-8 border-slate-200 bg-white/80 text-[11px] focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <SlidersHorizontal className="h-3 w-3" /> Status
-                    </label>
-                    <select className="h-8 w-full rounded-lg border border-slate-200 bg-white/80 px-2 text-[11px] text-slate-700 shadow-sm focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300">
-                      <option>Assigned</option>
-                      <option>Returned</option>
-                      <option>Under Maintenance</option>
-                    </select>
-                  </div>
-                </div>
+          {/* Date + Status */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                <CalendarDays className="h-3.5 w-3.5 text-slate-400" /> Date
+              </label>
+              <Input
+                type="date"
+                className="h-9 rounded-xl border-slate-200 bg-slate-50/50 text-[12px] focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-200"
+                value={assignmentData.date}
+                onChange={(e) => setAssignmentData({ ...assignmentData, date: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" /> Status
+              </label>
+              <select 
+                className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-[12px] text-slate-700 shadow-sm focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-200 outline-none transition-all"
+                value={assignmentData.status}
+                onChange={(e) => setAssignmentData({ ...assignmentData, status: e.target.value })}
+              >
+                <option>Confirmed</option>
+                <option>Pending</option>
+              </select>
+            </div>
+          </div>
 
-                {/* Notes */}
-                <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Notes
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="w-full rounded-lg border border-slate-200 bg-white/80 px-3 py-2 text-[11px] text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300 dark:placeholder:text-zinc-500"
-                    placeholder="Purpose, project, or special conditions for this assignment."
-                  />
-                </div>
+          {/* Notes */}
+          <div>
+            <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+              Notes
+            </label>
+            <textarea
+              rows={3}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-[12px] text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-200 dark:placeholder:text-zinc-500 transition-all"
+              placeholder="Purpose, project, or special conditions for this assignment."
+              value={assignmentData.notes}
+              onChange={(e) => setAssignmentData({ ...assignmentData, notes: e.target.value })}
+            />
+          </div>
 
-                {/* Actions */}
-                <div className="flex items-center justify-end gap-2 pt-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 rounded-full border-slate-200 px-4 text-[11px] dark:border-white/10 dark:text-zinc-300"
-                  >
-                    Clear
-                  </Button>
-                  <Button
-                    type="submit"
-                    size="sm"
-                    className="h-8 rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-5 text-[11px] font-semibold text-white shadow-md hover:opacity-90"
-                  >
-                    Confirm Assignment
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-full border-slate-200 px-6 text-[11px] font-medium dark:border-white/10 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/5"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              className="h-9 rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-6 text-[11px] font-semibold text-white shadow-md hover:opacity-90 active:scale-95 transition-all"
+            >
+              Confirm Assignment
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={isMorOpen}
+        onClose={() => setIsMorOpen(false)}
+        title="Memorandum of Receipt"
+        description="Official document for asset assignment."
+        className="max-w-3xl"
+      >
+        <div className="space-y-8 p-4 bg-white dark:bg-zinc-950 rounded-lg border border-slate-100 dark:border-zinc-800 overflow-hidden relative print:p-0 print:border-0">
+          <div className="absolute top-0 right-0 p-8 opacity-5">
+            <ClipboardList className="h-32 w-32" />
+          </div>
+
+          {/* Header */}
+          <div className="flex justify-between items-start border-b pb-6 dark:border-zinc-800">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tighter flex items-center gap-2">
+                <span className="bg-teal-600 text-white p-1 rounded">MI</span>RA
+              </h3>
+              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">Asset Management System</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase">MOR No.</p>
+              <p className="text-lg font-mono font-bold text-teal-600">MOR-2026-{(Math.random() * 10000).toFixed(0).padStart(4, '0')}</p>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="grid grid-cols-2 gap-8 text-xs">
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-1.5">Recipient Details</h4>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{assignmentData.assignee}</p>
+                <p className="text-slate-600 dark:text-slate-400">{assignmentData.department}</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-1.5">Assignment Date</h4>
+                <p className="text-slate-900 dark:text-slate-100">{assignmentData.date || new Date().toLocaleDateString()}</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-1.5">Asset Information</h4>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{assignmentData.asset}</p>
+                <p className="text-slate-500 font-mono text-[10px] mt-0.5">SN: {(Math.random() * 10000000).toFixed(0).padStart(8, '0')}</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-1.5">Status</h4>
+                <Badge className={`${assignmentData.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'} border-0`}>
+                  {assignmentData.status}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes */}
+          {assignmentData.notes && (
+            <div className="bg-slate-50 dark:bg-zinc-900 p-4 rounded-xl border border-slate-100 dark:border-zinc-800">
+              <h4 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-2">Terms & Conditions</h4>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed italic">{assignmentData.notes}</p>
+            </div>
+          )}
+
+          <div className="pt-8 text-[11px] text-slate-500 leading-relaxed max-w-2xl">
+            I hereby acknowledge receipt of the asset(s) listed above in good working condition. I understand that I am responsible for the proper care and maintenance of this equipment.
+          </div>
+
+          {/* Signatures */}
+          <div className="grid grid-cols-2 gap-12 pt-16">
+            <div className="text-center">
+              <div className="border-b border-slate-300 dark:border-zinc-700 pb-2 mb-2 min-h-8" />
+              <p className="text-[10px] font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest">Received By</p>
+              <p className="text-[9px] text-slate-500">Date & Signature</p>
+            </div>
+            <div className="text-center">
+              <div className="border-b border-slate-300 dark:border-zinc-700 pb-2 mb-2 min-h-8" />
+              <p className="text-[10px] font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest">Issued By</p>
+              <p className="text-[9px] text-slate-500">Asset Management Officer</p>
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div className="flex justify-end gap-3 pt-6 border-t mt-8 dark:border-zinc-800 print:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-full px-6 text-[11px]"
+              onClick={() => setIsMorOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              size="sm"
+              className="h-9 rounded-full bg-slate-900 px-6 text-[11px] font-semibold text-white shadow-lg hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-zinc-200 transition-all active:scale-95"
+              onClick={() => window.print()}
+            >
+              Print MOR
+            </Button>
+          </div>
         </div>
+      </Modal>
+
+      <Modal
+        open={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        title="Confirm Assignment"
+        description="Please verify the details before confirming."
+        className="max-w-sm"
+      >
+        <div className="space-y-6 pt-2">
+          {assignmentToConfirm && (
+            <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-white/5 dark:bg-zinc-900/50">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-slate-400 font-bold">
+                  <span>Asset</span>
+                  <span className="font-mono">{assignmentToConfirm.asset}</span>
+                </div>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{assignmentToConfirm.name}</p>
+                <div className="pt-2 border-t border-slate-100 dark:border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-linear-to-br from-teal-500 to-teal-600 flex items-center justify-center text-[10px] font-bold text-white shadow-sm font-mono">
+                      {assignmentToConfirm.initials}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{assignmentToConfirm.assignee}</p>
+                      <p className="text-[10px] text-slate-500 font-medium">{assignmentToConfirm.department}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 h-10 rounded-full px-6 text-[11px] font-medium"
+              onClick={() => setIsConfirmModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1 h-10 rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-6 text-[11px] font-semibold text-white shadow-md hover:opacity-90 active:scale-95 transition-all"
+              onClick={handleFinalConfirm}
+            >
+              Confirm Now
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        title="Assignment Details"
+        description="Full documentation of this asset movement."
+        className="max-w-md"
+      >
+        {viewingAssignment && (
+          <div className="space-y-6 pt-2">
+            <div className="flex items-center justify-between">
+              <Badge
+                variant={viewingAssignment.statusVariant}
+                className={`text-[10px] ${badgeStyles[viewingAssignment.statusVariant]}`}
+              >
+                {viewingAssignment.status}
+              </Badge>
+              <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5" /> {viewingAssignment.date}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/30 p-4 dark:border-white/5 dark:bg-zinc-900/30">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Asset Information</h4>
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 shrink-0 rounded-xl bg-teal-100 dark:bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                    <ClipboardList className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-mono font-medium text-teal-600 dark:text-teal-400">
+                      {viewingAssignment.asset}
+                    </p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {viewingAssignment.name}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/30 p-4 dark:border-white/5 dark:bg-zinc-900/30">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Assignee Details</h4>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 shrink-0 rounded-full bg-linear-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-[12px] font-bold text-slate-600 dark:text-slate-300 font-mono">
+                    {viewingAssignment.initials}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {viewingAssignment.assignee}
+                    </p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      {viewingAssignment.department}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mocking notes for viewed items */}
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/30 p-4 dark:border-white/5 dark:bg-zinc-900/30">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Internal Notes</h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                  Asset assigned for primary work use. Condition verified as excellent. Standard 12-month review cycle applies.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                className="w-full h-11 rounded-full border-slate-200 text-slate-600 dark:border-zinc-800 dark:text-zinc-400 font-semibold"
+                onClick={() => setIsViewModalOpen(false)}
+              >
+                Close Details
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </>
   );

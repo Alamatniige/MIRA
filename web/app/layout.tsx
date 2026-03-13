@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/auth";
+import { Toaster } from "sileo";
+import "sileo/styles.css";
 import "../styles/globals.css";
 
 const poppins = Poppins({
@@ -32,6 +34,18 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <Toaster 
+              position="top-center" 
+              theme="system"
+              options={{
+                fill: "#000000ff",
+                roundness: 12,
+                styles: {
+                  title: "font-sans font-semibold text-sm text-slate-200 dark:text-slate-200",
+                  description: "font-sans text-xs text-slate-400 dark:text-slate-400",
+                }
+              }}
+            />
           </ThemeProvider>
         </AuthProvider>
       </body>

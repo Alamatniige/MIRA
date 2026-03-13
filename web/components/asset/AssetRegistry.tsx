@@ -20,6 +20,7 @@ import {
 import { Modal } from "@/components/ui/modal";
 import { QRCodeSVG } from "qrcode.react";
 import Image from "next/image";
+import { sileo } from "sileo";
 
 /* ──────────────────────────────── helpers ──────────────────────────────── */
 
@@ -507,7 +508,7 @@ export function AssetRegistry() {
         } else {
           const errData = await uploadRes.json();
           console.error("Failed to upload image.", errData);
-          alert("Image upload failed: " + errData.error);
+          sileo.error({ title: "Upload Failed", description: "Image upload failed: " + errData.error });
         }
       }
 
@@ -541,6 +542,11 @@ export function AssetRegistry() {
         setQrOpen(true);
       }
       setOpen(false);
+      sileo.success({ 
+        title: "Asset Saved", 
+        description: "The asset has been successfully registered.",
+        fill: "#000000" 
+      });
 
       // Reset form
       setFormData({
@@ -557,7 +563,7 @@ export function AssetRegistry() {
 
     } catch (err) {
       console.error(err);
-      alert("Failed to save asset. Please try again.");
+      sileo.error({ title: "Error", description: "Failed to save asset. Please try again." });
     } finally {
       setIsGeneratingQr(false);
     }
@@ -673,7 +679,7 @@ export function AssetRegistry() {
         } else {
           const errData = await uploadRes.json();
           console.error("Failed to upload image.", errData);
-          alert("Image upload failed: " + errData.error);
+          sileo.error({ title: "Upload Failed", description: "Image upload failed: " + errData.error });
         }
       }
 
@@ -710,10 +716,15 @@ export function AssetRegistry() {
 
       refresh();
       closeEditModal();
+      sileo.success({ 
+        title: "Asset Updated", 
+        description: "The asset has been successfully updated.",
+        fill: "#000000"
+      });
 
     } catch (err) {
       console.error(err);
-      alert("Failed to update asset. Please try again.");
+      sileo.error({ title: "Error", description: "Failed to update asset. Please try again." });
     }
   };
 
@@ -735,10 +746,15 @@ export function AssetRegistry() {
       refresh();
       setDeleteModal(false);
       setSelectedDeleteAsset(null);
+      sileo.success({ 
+        title: "Asset Deleted", 
+        description: "The asset has been successfully removed.",
+        fill: "#000000"
+      });
 
     } catch (err) {
       console.error(err);
-      alert("Failed to delete asset. Please try again.");
+      sileo.error({ title: "Error", description: "Failed to delete asset. Please try again." });
     }
   };
 
@@ -1803,10 +1819,10 @@ export function AssetRegistry() {
               </div>
             </div>
 
-            {/* Image section simplified to match Add modal */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+            {/* Image section synced with Add modal layout */}
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   Asset Images
                 </label>
                 {editAllImages.length > 1 && (
@@ -1823,104 +1839,101 @@ export function AssetRegistry() {
                 )}
               </div>
 
-              <div 
-                className={`rounded-xl border-2 border-dashed p-3 transition-colors ${
-                  isDragging 
-                    ? "border-primary bg-primary/5 dark:bg-teal-900/10" 
+              <div
+                className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${
+                  isDragging
+                    ? "border-primary bg-primary/5 dark:bg-teal-900/10"
                     : "border-slate-200 dark:border-teal-800/30"
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {editAllImages.map((imageUrl, index) => {
-                    const isExistingImage = index < (selectedEditAsset.image?.length || 0);
+                {/* Invisible file input - only top layer when no images */}
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className={`absolute inset-0 h-full w-full cursor-pointer opacity-0 ${editAllImages.length === 0 ? 'z-10' : 'z-0'}`}
+                  onChange={(e) => handleEditImageChange(e.target.files)}
+                />
 
-                    return (
-                      <div
-                        key={`${isExistingImage ? "saved" : "new"}-${imageUrl}-${index}`}
-                        className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-teal-800/30 dark:bg-slate-900 cursor-pointer"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setGallerySource("edit");
-                          openGallery(index);
-                        }}
-                      >
-                        <Image
-                          src={imageUrl}
-                          alt={`Asset image ${index + 1}`}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 180px"
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-black/10 transition-colors group-hover:bg-black/35" />
-                        <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              if (isExistingImage) {
-                                removeExistingImage(index);
-                              } else {
-                                removeEditImage(index - (selectedEditAsset.image?.length || 0));
-                              }
-                            }}
-                            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/20 text-white shadow-xl backdrop-blur-md transition-transform hover:scale-110 active:scale-95"
-                            title={isExistingImage ? "Remove saved image" : "Remove new image"}
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="h-5 w-5">
-                              <path d="M3 6h18" />
-                              <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
-                              <path d="m6 6 1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14" />
-                              <path d="M10 11v6M14 11v6" />
-                            </svg>
-                          </button>
-                        </div>
-                        <div className={`absolute bottom-2 left-2 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm ${
-                          isExistingImage ? "bg-black/60" : "bg-primary"
-                        }`}>
-                          {isExistingImage ? "Saved" : "New"}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  <label className="relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-center transition-colors hover:border-primary hover:bg-primary/5 dark:border-teal-800/30 dark:bg-slate-950/40 dark:hover:border-teal-500 dark:hover:bg-teal-900/10">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                      onChange={(e) => handleEditImageChange(e.target.files)}
-                    />
-                    <div className={`mb-2 flex h-10 w-10 items-center justify-center rounded-full ${isDragging ? "bg-primary/20 text-primary" : "bg-white text-slate-400 shadow-sm dark:bg-slate-800"}`}>
+                {editAllImages.length === 0 ? (
+                  /* Empty state */
+                  <div className="flex flex-col items-center justify-center p-6 text-center">
+                    <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${
+                      isDragging ? "bg-primary/20 text-primary" : "bg-white dark:bg-slate-800 text-slate-400 shadow-sm"
+                    }`}>
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="17 8 12 3 7 8" />
                         <line x1="12" y1="3" x2="12" y2="15" />
                       </svg>
                     </div>
-                    <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">Add images</p>
-                    <p className="mt-1 text-[10px] text-slate-500">Click or drop files here</p>
-                  </label>
-                </div>
+                    <p className="mb-1 text-[12px] font-semibold text-slate-700 dark:text-slate-200">
+                      Click to upload <span className="font-normal text-slate-500">or drag and drop</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500">SVG, PNG, JPG or GIF (max. 5MB)</p>
+                  </div>
+                ) : (
+                  <div 
+                    className="relative z-20 h-36 bg-slate-100 dark:bg-slate-900 group cursor-pointer"
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      e.stopPropagation(); 
+                      setGallerySource("edit");
+                      openGallery(0); 
+                    }}
+                  >
+                    <Image
+                      src={editAllImages[0]}
+                      alt="Preview"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 360px"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    {/* dark overlay for readability */}
+                    <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+                    
+                    {/* Hover Overlay with Plus Sign */}
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 shadow-xl transform scale-75 group-hover:scale-100 transition-transform focus:outline-none">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="h-6 w-6">
+                          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </div>
+                    </div>
 
-                {editAllImages.length === 0 && (
-                  <div className="mt-3 flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-left dark:bg-slate-900/40">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm dark:bg-slate-800">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
+                    {/* Count badge */}
+                    <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} className="h-3 w-3">
+                        <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
                       </svg>
+                      {editAllImages.length} photos
+                      <span className="ml-1 opacity-60">
+                        ({selectedEditAsset.image?.length || 0} saved, {editImagePreviews.length} new)
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">No images selected</p>
-                      <p className="text-[10px] text-slate-500">Saved images and newly added uploads will appear here.</p>
-                    </div>
+
+                    {/* Remove first image - Stop propagation so it doesn't open gallery */}
+                    <button
+                      type="button"
+                      onClick={(e) => { 
+                        e.preventDefault(); 
+                        e.stopPropagation(); 
+                        if (0 < (selectedEditAsset.image?.length || 0)) {
+                          removeExistingImage(0);
+                        } else {
+                          removeEditImage(0 - (selectedEditAsset.image?.length || 0));
+                        }
+                      }}
+                      className="absolute right-2 top-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-500 transition-all hover:scale-110 active:scale-95 shadow-lg"
+                      title="Remove image"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-3.5 w-3.5">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
                   </div>
                 )}
               </div>
