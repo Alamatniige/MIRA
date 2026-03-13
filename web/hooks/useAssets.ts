@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import type { Asset, AssetType, AssetRoom, AssetFloor } from "@/types/mira";
 
+const getErrorMessage = (err: unknown, fallback: string) => {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return fallback;
+};
+
 export function useAssets() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetsTypes, setAssetTypes] = useState<AssetType[]>([]);
@@ -33,13 +40,13 @@ export function useAssets() {
 
       setAssets(Array.isArray(data) ? data : []);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch assets:", err);
-      setError(err.message || "Failed to load assets");
+      setError(getErrorMessage(err, "Failed to load assets"));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [getHeaders]);
 
   const fetchAssetTypes = useCallback(async () => {
     try {
@@ -49,7 +56,7 @@ export function useAssets() {
         throw new Error(data.message || "Failed to fetch asset types");
       }
       setAssetTypes(Array.isArray(data) ? data : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch asset types:", err);
       setAssetTypes([]);
     }
@@ -70,7 +77,7 @@ export function useAssets() {
       
       setAssetRooms(Array.isArray(rData) ? rData : []);
       setAssetFloors(Array.isArray(fData) ? fData : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch rooms/floors:", err);
       setAssetRooms([]);
       setAssetFloors([]);
@@ -102,6 +109,9 @@ export function useAssets() {
     isLoading,
     error,
     refresh: fetchAssets,
+
+    // Stats and Filters
+    assigned: assets.filter((a) => Boolean(a.isAssigned)).length,
     total: assets.length,
     active: assets.filter((a) => a.currentStatus === "Active").length,
     available: assets.filter((a) => a.currentStatus === "Available").length,

@@ -1,22 +1,124 @@
 package asset
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"mira-api/internal/db"
 	"mira-api/v1/qr"
-	"mira-api/v1/supabase"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/skip2/go-qrcode"
 	"gorm.io/gorm"
 )
+
+func removedAssetImageObjectPaths(existingImages, updatedImages []string) []string {
+	if len(existingImages) == 0 {
+		return nil
+	}
+
+	updatedSet := make(map[string]struct{}, len(updatedImages))
+	for _, imageURL := range updatedImages {
+		updatedSet[imageURL] = struct{}{}
+	}
+
+	removedPaths := make([]string, 0)
+	for _, imageURL := range existingImages {
+		if _, exists := updatedSet[imageURL]; exists {
+			continue
+		}
+
+		objectPath, err := assetStorageObjectPath(imageURL)
+		if err != nil {
+			log.Printf("failed to parse asset image URL %q: %v", imageURL, err)
+			continue
+		}
+
+		removedPaths = append(removedPaths, objectPath)
+	}
+
+	return removedPaths
+}
+
+func assetStorageObjectPath(publicURL string) (string, error) {
+	parsedURL, err := url.Parse(publicURL)
+	if err != nil {
+		return "", err
+	}
+
+	const publicPrefix = "/storage/v1/object/public/asset/"
+	if !strings.Contains(parsedURL.Path, publicPrefix) {
+		return "", fmt.Errorf("unexpected asset image URL path: %s", parsedURL.Path)
+	}
+
+	objectPath := strings.TrimPrefix(parsedURL.Path, publicPrefix)
+	if objectPath == parsedURL.Path || objectPath == "" {
+		return "", fmt.Errorf("asset image URL does not contain an object path")
+	}
+
+	return objectPath, nil
+}
+
+func deleteAssetStorageObjects(objectPaths []string) error {
+	if len(objectPaths) == 0 {
+		return nil
+	}
+
+	supabaseURL := strings.TrimRight(os.Getenv("SUPABASE_URL"), "/")
+	serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	if supabaseURL == "" || serviceRoleKey == "" {
+		return fmt.Errorf("supabase storage cleanup is unavailable because SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not configured")
+	}
+
+	httpClient := &http.Client{}
+	for _, objectPath := range objectPaths {
+		deleteURL := fmt.Sprintf("%s/storage/v1/object/asset/%s", supabaseURL, escapeStorageObjectPath(objectPath))
+		request, err := http.NewRequest(http.MethodDelete, deleteURL, nil)
+		if err != nil {
+			return err
+		}
+
+		request.Header.Set("Authorization", "Bearer "+serviceRoleKey)
+		request.Header.Set("apikey", serviceRoleKey)
+
+		response, err := httpClient.Do(request)
+		if err != nil {
+			return err
+		}
+
+		responseBody, _ := io.ReadAll(response.Body)
+		response.Body.Close()
+
+		if response.StatusCode == http.StatusNotFound {
+			continue
+		}
+
+		if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+			return fmt.Errorf("failed to delete asset image %q from storage: %s", objectPath, strings.TrimSpace(string(responseBody)))
+		}
+	}
+
+	return nil
+}
+
+func escapeStorageObjectPath(objectPath string) string {
+	parts := strings.Split(objectPath, "/")
+	for index, part := range parts {
+		parts[index] = url.PathEscape(part)
+	}
+
+	return strings.Join(parts, "/")
+}
 
 // Fetch all registered assets
 func GetAssets(w http.ResponseWriter, r *http.Request) {
@@ -220,17 +322,24 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	removedImagePaths := removedAssetImageObjectPaths(asset.Image, req.Image)
+
 	asset.AssetName = req.AssetName
 	asset.AssetType = req.AssetType
 	asset.SerialNumber = req.SerialNumber
 	asset.Specification = req.Specification
 	asset.Room = req.Room
 	asset.Floor = req.Floor
+	asset.CurrentStatus = req.CurrentStatus
 	asset.Image = req.Image
 
 	if result := db.DB.Save(&asset); result.Error != nil {
 		http.Error(w, "Error updating asset: "+result.Error.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	if err := deleteAssetStorageObjects(removedImagePaths); err != nil {
+		log.Printf("asset %s updated but failed to clean removed images from storage: %v", asset.ID, err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -324,7 +433,14 @@ func UploadAssetImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseURL := strings.TrimRight(os.Getenv("SUPABASE_URL"), "/")
+	serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	if supabaseURL == "" || serviceRoleKey == "" {
+		http.Error(w, "Storage is not configured: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY", http.StatusInternalServerError)
+		return
+	}
+
+	httpClient := &http.Client{}
 	var uploadedUrls []string
 
 	for _, fileHeader := range files {
@@ -334,16 +450,39 @@ func UploadAssetImage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		fileBytes, err := io.ReadAll(file)
+		file.Close()
+		if err != nil {
+			http.Error(w, "Error reading file: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		// Generate unique filename
 		ext := filepath.Ext(fileHeader.Filename)
 		filename := uuid.New().String() + ext
+		contentType := http.DetectContentType(fileBytes)
 
-		// Upload to Supabase storage bucket "asset"
-		resp := supabase.Client.Storage.From("asset").Upload(filename, file, nil)
-		file.Close() // Close immediately after upload
+		// Upload directly to Supabase Storage REST API using service role key
+		uploadURL := fmt.Sprintf("%s/storage/v1/object/asset/%s", supabaseURL, filename)
+		req, err := http.NewRequest(http.MethodPost, uploadURL, bytes.NewReader(fileBytes))
+		if err != nil {
+			http.Error(w, "Error creating upload request: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		req.Header.Set("Authorization", "Bearer "+serviceRoleKey)
+		req.Header.Set("apikey", serviceRoleKey)
+		req.Header.Set("Content-Type", contentType)
 
-		if resp.Message != "" {
-			http.Error(w, "Failed to upload image: "+resp.Message, http.StatusInternalServerError)
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			http.Error(w, "Error uploading file: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		respBody, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+			http.Error(w, "Failed to upload image: "+string(respBody), http.StatusInternalServerError)
 			return
 		}
 
@@ -355,4 +494,3 @@ func UploadAssetImage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"imageUrls": uploadedUrls})
 }
-
