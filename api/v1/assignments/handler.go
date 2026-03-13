@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
@@ -56,6 +57,7 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 	assignment := AssetAssignment{
 		AssetID: req.AssetID,
 		UserID:  req.UserID,
+		Notes:   req.Notes,
 	}
 
 	if err := tx.Create(&assignment).Error; err != nil {
@@ -153,15 +155,97 @@ func ReturnAsset(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Fetch all assets with assigned users
+// Fetch all assignments enriched with asset and user details
 func GetAllAssets(w http.ResponseWriter, r *http.Request) {
-	var assignments []AssetAssignment
+	type row struct {
+		ID           string     `gorm:"column:id"`
+		AssetID      string     `gorm:"column:assetId"`
+		Tag          string     `gorm:"column:tag"`
+		AssetName    string     `gorm:"column:assetName"`
+		FullName     string     `gorm:"column:fullName"`
+		Department   string     `gorm:"column:department"`
+		Acknowledged bool       `gorm:"column:acknowledged"`
+		Notes        string     `gorm:"column:notes"`
+		AssignedDate time.Time  `gorm:"column:assignedDate"`
+		ReturnedDate *time.Time `gorm:"column:returnedDate"`
+	}
 
-	if err := db.DB.Find(&assignments).Error; err != nil {
+	var rows []row
+	err := db.DB.Raw(`
+		SELECT
+			a.id,
+			a."assetId",
+			ast.tag,
+			ast."assetName",
+			u."fullName",
+			u.department,
+			a.acknowledged,
+			a.notes,
+			a."assignedDate",
+			a."returnedDate"
+		FROM "assetsAssignment" a
+		JOIN assets ast ON ast.id = a."assetId"
+		JOIN users u ON u.id = a."userId"
+		ORDER BY a."assignedDate" DESC
+	`).Scan(&rows).Error
+
+	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
+	result := make([]AssignmentResponse, 0, len(rows))
+	for _, r := range rows {
+		status := "PENDING"
+		if r.ReturnedDate != nil {
+			status = "RETURNED"
+		} else if r.Acknowledged {
+			status = "CONFIRMED"
+		}
+		result = append(result, AssignmentResponse{
+			ID:         r.ID,
+			AssetID:    r.AssetID,
+			AssetTag:   r.Tag,
+			AssetName:  r.AssetName,
+			Assignee:   r.FullName,
+			Department: r.Department,
+			Status:     status,
+			Notes:      r.Notes,
+			AssignedAt: r.AssignedDate,
+			ReturnedAt: r.ReturnedDate,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(assignments)
+	json.NewEncoder(w).Encode(result)
+}
+
+// ConfirmAssignment sets acknowledged = true for a given assignment
+func ConfirmAssignment(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		http.Error(w, "Missing assignment ID", http.StatusBadRequest)
+		return
+	}
+
+	var assignment AssetAssignment
+	if err := db.DB.First(&assignment, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Assignment not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	if err := db.DB.Model(&assignment).Update("acknowledged", true).Error; err != nil {
+		http.Error(w, "Failed to confirm assignment", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Assignment confirmed"})
 }
