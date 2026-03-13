@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useUsers } from "@/hooks/useUsers";
 import { User as UserType } from "@/types/mira";
 import { FullPageLoader } from "@/components/ui/loader";
+import { Button } from "@/components/ui/button";
 
 export function ProfileContent() {
     const [isEditing, setIsEditing] = useState(false);
@@ -94,27 +95,33 @@ export function ProfileContent() {
 
                     {isEditing ? (
                         <div className="flex items-center gap-2">
-                            <button
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => setIsEditing(false)}
-                                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors h-auto"
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                                variant="default"
+                                size="sm"
                                 onClick={handleSave}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0F766E] rounded-lg hover:bg-[#0E7490] transition-all shadow-sm shadow-[#0F766E]/20"
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0F766E] rounded-lg hover:bg-[#0E7490] transition-all shadow-sm shadow-[#0F766E]/20 h-auto"
                             >
                                 <Save className="w-4 h-4" />
                                 Save Changes
-                            </button>
+                            </Button>
                         </div>
                     ) : (
-                        <button
+                        <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => setIsEditing(true)}
-                            className="px-4 py-2 text-sm font-medium text-[#0F766E] dark:text-teal-400 bg-[#0F766E]/10 dark:bg-teal-500/10 rounded-lg hover:bg-[#0F766E]/20 dark:hover:bg-teal-500/20 transition-colors"
+                            className="px-4 py-2 text-sm font-medium text-[#0F766E] dark:text-teal-400 bg-[#0F766E]/10 dark:bg-teal-500/10 rounded-lg hover:bg-[#0F766E]/20 dark:hover:bg-teal-500/20 transition-colors border-none h-auto"
                         >
                             Edit Profile
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>

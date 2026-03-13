@@ -34,7 +34,8 @@ import { cn } from "@/lib/utils";
 import { User as UserType } from "@/types/mira";
 import { useUsers } from "@/hooks/useUsers";
 import { getInitials, getAvatarGradient } from "@/utils/user";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type RoleVariant = "admin" | "staff";
@@ -486,12 +487,14 @@ export function UsersContent() {
                                         {/* Actions */}
                                         <TableCell className="p-3 text-right sm:p-4">
                                             <div className="inline-flex items-center gap-2 text-[11px] font-medium">
-                                                <button
+                                                <Button
+                                                    variant="link"
+                                                    size="xs"
                                                     onClick={() => setViewUser(user)}
-                                                    className="flex items-center gap-0.5 text-[#0F766E] dark:text-teal-400 hover:underline"
+                                                    className="flex items-center gap-0.5 text-[#0F766E] dark:text-teal-400 hover:underline h-auto p-0"
                                                 >
                                                     View
-                                                </button>
+                                                </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>

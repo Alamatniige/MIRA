@@ -221,14 +221,16 @@ export function AssignmentView() {
                   Track historical movements of key assets.
                 </p>
               </div>
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 type="button"
                 onClick={() => setViewTimeline((v) => !v)}
-                className="absolute right-6 top-5 flex items-center gap-1 text-xs font-semibold text-[#0F766E] transition-colors hover:text-[#0E7490] dark:text-teal-400 dark:hover:text-teal-300"
+                className="absolute right-6 top-5 flex items-center gap-1 text-xs font-semibold text-[#0F766E] transition-colors hover:text-[#0E7490] dark:text-teal-400 dark:hover:text-teal-300 h-auto p-0"
               >
                 {viewTimeline ? 'View as table' : 'View as timeline'}
                 <ChevronRight className="h-3 w-3" />
-              </button>
+              </Button>
             </CardHeader>
 
             <CardContent className="p-0">
@@ -276,27 +278,31 @@ export function AssignmentView() {
                             </Badge>
                             <div className="flex gap-2">
                               {item.status === 'Pending' && (
-                                <button 
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
                                   onClick={() => {
                                     setAssignmentToConfirm(item);
                                     setIsConfirmModalOpen(true);
                                   }}
-                                  className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600/10 text-teal-600 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
+                                  className="h-7 w-7 rounded-full bg-teal-600/10 text-teal-600 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
                                   title="Confirm Assignment"
                                 >
                                   <Check className="h-4 w-4" />
-                                </button>
+                                </Button>
                               )}
-                              <button 
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
                                 onClick={() => {
                                   setViewingAssignment(item);
                                   setIsViewModalOpen(true);
                                 }}
-                                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                                className="h-7 w-7 rounded-full bg-slate-100 text-slate-500 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                                 title="View Details"
                               >
                                 <Eye className="h-4 w-4" />
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -385,27 +391,31 @@ export function AssignmentView() {
                         <TableCell className="p-3 sm:p-4">
                           <div className="flex items-center gap-2">
                             {item.status === 'Pending' && (
-                              <button 
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
                                 onClick={() => {
                                   setAssignmentToConfirm(item);
                                   setIsConfirmModalOpen(true);
                                 }}
-                                className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600/10 text-teal-700 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
+                                className="h-8 w-8 rounded-full bg-teal-600/10 text-teal-700 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
                                 title="Confirm Assignment"
                               >
                                 <Check className="h-4 w-4" />
-                              </button>
+                              </Button>
                             )}
-                            <button 
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
                               onClick={() => {
                                 setViewingAssignment(item);
                                 setIsViewModalOpen(true);
                               }}
-                              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-500 dark:hover:bg-zinc-700"
+                              className="h-8 w-8 rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-500 dark:hover:bg-zinc-700"
                               title="View Details"
                             >
                               <Eye className="h-4 w-4" />
-                            </button>
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>

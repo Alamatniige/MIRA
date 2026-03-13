@@ -1,5 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "./button";
+import { X } from "lucide-react";
 
 interface ModalProps {
   open: boolean;
@@ -52,15 +54,17 @@ export function Modal({
               ) : null}
             </div>
             {onClose && showCloseButton ? (
-              <button
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 type="button"
                 onClick={onClose}
                 className={cn(
-                  "inline-flex h-7 w-7 items-center justify-center rounded-full text-xs text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-teal-800/40 dark:hover:text-slate-200 transition-colors"
+                  "h-7 w-7 rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-teal-800/40 dark:hover:text-slate-200 transition-colors"
                 )}
               >
-                ✕
-              </button>
+                <X className="h-3 w-3" />
+              </Button>
             ) : null}
           </div>
         )}
