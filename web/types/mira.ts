@@ -1,15 +1,6 @@
-export type AssetStatus =
-  | "AVAILABLE"
-  | "UNAVAILABLE"
-  | "UNDER_MAINTENANCE";
+export type AssetStatus = 'AVAILABLE' | 'UNAVAILABLE' | 'UNDER_MAINTENANCE';
 
-export type Department =
-  | "IT"
-  | "OPERATIONS"
-  | "FINANCE"
-  | "HR"
-  | "OTHER"
-  | string;
+export type Department = 'IT' | 'OPERATIONS' | 'FINANCE' | 'HR' | 'OTHER' | string;
 
 export interface AssetType {
   id: number;
@@ -59,7 +50,7 @@ export interface Assignment {
   assetName: string;
   assignee: string;
   department: Department;
-  status: "ASSIGNED" | "RETURNED" | "UNDER_MAINTENANCE";
+  status: 'PENDING' | 'CONFIRMED' | 'RETURNED';
   notes?: string;
   assignedAt: string;
   returnedAt?: string;
@@ -68,7 +59,7 @@ export interface Assignment {
 export interface MaintenanceEvent {
   id: string;
   assetId: string;
-  type: "PREVENTIVE" | "CORRECTIVE" | "UPGRADE";
+  type: 'PREVENTIVE' | 'CORRECTIVE' | 'UPGRADE';
   openedAt: string;
   closedAt?: string;
   vendor?: string;
