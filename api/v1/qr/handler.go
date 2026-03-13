@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"mira-api/internal/db"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/skip2/go-qrcode"
 )
@@ -49,6 +51,52 @@ func GenerateQrCode(w http.ResponseWriter, r *http.Request) {
 // Scan QR Code
 type ScanRequest struct {
 	ScannedData string `json:"scannedData"`
+}
+
+func getGlobalReturnQrToken() string {
+	token := strings.TrimSpace(os.Getenv("GLOBAL_RETURN_QR_TOKEN"))
+	if token == "" {
+		return "global-return-v1"
+	}
+	return token
+}
+
+func buildGlobalReturnQrPayload() string {
+	return ReturnQrPrefix + getGlobalReturnQrToken()
+}
+
+// GenerateGlobalReturnQr returns one static QR payload used for return-flow entry.
+func GenerateGlobalReturnQr(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ReturnQrGenerateResponse{
+		Payload: buildGlobalReturnQrPayload(),
+		Token:   getGlobalReturnQrToken(),
+		Intent:  "asset-return",
+	})
+}
+
+// ValidateGlobalReturnQr validates scanned payload for the global return QR flow.
+func ValidateGlobalReturnQr(w http.ResponseWriter, r *http.Request) {
+	var req ReturnQrValidateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	expected := buildGlobalReturnQrPayload()
+	if strings.TrimSpace(req.ScannedData) != expected {
+		http.Error(w, "Invalid return QR Code", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ReturnQrValidateResponse{
+		Valid:   true,
+		Intent:  "asset-return",
+		Payload: expected,
+	})
 }
 
 func ScanQrCode(w http.ResponseWriter, r *http.Request) {

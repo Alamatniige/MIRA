@@ -1,0 +1,35 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+export async function POST(req: NextRequest) {
+  const authHeader = req.headers.get('authorization');
+
+  try {
+    const response = await fetch(`${API_URL}/qr/return/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
+      },
+    });
+
+    const text = await response.text();
+    const data = (() => {
+      try {
+        return JSON.parse(text);
+      } catch {
+        return { message: text.trim() };
+      }
+    })();
+
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+
+    return NextResponse.json(data, { status: 200 });
+  } catch (error) {
+    console.error('Proxy POST QR return generate Error:', error);
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+  }
+}

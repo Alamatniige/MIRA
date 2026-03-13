@@ -1,6 +1,12 @@
 import type { Assignment, User } from '@/types/mira';
 import { useCallback, useEffect, useState } from 'react';
 
+interface GlobalReturnQrResponse {
+  payload: string;
+  token: string;
+  intent: string;
+}
+
 export function useAssignments() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -82,6 +88,20 @@ export function useAssignments() {
     [getHeaders, fetchAssignments],
   );
 
+  const getGlobalReturnQr = useCallback(async (): Promise<GlobalReturnQrResponse> => {
+    const response = await fetch('/api/qr/return/generate', {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to load return QR');
+    }
+
+    return data as GlobalReturnQrResponse;
+  }, [getHeaders]);
+
   useEffect(() => {
     fetchAssignments();
     fetchUsers();
@@ -95,5 +115,6 @@ export function useAssignments() {
     refresh: fetchAssignments,
     createAssignment,
     confirmAssignment,
+    getGlobalReturnQr,
   };
 }
