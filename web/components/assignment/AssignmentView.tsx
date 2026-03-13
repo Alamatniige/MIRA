@@ -25,11 +25,13 @@ import {
   SlidersHorizontal,
   Check,
   Eye,
+  Download,
 } from 'lucide-react';
 
 import { useAssignments } from '@/hooks/useAssignments';
 import { useAssets } from '@/hooks/useAssets';
 import { Modal } from '../ui/modal';
+import { MorTemplate } from '@/lib/pdf-templates';
 import type { User } from '@/types/mira';
 
 function getInitials(name: string) {
@@ -75,7 +77,6 @@ const EMPTY_FORM = {
 export function AssignmentView() {
   const [viewTimeline, setViewTimeline] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMorOpen, setIsMorOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [assignmentToConfirm, setAssignmentToConfirm] = useState<{
@@ -103,7 +104,21 @@ export function AssignmentView() {
   const [userOpen, setUserOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Store the last submitted form data for the MOR modal
-  const [morData, setMorData] = useState(EMPTY_FORM);
+  const [morData, setMorData] = useState<{
+    assetQuery: string;
+    userQuery: string;
+    department: string;
+    date: string;
+    notes: string;
+    status?: string;
+    statusVariant?: 'success' | 'warning' | 'muted';
+  }>({
+    assetQuery: '',
+    userQuery: '',
+    department: '',
+    date: '',
+    notes: '',
+  });
 
   const { assignments, users, isLoading, createAssignment, confirmAssignment } = useAssignments();
   const { assets, refresh: refreshAssets } = useAssets();
@@ -175,10 +190,21 @@ export function AssignmentView() {
     setIsSubmitting(true);
     try {
       await createAssignment(form.assetId, form.userId, form.notes);
-      setMorData(form);
+      const data = {
+        assetQuery: form.assetQuery,
+        userQuery: form.userQuery,
+        department: form.department,
+        date: form.date,
+        notes: form.notes,
+        status: 'Pending',
+        statusVariant: 'warning' as const,
+      };
+      setMorData(data);
       setForm(EMPTY_FORM);
       setIsModalOpen(false);
-      setIsMorOpen(true);
+      
+      // Open PDF in new tab
+      setTimeout(() => generatePdfAndOpen(data), 100);
     } catch (err) {
       console.error('Failed to create assignment:', err);
     } finally {
@@ -196,6 +222,48 @@ export function AssignmentView() {
       setIsConfirmModalOpen(false);
       setAssignmentToConfirm(null);
     }
+  };
+
+  const generatePdfAndOpen = async (data: typeof morData) => {
+    const element = document.getElementById('mor-print-hidden-content');
+    if (!element) return;
+
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5] as [number, number, number, number],
+        filename: `MOR-${data.date || 'Asset'}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const }
+      };
+
+      const worker = html2pdf().set(opt).from(element).toPdf().outputPdf('blob');
+      worker.then((blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      });
+    } catch (err) {
+      console.error("Failed to generate PDF", err);
+    }
+  };
+
+  const handleViewMor = () => {
+    if (!viewingAssignment) return;
+    setIsViewModalOpen(false);
+    const data = {
+      assetQuery: `${viewingAssignment.asset} · ${viewingAssignment.name}`,
+      userQuery: viewingAssignment.assignee,
+      department: viewingAssignment.department,
+      date: viewingAssignment.date.split(' · ')[0],
+      notes: viewingAssignment.notes || '',
+      status: viewingAssignment.status,
+      statusVariant: viewingAssignment.statusVariant,
+    };
+    
+    // Open template in new tab
+    const encoded = encodeURIComponent(btoa(JSON.stringify(data)));
+    window.open(`/assignment/mor?data=${encoded}`, '_blank');
   };
 
   if (isLoading) {
@@ -287,10 +355,10 @@ export function AssignmentView() {
                         <div className="flex flex-col items-center">
                           <span
                             className={`mt-1 flex h-2.5 w-2.5 shrink-0 rounded-full ${variant === 'success'
-                                ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
-                                : variant === 'warning'
-                                  ? 'bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]'
-                                  : 'bg-slate-400'
+                              ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
+                              : variant === 'warning'
+                                ? 'bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]'
+                                : 'bg-slate-400'
                               }`}
                           />
                           {index < assignments.length - 1 && (
@@ -685,135 +753,10 @@ export function AssignmentView() {
         </form>
       </Modal>
 
-      {/* Memo Modal */}
-      <Modal
-        open={isMorOpen}
-        onClose={() => setIsMorOpen(false)}
-        title="Memorandum of Receipt"
-        description="Official document for asset assignment."
-        className="max-w-3xl"
-      >
-        <div className="space-y-8 p-4 bg-white dark:bg-zinc-950 rounded-lg border border-slate-100 dark:border-zinc-800 overflow-auto relative print:p-0 print:border-0">
-          <div className="absolute top-0 right-0 p-8 opacity-5">
-            <ClipboardList className="h-32 w-32" />
-          </div>
-
-          {/* Header */}
-          <div className="flex justify-between items-start border-b pb-6 dark:border-zinc-800">
-            <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tighter flex items-center gap-2">
-                <span className="bg-teal-600 text-white p-1 rounded">MI</span>RA
-              </h3>
-              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">
-                Asset Management System
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase">
-                MOR No.
-              </p>
-              <p className="text-lg font-mono font-bold text-teal-600">
-                MOR-2026-{(Math.random() * 10000).toFixed(0).padStart(4, '0')}
-              </p>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="grid grid-cols-2 gap-8 text-xs">
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-1.5">
-                  Recipient Details
-                </h4>
-                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {morData.userQuery}
-                </p>
-                <p className="text-slate-600 dark:text-slate-400">{morData.department}</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-1.5">
-                  Assignment Date
-                </h4>
-                <p className="text-slate-900 dark:text-slate-100">
-                  {morData.date || new Date().toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-1.5">
-                  Asset Information
-                </h4>
-                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {morData.assetQuery}
-                </p>
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-1.5">
-                  Status
-                </h4>
-                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-0">
-                  Pending
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          {morData.notes && (
-            <div className="bg-slate-50 dark:bg-zinc-900 p-4 rounded-xl border border-slate-100 dark:border-zinc-800">
-              <h4 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-2">
-                Terms & Conditions
-              </h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed italic">
-                {morData.notes}
-              </p>
-            </div>
-          )}
-
-          <div className="pt-8 text-[11px] text-slate-500 leading-relaxed max-w-2xl">
-            I hereby acknowledge receipt of the asset(s) listed above in good working condition. I
-            understand that I am responsible for the proper care and maintenance of this equipment.
-          </div>
-
-          {/* Signatures */}
-          <div className="grid grid-cols-2 gap-12 pt-16">
-            <div className="text-center">
-              <div className="border-b border-slate-300 dark:border-zinc-700 pb-2 mb-2 min-h-8" />
-              <p className="text-[10px] font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest">
-                Received By
-              </p>
-              <p className="text-[9px] text-slate-500">Date & Signature</p>
-            </div>
-            <div className="text-center">
-              <div className="border-b border-slate-300 dark:border-zinc-700 pb-2 mb-2 min-h-8" />
-              <p className="text-[10px] font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest">
-                Issued By
-              </p>
-              <p className="text-[9px] text-slate-500">Asset Management Officer</p>
-            </div>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="flex justify-end gap-3 pt-6 border-t mt-8 dark:border-zinc-800 print:hidden">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 rounded-full px-6 text-[11px]"
-              onClick={() => setIsMorOpen(false)}
-            >
-              Close
-            </Button>
-            <Button
-              size="sm"
-              className="h-9 rounded-full bg-slate-900 px-6 text-[11px] font-semibold text-white shadow-lg hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-zinc-200 transition-all active:scale-95"
-              onClick={() => window.print()}
-            >
-              Print MOR
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {/* Hidden container for PDF generation */}
+      <div id="mor-print-hidden-content" className="fixed left-[-9999px] top-0 opacity-0 pointer-events-none">
+        <MorTemplate morData={morData} />
+      </div>
 
       {/* Confirm Modal */}
       <Modal
@@ -945,7 +888,13 @@ export function AssignmentView() {
               </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col gap-3">
+              <Button
+                className="w-full h-11 rounded-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-zinc-200 transition-all font-semibold"
+                onClick={handleViewMor}
+              >
+                View MOR
+              </Button>
               <Button
                 variant="outline"
                 className="w-full h-11 rounded-full border-slate-200 text-slate-600 dark:border-zinc-800 dark:text-zinc-400 font-semibold"
