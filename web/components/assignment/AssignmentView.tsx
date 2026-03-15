@@ -25,14 +25,13 @@ import {
   SlidersHorizontal,
   Check,
   Eye,
-  Download,
 } from 'lucide-react';
 
 import { useAssignments } from '@/hooks/useAssignments';
 import { useAssets } from '@/hooks/useAssets';
 import { useUsers } from '@/hooks/useUsers';
 import { Modal } from '../ui/modal';
-import { MorTemplate } from '@/lib/pdf-templates';
+import { createMorReference, encodeMorData, type MorData } from '@/lib/mor';
 import type { User } from '@/types/mira';
 import { useAuth } from '@/lib/auth';
 import { QRCodeSVG } from 'qrcode.react';
@@ -98,9 +97,11 @@ export function AssignmentView() {
     asset: string;
     name: string;
     assignee: string;
+    issuerName?: string;
     initials: string;
     department: string;
     date: string;
+    documentDate: string;
     status: string;
     statusVariant: 'success' | 'warning' | 'muted';
     notes?: string;
@@ -111,21 +112,6 @@ export function AssignmentView() {
   const [userOpen, setUserOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [morData, setMorData] = useState<{
-    assetQuery: string;
-    userQuery: string;
-    department: string;
-    date: string;
-    notes: string;
-    status?: string;
-    statusVariant?: 'success' | 'warning' | 'muted';
-  }>({
-    assetQuery: '',
-    userQuery: '',
-    department: '',
-    date: '',
-    notes: '',
-  });
   const [currentUserName, setCurrentUserName] = useState<string>('');
 
   const { assignments, users, isLoading, createAssignment, confirmAssignment, getGlobalReturnQr } =
@@ -217,28 +203,74 @@ export function AssignmentView() {
     },
   ];
 
+  const issuerNameFallback =
+    currentUser?.full_name?.trim() || currentUserName || 'Asset Management Officer';
+
+  const buildMorData = ({
+    assetLabel,
+    assigneeName,
+    issuerName,
+    department,
+    date,
+    notes,
+    status,
+  }: {
+    assetLabel: string;
+    assigneeName: string;
+    issuerName?: string;
+    department: string;
+    date: string;
+    notes: string;
+    status?: string;
+  }): MorData => ({
+    assetLabel,
+    assigneeName,
+    department,
+    date,
+    notes,
+    issuerName: issuerName || issuerNameFallback,
+    issuerDepartment: 'IT Department',
+    status,
+    referenceNumber: createMorReference(date),
+  });
+
+  const openMorPreview = (data: MorData, previewWindow?: Window | null) => {
+    const href = `/assignment/mor?data=${encodeMorData(data)}`;
+
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.location.href = href;
+      return;
+    }
+
+    window.open(href, '_blank');
+  };
+
   const handleConfirmAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.assetId || !form.userId) return;
+
+    const previewWindow = window.open('', '_blank');
     setIsSubmitting(true);
+
     try {
       await createAssignment(form.assetId, form.userId, form.notes);
-      const data = {
-        assetQuery: form.assetQuery,
-        userQuery: form.userQuery,
+      const data = buildMorData({
+        assetLabel: form.assetQuery,
+        assigneeName: form.userQuery,
         department: form.department,
         date: form.date,
         notes: form.notes,
         status: 'Pending',
-        statusVariant: 'warning' as const,
-      };
-      setMorData(data);
+      });
+
       setForm(EMPTY_FORM);
       setIsModalOpen(false);
-
-      // Open PDF in new tab
-      setTimeout(() => generatePdfAndOpen(data), 100);
+      openMorPreview(data, previewWindow);
     } catch (err) {
+      if (previewWindow && !previewWindow.closed) {
+        previewWindow.close();
+      }
+
       console.error('Failed to create assignment:', err);
     } finally {
       setIsSubmitting(false);
@@ -257,46 +289,20 @@ export function AssignmentView() {
     }
   };
 
-  const generatePdfAndOpen = async (data: typeof morData) => {
-    const element = document.getElementById('mor-print-hidden-content');
-    if (!element) return;
-
-    try {
-      const html2pdf = (await import('html2pdf.js')).default;
-      const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5] as [number, number, number, number],
-        filename: `MOR-${data.date || 'Asset'}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const },
-      };
-
-      const worker = html2pdf().set(opt).from(element).toPdf().outputPdf('blob');
-      worker.then((blob: Blob) => {
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-      });
-    } catch (err) {
-      console.error('Failed to generate PDF', err);
-    }
-  };
-
   const handleViewMor = () => {
     if (!viewingAssignment) return;
     setIsViewModalOpen(false);
-    const data = {
-      assetQuery: `${viewingAssignment.asset} · ${viewingAssignment.name}`,
-      userQuery: viewingAssignment.assignee,
+    const data = buildMorData({
+      assetLabel: `${viewingAssignment.asset} · ${viewingAssignment.name}`,
+      assigneeName: viewingAssignment.assignee,
+      issuerName: viewingAssignment.issuerName,
       department: viewingAssignment.department,
-      date: viewingAssignment.date.split(' · ')[0],
+      date: viewingAssignment.documentDate,
       notes: viewingAssignment.notes || '',
       status: viewingAssignment.status,
-      statusVariant: viewingAssignment.statusVariant,
-    };
+    });
 
-    // Open template in new tab
-    const encoded = encodeURIComponent(btoa(JSON.stringify(data)));
-    window.open(`/assignment/mor?data=${encoded}`, '_blank');
+    openMorPreview(data);
   };
 
   const openReturnQrModal = async () => {
@@ -474,9 +480,11 @@ export function AssignmentView() {
                                         asset: a.assetTag,
                                         name: a.assetName,
                                         assignee: a.assignee,
+                                        issuerName: a.issuerName,
                                         initials,
                                         department: a.department,
                                         date: dateStr,
+                                        documentDate: a.assignedAt,
                                         status: label,
                                         statusVariant: variant,
                                         notes: a.notes,
@@ -612,9 +620,11 @@ export function AssignmentView() {
                                         asset: a.assetTag,
                                         name: a.assetName,
                                         assignee: a.assignee,
+                                        issuerName: a.issuerName,
                                         initials,
                                         department: a.department,
                                         date: dateStr,
+                                        documentDate: a.assignedAt,
                                         status: label,
                                         statusVariant: variant,
                                         notes: a.notes,
@@ -816,14 +826,6 @@ export function AssignmentView() {
             </div>
           </form>
         </Modal>
-
-        {/* Hidden container for PDF generation */}
-        <div
-          id="mor-print-hidden-content"
-          className="fixed left-[-9999px] top-0 opacity-0 pointer-events-none"
-        >
-          <MorTemplate morData={morData} />
-        </div>
 
         {/* Confirm Modal */}
         <Modal

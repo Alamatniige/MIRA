@@ -6,6 +6,8 @@ type AssetAssignment struct {
 	ID           string     `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	AssetID      string     `json:"assetId" gorm:"column:assetId;type:uuid;not null"`
 	UserID       string     `json:"userId" gorm:"column:userId;type:uuid;not null"`
+	IssuedByUserID *string  `json:"issuedByUserId,omitempty" gorm:"column:issuedByUserId;type:uuid"`
+	IssuedByNameSnapshot string `json:"issuedByNameSnapshot" gorm:"column:issuedByNameSnapshot;type:text"`
 	AssignedDate time.Time  `json:"assignedDate" gorm:"column:assignedDate;autoCreateTime"`
 	ReturnedDate *time.Time `json:"returnedDate" gorm:"column:returnedDate;type:timestamp;default:null"`
 	Acknowledged bool       `json:"acknowledged" gorm:"default:false;not null"`
@@ -29,6 +31,8 @@ type AssignmentResponse struct {
 	AssetTag   string     `json:"assetTag"`
 	AssetName  string     `json:"assetName"`
 	Assignee   string     `json:"assignee"`
+	IssuedByUserID *string `json:"issuedByUserId,omitempty"`
+	IssuerName string      `json:"issuerName"`
 	Department string     `json:"department"`
 	Status     string     `json:"status"`
 	Notes      string     `json:"notes"`

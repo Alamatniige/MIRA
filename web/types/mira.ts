@@ -49,6 +49,8 @@ export interface Assignment {
   assetTag: string;
   assetName: string;
   assignee: string;
+  issuedByUserId?: string;
+  issuerName?: string;
   department: Department;
   status: 'PENDING' | 'CONFIRMED' | 'RETURNED';
   notes?: string;

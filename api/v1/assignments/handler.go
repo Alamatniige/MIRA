@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"mira-api/internal/db"
+	"mira-api/middleware"
 	asset "mira-api/v1/assets"
+	userv1 "mira-api/v1/user"
 	"net/http"
 	"time"
 
@@ -31,6 +33,16 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	issuerID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || issuerID == "" {
+		if fallback, fallbackOk := r.Context().Value("userID").(string); fallbackOk && fallback != "" {
+			issuerID = fallback
+		} else {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}
+
 	tx := db.DB.Begin()
 	if tx.Error != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
@@ -54,10 +66,23 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var issuer userv1.User
+	if err := tx.Select("id", `"fullName"`).First(&issuer, "id = ?", issuerID).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Issuer not found", http.StatusUnauthorized)
+		} else {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+		}
+		return
+	}
+
 	assignment := AssetAssignment{
-		AssetID: req.AssetID,
-		UserID:  req.UserID,
-		Notes:   req.Notes,
+		AssetID:              req.AssetID,
+		UserID:               req.UserID,
+		IssuedByUserID:       &issuerID,
+		IssuedByNameSnapshot: issuer.FullName,
+		Notes:                req.Notes,
 	}
 
 	if err := tx.Create(&assignment).Error; err != nil {
@@ -225,16 +250,19 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 // Fetch all assignments enriched with asset and user details
 func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 	type row struct {
-		ID           string     `gorm:"column:id"`
-		AssetID      string     `gorm:"column:assetId"`
-		Tag          string     `gorm:"column:tag"`
-		AssetName    string     `gorm:"column:assetName"`
-		FullName     string     `gorm:"column:fullName"`
-		Department   string     `gorm:"column:department"`
-		Acknowledged bool       `gorm:"column:acknowledged"`
-		Notes        string     `gorm:"column:notes"`
-		AssignedDate time.Time  `gorm:"column:assignedDate"`
-		ReturnedDate *time.Time `gorm:"column:returnedDate"`
+		ID                   string     `gorm:"column:id"`
+		AssetID              string     `gorm:"column:assetId"`
+		Tag                  string     `gorm:"column:tag"`
+		AssetName            string     `gorm:"column:assetName"`
+		FullName             string     `gorm:"column:fullName"`
+		Department           string     `gorm:"column:department"`
+		Acknowledged         bool       `gorm:"column:acknowledged"`
+		Notes                string     `gorm:"column:notes"`
+		AssignedDate         time.Time  `gorm:"column:assignedDate"`
+		ReturnedDate         *time.Time `gorm:"column:returnedDate"`
+		IssuedByUserID       *string    `gorm:"column:issuedByUserId"`
+		IssuedByNameSnapshot *string    `gorm:"column:issuedByNameSnapshot"`
+		IssuerLiveName       *string    `gorm:"column:issuerLiveName"`
 	}
 
 	var rows []row
@@ -249,10 +277,14 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 			a.acknowledged,
 			a.notes,
 			a."assignedDate",
-			a."returnedDate"
+			a."returnedDate",
+			a."issuedByUserId",
+			a."issuedByNameSnapshot",
+			iu."fullName" as "issuerLiveName"
 		FROM "assetsAssignment" a
 		JOIN assets ast ON ast.id = a."assetId"
 		JOIN users u ON u.id = a."userId"
+		LEFT JOIN users iu ON iu.id = a."issuedByUserId"
 		ORDER BY a."assignedDate" DESC
 	`).Scan(&rows).Error
 
@@ -269,17 +301,27 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 		} else if r.Acknowledged {
 			status = "CONFIRMED"
 		}
+
+		issuerName := "Unknown issuer"
+		if r.IssuedByNameSnapshot != nil && *r.IssuedByNameSnapshot != "" {
+			issuerName = *r.IssuedByNameSnapshot
+		} else if r.IssuerLiveName != nil && *r.IssuerLiveName != "" {
+			issuerName = *r.IssuerLiveName
+		}
+
 		result = append(result, AssignmentResponse{
-			ID:         r.ID,
-			AssetID:    r.AssetID,
-			AssetTag:   r.Tag,
-			AssetName:  r.AssetName,
-			Assignee:   r.FullName,
-			Department: r.Department,
-			Status:     status,
-			Notes:      r.Notes,
-			AssignedAt: r.AssignedDate,
-			ReturnedAt: r.ReturnedDate,
+			ID:             r.ID,
+			AssetID:        r.AssetID,
+			AssetTag:       r.Tag,
+			AssetName:      r.AssetName,
+			Assignee:       r.FullName,
+			IssuedByUserID: r.IssuedByUserID,
+			IssuerName:     issuerName,
+			Department:     r.Department,
+			Status:         status,
+			Notes:          r.Notes,
+			AssignedAt:     r.AssignedDate,
+			ReturnedAt:     r.ReturnedDate,
 		})
 	}
 
