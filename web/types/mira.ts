@@ -52,10 +52,13 @@ export interface Assignment {
   issuedByUserId?: string;
   issuerName?: string;
   department: Department;
-  status: 'PENDING' | 'CONFIRMED' | 'RETURNED';
+  status: 'PENDING' | 'CONFIRMED' | 'RETURNED' | 'REJECTED';
   notes?: string;
   assignedAt: string;
   returnedAt?: string;
+  rejectedAt?: string;
+  rejectedByUserId?: string;
+  rejectionReason?: string;
 }
 
 export interface MaintenanceEvent {

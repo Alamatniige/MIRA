@@ -10,11 +10,28 @@ import (
 	"mira-api/v1/notifications"
 	userv1 "mira-api/v1/user"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
+
+func deriveAssignmentStatus(acknowledged bool, returnedAt *time.Time, rejectedAt *time.Time) string {
+	if rejectedAt != nil {
+		return "REJECTED"
+	}
+
+	if returnedAt != nil {
+		return "RETURNED"
+	}
+
+	if acknowledged {
+		return "CONFIRMED"
+	}
+
+	return "PENDING"
+}
 
 // Assign assets to user
 func AssignAsset(w http.ResponseWriter, r *http.Request) {
@@ -153,7 +170,7 @@ func ReturnAsset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var assignment AssetAssignment
-	if err := tx.Where("\"assetId\" = ? AND \"userId\" = ? AND \"returnedDate\" IS NULL", req.AssetID, userID).First(&assignment).Error; err != nil {
+	if err := tx.Where("\"assetId\" = ? AND \"userId\" = ? AND \"returnedDate\" IS NULL AND \"rejectedAt\" IS NULL", req.AssetID, userID).First(&assignment).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			http.Error(w, "Active assignment not found for this user", http.StatusNotFound)
@@ -189,6 +206,102 @@ func ReturnAsset(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// RejectAssignment rejects an active assignment and frees the asset for reassignment.
+func RejectAssignment(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		http.Error(w, "Missing assignment ID", http.StatusBadRequest)
+		return
+	}
+
+	var req RejectAssignmentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		http.Error(w, "Rejection reason is required", http.StatusBadRequest)
+		return
+	}
+
+	rejectedByUserID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || rejectedByUserID == "" {
+		if fallback, fallbackOK := r.Context().Value("userID").(string); fallbackOK && fallback != "" {
+			rejectedByUserID = fallback
+		} else {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}
+
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	var assignment AssetAssignment
+	if err := tx.First(&assignment, "id = ?", id).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Assignment not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	if assignment.ReturnedDate != nil {
+		tx.Rollback()
+		http.Error(w, "Assignment is already returned", http.StatusConflict)
+		return
+	}
+
+	if assignment.RejectedAt != nil {
+		tx.Rollback()
+		http.Error(w, "Assignment is already rejected", http.StatusConflict)
+		return
+	}
+
+	rejectedAt := time.Now()
+	updates := map[string]interface{}{
+		"rejectedAt":       rejectedAt,
+		"rejectedByUserId": rejectedByUserID,
+		"rejectionReason":  reason,
+		"acknowledged":     false,
+	}
+
+	if err := tx.Model(&assignment).Updates(updates).Error; err != nil {
+		tx.Rollback()
+		http.Error(w, "Failed to reject assignment", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Model(&asset.Asset{}).Where("id = ?", assignment.AssetID).Update("isAssigned", false).Error; err != nil {
+		tx.Rollback()
+		http.Error(w, "Failed to update asset status", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":         "Assignment rejected",
+		"assignmentId":    assignment.ID,
+		"rejectedAt":      rejectedAt,
+		"rejectionReason": reason,
+	})
+}
+
 // GetMyActiveAssignments returns active (not yet returned) assignments for the authenticated user.
 func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("userID").(string)
@@ -198,14 +311,17 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type row struct {
-		ID           string    `gorm:"column:id"`
-		AssetID      string    `gorm:"column:assetId"`
-		Tag          string    `gorm:"column:tag"`
-		AssetName    string    `gorm:"column:assetName"`
-		Department   string    `gorm:"column:department"`
-		Acknowledged bool      `gorm:"column:acknowledged"`
-		Notes        string    `gorm:"column:notes"`
-		AssignedDate time.Time `gorm:"column:assignedDate"`
+		ID               string     `gorm:"column:id"`
+		AssetID          string     `gorm:"column:assetId"`
+		Tag              string     `gorm:"column:tag"`
+		AssetName        string     `gorm:"column:assetName"`
+		Department       string     `gorm:"column:department"`
+		Acknowledged     bool       `gorm:"column:acknowledged"`
+		Notes            string     `gorm:"column:notes"`
+		AssignedDate     time.Time  `gorm:"column:assignedDate"`
+		RejectedAt       *time.Time `gorm:"column:rejectedAt"`
+		RejectedByUserID *string    `gorm:"column:rejectedByUserId"`
+		RejectionReason  string     `gorm:"column:rejectionReason"`
 	}
 
 	var rows []row
@@ -218,12 +334,16 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 			u.department,
 			a.acknowledged,
 			a.notes,
-			a."assignedDate"
+			a."assignedDate",
+			a."rejectedAt",
+			a."rejectedByUserId",
+			a."rejectionReason"
 		FROM "assetsAssignment" a
 		JOIN assets ast ON ast.id = a."assetId"
 		JOIN users u ON u.id = a."userId"
 		WHERE a."userId" = ?
 		  AND a."returnedDate" IS NULL
+		  AND a."rejectedAt" IS NULL
 		ORDER BY a."assignedDate" DESC
 	`, userID).Scan(&rows).Error
 
@@ -234,20 +354,20 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 
 	result := make([]AssignmentResponse, 0, len(rows))
 	for _, row := range rows {
-		status := "PENDING"
-		if row.Acknowledged {
-			status = "CONFIRMED"
-		}
+		status := deriveAssignmentStatus(row.Acknowledged, nil, row.RejectedAt)
 
 		result = append(result, AssignmentResponse{
-			ID:         row.ID,
-			AssetID:    row.AssetID,
-			AssetTag:   row.Tag,
-			AssetName:  row.AssetName,
-			Department: row.Department,
-			Status:     status,
-			Notes:      row.Notes,
-			AssignedAt: row.AssignedDate,
+			ID:               row.ID,
+			AssetID:          row.AssetID,
+			AssetTag:         row.Tag,
+			AssetName:        row.AssetName,
+			Department:       row.Department,
+			Status:           status,
+			Notes:            row.Notes,
+			AssignedAt:       row.AssignedDate,
+			RejectedAt:       row.RejectedAt,
+			RejectedByUserID: row.RejectedByUserID,
+			RejectionReason:  row.RejectionReason,
 		})
 	}
 
@@ -269,6 +389,9 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 		Notes                string     `gorm:"column:notes"`
 		AssignedDate         time.Time  `gorm:"column:assignedDate"`
 		ReturnedDate         *time.Time `gorm:"column:returnedDate"`
+		RejectedAt           *time.Time `gorm:"column:rejectedAt"`
+		RejectedByUserID     *string    `gorm:"column:rejectedByUserId"`
+		RejectionReason      string     `gorm:"column:rejectionReason"`
 		IssuedByUserID       *string    `gorm:"column:issuedByUserId"`
 		IssuedByNameSnapshot *string    `gorm:"column:issuedByNameSnapshot"`
 		IssuerLiveName       *string    `gorm:"column:issuerLiveName"`
@@ -287,6 +410,9 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 			a.notes,
 			a."assignedDate",
 			a."returnedDate",
+			a."rejectedAt",
+			a."rejectedByUserId",
+			a."rejectionReason",
 			a."issuedByUserId",
 			a."issuedByNameSnapshot",
 			iu."fullName" as "issuerLiveName"
@@ -304,12 +430,7 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 
 	result := make([]AssignmentResponse, 0, len(rows))
 	for _, r := range rows {
-		status := "PENDING"
-		if r.ReturnedDate != nil {
-			status = "RETURNED"
-		} else if r.Acknowledged {
-			status = "CONFIRMED"
-		}
+		status := deriveAssignmentStatus(r.Acknowledged, r.ReturnedDate, r.RejectedAt)
 
 		issuerName := "Unknown issuer"
 		if r.IssuedByNameSnapshot != nil && *r.IssuedByNameSnapshot != "" {
@@ -319,18 +440,21 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 		}
 
 		result = append(result, AssignmentResponse{
-			ID:             r.ID,
-			AssetID:        r.AssetID,
-			AssetTag:       r.Tag,
-			AssetName:      r.AssetName,
-			Assignee:       r.FullName,
-			IssuedByUserID: r.IssuedByUserID,
-			IssuerName:     issuerName,
-			Department:     r.Department,
-			Status:         status,
-			Notes:          r.Notes,
-			AssignedAt:     r.AssignedDate,
-			ReturnedAt:     r.ReturnedDate,
+			ID:               r.ID,
+			AssetID:          r.AssetID,
+			AssetTag:         r.Tag,
+			AssetName:        r.AssetName,
+			Assignee:         r.FullName,
+			IssuedByUserID:   r.IssuedByUserID,
+			IssuerName:       issuerName,
+			Department:       r.Department,
+			Status:           status,
+			Notes:            r.Notes,
+			AssignedAt:       r.AssignedDate,
+			ReturnedAt:       r.ReturnedDate,
+			RejectedAt:       r.RejectedAt,
+			RejectedByUserID: r.RejectedByUserID,
+			RejectionReason:  r.RejectionReason,
 		})
 	}
 
@@ -355,6 +479,16 @@ func ConfirmAssignment(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "Database error", http.StatusInternalServerError)
 		}
+		return
+	}
+
+	if assignment.ReturnedDate != nil {
+		http.Error(w, "Assignment is already returned", http.StatusConflict)
+		return
+	}
+
+	if assignment.RejectedAt != nil {
+		http.Error(w, "Assignment is already rejected", http.StatusConflict)
 		return
 	}
 

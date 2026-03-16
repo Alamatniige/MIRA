@@ -88,6 +88,22 @@ export function useAssignments() {
     [getHeaders, fetchAssignments],
   );
 
+  const rejectAssignment = useCallback(
+    async (id: string, reason: string) => {
+      const response = await fetch(`/api/assignments/${id}/reject`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ reason }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to reject assignment');
+      }
+      await fetchAssignments();
+    },
+    [getHeaders, fetchAssignments],
+  );
+
   const getGlobalReturnQr = useCallback(async (): Promise<GlobalReturnQrResponse> => {
     const response = await fetch('/api/qr/return/generate', {
       method: 'POST',
@@ -115,6 +131,7 @@ export function useAssignments() {
     refresh: fetchAssignments,
     createAssignment,
     confirmAssignment,
+    rejectAssignment,
     getGlobalReturnQr,
   };
 }

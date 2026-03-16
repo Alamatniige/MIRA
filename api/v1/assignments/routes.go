@@ -11,5 +11,6 @@ func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/assign", middleware.AuthMiddleware(GetAllAssets)).Methods("GET")
 	r.HandleFunc("/assign/active", middleware.AuthMiddleware(GetMyActiveAssignments)).Methods("GET")
 	r.HandleFunc("/assign/{id}/confirm", middleware.AuthMiddleware(ConfirmAssignment)).Methods("PUT")
+	r.HandleFunc("/assign/{id}/reject", middleware.AuthMiddleware(RejectAssignment)).Methods("PUT")
 	r.HandleFunc("/return", middleware.AuthMiddleware(ReturnAsset)).Methods("POST")
 }

@@ -25,6 +25,7 @@ import {
   SlidersHorizontal,
   Check,
   Eye,
+  X,
 } from 'lucide-react';
 
 import { useAssignments } from '@/hooks/useAssignments';
@@ -57,13 +58,22 @@ function formatDate(iso: string) {
 const badgeStyles: Record<string, string> = {
   success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
   warning: 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+  danger: 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400',
   muted: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
 };
 
-function statusVariant(status: string): 'success' | 'warning' | 'muted' {
+function statusVariant(status: string): 'success' | 'warning' | 'danger' | 'muted' {
   if (status === 'CONFIRMED') return 'success';
   if (status === 'PENDING') return 'warning';
+  if (status === 'REJECTED') return 'danger';
   return 'muted';
+}
+
+function statusLabel(status: string) {
+  if (status === 'CONFIRMED') return 'Confirmed';
+  if (status === 'RETURNED') return 'Returned';
+  if (status === 'REJECTED') return 'Rejected';
+  return 'Pending';
 }
 
 const EMPTY_FORM = {
@@ -80,6 +90,7 @@ export function AssignmentView() {
   const [viewTimeline, setViewTimeline] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isReturnQrOpen, setIsReturnQrOpen] = useState(false);
   const [isLoadingReturnQr, setIsLoadingReturnQr] = useState(false);
@@ -93,6 +104,14 @@ export function AssignmentView() {
     initials: string;
     department: string;
   } | null>(null);
+  const [assignmentToReject, setAssignmentToReject] = useState<{
+    id: string;
+    asset: string;
+    name: string;
+    assignee: string;
+  } | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [isRejecting, setIsRejecting] = useState(false);
   const [viewingAssignment, setViewingAssignment] = useState<{
     asset: string;
     name: string;
@@ -103,8 +122,9 @@ export function AssignmentView() {
     date: string;
     documentDate: string;
     status: string;
-    statusVariant: 'success' | 'warning' | 'muted';
+    statusVariant: 'success' | 'warning' | 'danger' | 'muted';
     notes?: string;
+    rejectionReason?: string;
   } | null>(null);
 
   const [form, setForm] = useState(EMPTY_FORM);
@@ -114,8 +134,15 @@ export function AssignmentView() {
 
   const [currentUserName, setCurrentUserName] = useState<string>('');
 
-  const { assignments, users, isLoading, createAssignment, confirmAssignment, getGlobalReturnQr } =
-    useAssignments();
+  const {
+    assignments,
+    users,
+    isLoading,
+    createAssignment,
+    confirmAssignment,
+    rejectAssignment,
+    getGlobalReturnQr,
+  } = useAssignments();
   const { assets, refresh: refreshAssets } = useAssets();
   const { getCurrentUser } = useUsers();
 
@@ -144,7 +171,9 @@ export function AssignmentView() {
   }, []);
 
   const occupiedAssetIds = new Set(
-    assignments.filter((a) => a.status !== 'RETURNED').map((a) => a.assetId),
+    assignments
+      .filter((a) => a.status !== 'RETURNED' && a.status !== 'REJECTED')
+      .map((a) => a.assetId),
   );
   const unassignedAssets = assets.filter((a) => !occupiedAssetIds.has(a.id));
 
@@ -160,7 +189,9 @@ export function AssignmentView() {
   );
 
   const totalCount = assignments.length;
-  const assignedCount = assignments.filter((a) => a.status !== 'RETURNED').length;
+  const assignedCount = assignments.filter(
+    (a) => a.status !== 'RETURNED' && a.status !== 'REJECTED',
+  ).length;
   const returnedCount = assignments.filter((a) => a.status === 'RETURNED').length;
   const pendingCount = assignments.filter((a) => a.status === 'PENDING').length;
 
@@ -289,6 +320,22 @@ export function AssignmentView() {
     }
   };
 
+  const handleFinalReject = async () => {
+    if (!assignmentToReject || !rejectReason.trim()) return;
+
+    setIsRejecting(true);
+    try {
+      await rejectAssignment(assignmentToReject.id, rejectReason.trim());
+      setIsRejectModalOpen(false);
+      setAssignmentToReject(null);
+      setRejectReason('');
+    } catch (err) {
+      console.error('Failed to reject assignment:', err);
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
   const handleViewMor = () => {
     if (!viewingAssignment) return;
     setIsViewModalOpen(false);
@@ -407,12 +454,7 @@ export function AssignmentView() {
                   <div className="space-y-0 divide-y divide-slate-100 dark:divide-white/5">
                     {assignments.map((a, index) => {
                       const variant = statusVariant(a.status);
-                      const label =
-                        a.status === 'CONFIRMED'
-                          ? 'Confirmed'
-                          : a.status === 'RETURNED'
-                            ? 'Returned'
-                            : 'Pending';
+                      const label = statusLabel(a.status);
                       const initials = getInitials(a.assignee);
                       const dateStr = formatDate(a.assignedAt);
                       return (
@@ -428,7 +470,9 @@ export function AssignmentView() {
                                   ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
                                   : variant === 'warning'
                                     ? 'bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]'
-                                    : 'bg-slate-400'
+                                    : variant === 'danger'
+                                      ? 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]'
+                                      : 'bg-slate-400'
                               }`}
                             />
                             {index < assignments.length - 1 && (
@@ -456,23 +500,41 @@ export function AssignmentView() {
                                 </Badge>
                                 <div className="flex gap-2">
                                   {a.status === 'PENDING' && (
-                                    <button
-                                      onClick={() => {
-                                        setAssignmentToConfirm({
-                                          id: a.id,
-                                          asset: a.assetTag,
-                                          name: a.assetName,
-                                          assignee: a.assignee,
-                                          initials,
-                                          department: a.department,
-                                        });
-                                        setIsConfirmModalOpen(true);
-                                      }}
-                                      className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600/10 text-teal-600 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
-                                      title="Confirm Assignment"
-                                    >
-                                      <Check className="h-4 w-4" />
-                                    </button>
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          setAssignmentToConfirm({
+                                            id: a.id,
+                                            asset: a.assetTag,
+                                            name: a.assetName,
+                                            assignee: a.assignee,
+                                            initials,
+                                            department: a.department,
+                                          });
+                                          setIsConfirmModalOpen(true);
+                                        }}
+                                        className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600/10 text-teal-600 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
+                                        title="Confirm Assignment"
+                                      >
+                                        <Check className="h-4 w-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setAssignmentToReject({
+                                            id: a.id,
+                                            asset: a.assetTag,
+                                            name: a.assetName,
+                                            assignee: a.assignee,
+                                          });
+                                          setRejectReason('');
+                                          setIsRejectModalOpen(true);
+                                        }}
+                                        className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/10 text-red-600 transition-all hover:bg-red-600 hover:text-white dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white"
+                                        title="Reject Assignment"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </button>
+                                    </>
                                   )}
                                   <button
                                     onClick={() => {
@@ -488,6 +550,7 @@ export function AssignmentView() {
                                         status: label,
                                         statusVariant: variant,
                                         notes: a.notes,
+                                        rejectionReason: a.rejectionReason,
                                       });
                                       setIsViewModalOpen(true);
                                     }}
@@ -547,12 +610,7 @@ export function AssignmentView() {
                       <TableBody>
                         {assignments.map((a) => {
                           const variant = statusVariant(a.status);
-                          const label =
-                            a.status === 'CONFIRMED'
-                              ? 'Confirmed'
-                              : a.status === 'RETURNED'
-                                ? 'Returned'
-                                : 'Pending';
+                          const label = statusLabel(a.status);
                           const initials = getInitials(a.assignee);
                           const dateStr = formatDate(a.assignedAt);
                           return (
@@ -595,23 +653,41 @@ export function AssignmentView() {
                               <TableCell className="p-3 sm:p-4">
                                 <div className="flex items-center gap-2">
                                   {a.status === 'PENDING' && (
-                                    <button
-                                      onClick={() => {
-                                        setAssignmentToConfirm({
-                                          id: a.id,
-                                          asset: a.assetTag,
-                                          name: a.assetName,
-                                          assignee: a.assignee,
-                                          initials,
-                                          department: a.department,
-                                        });
-                                        setIsConfirmModalOpen(true);
-                                      }}
-                                      className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600/10 text-teal-700 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
-                                      title="Confirm Assignment"
-                                    >
-                                      <Check className="h-4 w-4" />
-                                    </button>
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          setAssignmentToConfirm({
+                                            id: a.id,
+                                            asset: a.assetTag,
+                                            name: a.assetName,
+                                            assignee: a.assignee,
+                                            initials,
+                                            department: a.department,
+                                          });
+                                          setIsConfirmModalOpen(true);
+                                        }}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600/10 text-teal-700 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
+                                        title="Confirm Assignment"
+                                      >
+                                        <Check className="h-4 w-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setAssignmentToReject({
+                                            id: a.id,
+                                            asset: a.assetTag,
+                                            name: a.assetName,
+                                            assignee: a.assignee,
+                                          });
+                                          setRejectReason('');
+                                          setIsRejectModalOpen(true);
+                                        }}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600/10 text-red-700 transition-all hover:bg-red-600 hover:text-white dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white"
+                                        title="Reject Assignment"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </button>
+                                    </>
                                   )}
 
                                   <button
@@ -628,6 +704,7 @@ export function AssignmentView() {
                                         status: label,
                                         statusVariant: variant,
                                         notes: a.notes,
+                                        rejectionReason: a.rejectionReason,
                                       });
                                       setIsViewModalOpen(true);
                                     }}
@@ -955,6 +1032,17 @@ export function AssignmentView() {
                     {viewingAssignment?.notes || 'No notes provided.'}
                   </p>
                 </div>
+
+                {viewingAssignment.status === 'Rejected' && (
+                  <div className="rounded-2xl border border-red-100 bg-red-50/50 p-4 dark:border-red-900/40 dark:bg-red-950/20">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-red-500 mb-2">
+                      Rejection Reason
+                    </h4>
+                    <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
+                      {viewingAssignment.rejectionReason || 'No rejection reason provided.'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 flex flex-col gap-3">
@@ -1007,6 +1095,71 @@ export function AssignmentView() {
               </Button>
               <Button variant="default" className="" onClick={handlePrintReturnQr}>
                 Print QR
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Reject Modal */}
+        <Modal
+          open={isRejectModalOpen}
+          onClose={() => {
+            setIsRejectModalOpen(false);
+            setAssignmentToReject(null);
+            setRejectReason('');
+          }}
+          title="Reject Assignment"
+          description="Provide a reason before rejecting this request."
+          className="max-w-sm"
+        >
+          <div className="space-y-4 pt-2">
+            {assignmentToReject && (
+              <div className="rounded-xl border border-red-100 bg-red-50/50 p-4 dark:border-red-900/40 dark:bg-red-950/20">
+                <p className="text-[10px] uppercase tracking-widest text-red-500 font-bold">
+                  Request
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {assignmentToReject.asset} · {assignmentToReject.name}
+                </p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Assignee: {assignmentToReject.assignee}
+                </p>
+              </div>
+            )}
+
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Rejection Reason
+              </label>
+              <textarea
+                rows={3}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-[12px] text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-200 dark:placeholder:text-zinc-500 transition-all"
+                placeholder="Explain why this assignment request is rejected."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-10 rounded-full px-6 text-[11px] font-medium"
+                onClick={() => {
+                  setIsRejectModalOpen(false);
+                  setAssignmentToReject(null);
+                  setRejectReason('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={isRejecting || !rejectReason.trim()}
+                className="flex-1 h-10 rounded-full bg-linear-to-r from-red-600 to-red-500 px-6 text-[11px] font-semibold text-white shadow-md hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                onClick={handleFinalReject}
+              >
+                {isRejecting ? 'Rejecting…' : 'Reject Request'}
               </Button>
             </div>
           </div>
