@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"mira-api/internal/activity"
 	"mira-api/internal/db"
 	"mira-api/v1/user"
 
@@ -55,6 +56,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
+
+	now := time.Now().UTC()
+	if err := activity.TouchUserLastActive(targetUser.ID, now); err != nil {
+		http.Error(w, "Failed to update user activity", http.StatusInternalServerError)
+		return
+	}
+	targetUser.LastActive = &now
 
 	// 3. Issue a self-signed JWT
 	tokenStr, err := generateToken(targetUser)
@@ -130,6 +138,13 @@ func SetupPassword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error saving new password", http.StatusInternalServerError)
 		return
 	}
+
+	now := time.Now().UTC()
+	if err := activity.TouchUserLastActive(targetUser.ID, now); err != nil {
+		http.Error(w, "Password updated, but failed to update user activity", http.StatusInternalServerError)
+		return
+	}
+	targetUser.LastActive = &now
 
 	// 5. Generate a JWT token to log them in automatically (if needed by the frontend)
 	tokenStr, err := generateToken(targetUser)

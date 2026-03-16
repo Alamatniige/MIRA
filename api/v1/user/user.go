@@ -14,7 +14,7 @@ type User struct {
 	PhoneNumber string     `json:"phoneNumber" gorm:"column:phoneNumber;not null"`
 	Status      string     `json:"status" gorm:"column:status;default:active;not null"`
 	LastActive  *time.Time `json:"lastActive" gorm:"column:lastActive"`
-	AssetsCount int        `json:"assetsCount" gorm:"-"`
+	AssetsCount int        `json:"assetsCount" gorm:"column:assetsCount;->"`
 	Role        Role       `json:"role" gorm:"foreignKey:RoleID"`
 	CreatedAt   time.Time  `json:"createdAt" gorm:"column:createdAt;autoCreateTime"`
 }

@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"mira-api/internal/activity"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -57,6 +60,10 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		if !ok {
 			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
 			return
+		}
+
+		if err := activity.TouchUserLastActive(claims.UserID, time.Now().UTC()); err != nil {
+			fmt.Printf("failed to update lastActive for user %s: %v\n", claims.UserID, err)
 		}
 
 		ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)

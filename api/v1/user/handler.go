@@ -19,6 +19,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const userWithAssetsCountSelect = "users.*, (SELECT COUNT(*) FROM \"assetsAssignment\" WHERE \"assetsAssignment\".\"userId\" = users.id AND \"assetsAssignment\".\"returnedDate\" IS NULL) as assetsCount"
+
 func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
@@ -28,7 +30,7 @@ func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 
 	var user User
 	result := db.DB.Model(&User{}).
-		Select("users.*, (SELECT COUNT(*) FROM \"assetsAssignment\" WHERE \"assetsAssignment\".\"userId\" = users.id AND \"assetsAssignment\".\"returnedDate\" IS NULL) as assetsCount").
+		Select(userWithAssetsCountSelect).
 		Preload("Role").
 		Where("id = ?", userID).
 		First(&user)
@@ -130,7 +132,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	var users []User
 	if result := db.DB.Model(&User{}).
-		Select("users.*, (SELECT COUNT(*) FROM \"assetsAssignment\" WHERE \"assetsAssignment\".\"userId\" = users.id AND \"assetsAssignment\".\"returnedDate\" IS NULL) as assetsCount").
+		Select(userWithAssetsCountSelect).
 		Preload("Role").
 		Find(&users); result.Error != nil {
 		http.Error(w, "Error fetching users: "+result.Error.Error(), http.StatusInternalServerError)
@@ -156,7 +158,10 @@ func GetUserDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user User
-	if result := db.DB.Preload("Role").First(&user, "id = ?", id); result.Error != nil {
+	if result := db.DB.Model(&User{}).
+		Select(userWithAssetsCountSelect).
+		Preload("Role").
+		First(&user, "id = ?", id); result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			http.Error(w, "User not found", http.StatusNotFound)
 		} else {
