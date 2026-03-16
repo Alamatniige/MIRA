@@ -5,6 +5,7 @@ import { ShieldCheck, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucid
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export function LoginForm() {
   const { login } = useAuth();
@@ -122,12 +123,12 @@ export function LoginForm() {
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Password
                   </label>
-                  <a
-                    href="#"
+                  <Link
+                    href="/forgot-password"
                     className="text-xs text-[#0F766E] hover:text-[#0E7490] transition-colors font-semibold"
                   >
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">

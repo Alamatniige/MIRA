@@ -5,21 +5,122 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FullPageLoader } from "@/components/ui/loader";
-import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Modal } from "@/components/ui/modal";
 import {
-  BarChart3,
-  Download,
   FileText,
-  TrendingUp,
+  Image as ImageIcon,
+  AlertCircle,
+  Clock,
+  CheckCircle2,
   Activity,
-  Wrench,
-  PieChart,
-  MoveUpRight,
-  ChevronRight
+  ArrowUpRight,
+  TrendingUp,
+  User,
+  Box,
+  MoreVertical,
+  ChevronRight,
+  Calendar,
+  ExternalLink,
+  ShieldAlert,
+  Search,
+  Download,
+  Eye
 } from "lucide-react";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { BuildingFloorMap } from "./BuildingFloorMap";
+
+type Report = {
+  id: string;
+  assetTag: string;
+  name: string;
+  user: string;
+  date: string;
+  description: string;
+  status: "open" | "in_progress" | "resolved";
+  images?: string[];
+  initials?: string; // Added initials for avatar
+};
+
+const MOCK_REPORTS: Report[] = [
+  {
+    id: "RPT-00123",
+    assetTag: "AST-100245",
+    name: "Dell Latitude 7420",
+    user: "Juan Dela Cruz",
+    initials: "JD",
+    date: "2026-03-10",
+    description:
+      "Laptop intermittently shutting down when on battery. Observed during client presentation.",
+    status: "open",
+    images: ["/placeholder-assets/laptop-1.jpg", "/placeholder-assets/laptop-2.jpg"],
+  },
+  {
+    id: "RPT-00124",
+    assetTag: "AST-100301",
+    name: "HP LaserJet Pro M404dn",
+    user: "Maria Santos",
+    initials: "MS",
+    date: "2026-03-08",
+    description:
+      "Paper jamming frequently on tray 2, especially on bulk print jobs above 50 pages.",
+    status: "in_progress",
+    images: ["/placeholder-assets/printer-1.jpg"],
+  },
+  {
+    id: "RPT-00125",
+    assetTag: "AST-100112",
+    name: "CCTV Lobby Camera #3",
+    user: "Security Team",
+    initials: "ST",
+    date: "2026-03-05",
+    description:
+      "Video feed showing artifacts at night. Possible IR sensor or lens issue.",
+    status: "resolved",
+    images: ["/placeholder-assets/cctv-1.jpg", "/placeholder-assets/cctv-2.jpg"],
+  },
+];
+
+const kpis = (reports: Report[]) => [
+  {
+    label: "Total Incidents",
+    value: reports.length.toString(),
+    sub: "All reported asset issues",
+    icon: <Activity className="h-5 w-5" />,
+    color: "from-slate-500/10 to-slate-600/10 text-slate-700 border-slate-200/60 dark:from-slate-500/15 dark:to-slate-400/5 dark:text-slate-300 dark:border-slate-400/20",
+    valueColor: "text-slate-800 dark:text-slate-100",
+  },
+  {
+    label: "Open Cases",
+    value: reports.filter(r => r.status === "open").length.toString(),
+    sub: "Awaiting triage",
+    icon: <AlertCircle className="h-5 w-5" />,
+    color: "from-red-500/10 to-red-600/10 text-red-700 border-red-200/60 dark:from-red-500/15 dark:to-red-400/5 dark:text-red-300 dark:border-red-500/20",
+    valueColor: "text-red-800 dark:text-red-300",
+  },
+  {
+    label: "In Progress",
+    value: reports.filter(r => r.status === "in_progress").length.toString(),
+    sub: "Technician assigned",
+    icon: <Clock className="h-5 w-5" />,
+    color: "from-amber-500/10 to-amber-600/10 text-amber-700 border-amber-200/60 dark:from-amber-500/15 dark:to-amber-400/5 dark:text-amber-300 dark:border-amber-500/20",
+    valueColor: "text-amber-800 dark:text-amber-200",
+  },
+  {
+    label: "Resolved",
+    value: reports.filter(r => r.status === "resolved").length.toString(),
+    sub: "Closed this month",
+    icon: <CheckCircle2 className="h-5 w-5" />,
+    color: "from-emerald-500/10 to-emerald-600/10 text-emerald-700 border-emerald-200/60 dark:from-emerald-500/15 dark:to-emerald-400/5 dark:text-emerald-300 dark:border-emerald-500/20",
+    valueColor: "text-emerald-800 dark:text-emerald-200",
+  },
+];
 
 export function ReportAnalytics() {
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,251 +133,314 @@ export function ReportAnalytics() {
     return <FullPageLoader label="Loading reports..." />;
   }
 
+  const filteredReports = MOCK_REPORTS.filter((report) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      report.name.toLowerCase().includes(query) ||
+      report.assetTag.toLowerCase().includes(query) ||
+      report.user.toLowerCase().includes(query) ||
+      report.description.toLowerCase().includes(query)
+    );
+  });
+
+  const reportKpis = kpis(MOCK_REPORTS);
+
   return (
-    <div className="space-y-6 pb-10">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 dark:from-teal-300 dark:to-cyan-400 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
-            Reports & Analytics
+    <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-1.5">
+
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Reports
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Real-time utilization, maintenance, and asset distribution metrics.
+          <p className="max-w-2xl text-sm text-slate-500 dark:text-slate-400">
+            Real-time monitoring of asset performance issues, maintenance requests, and resolution tracking.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
             size="sm"
-            className="h-9 rounded-xl border-slate-200 dark:border-teal-800/30 bg-white/50 dark:bg-[#09090b] px-4 text-xs font-medium text-slate-600 dark:text-slate-300 shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-teal-900/20 hover:text-slate-900 dark:hover:text-slate-100"
+            className="h-9 rounded-full border-slate-200/60 bg-white/50 px-5 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur-md transition-all hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
           >
             <Download className="mr-2 h-3.5 w-3.5" />
-            Export CSV
+            Export Data
           </Button>
           <Button
             size="sm"
-            className="h-9 rounded-xl bg-gradient-to-r from-[#0F766E] to-[#0E7490] px-4 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg active:scale-95"
+            className="h-9 rounded-full bg-linear-to-r from-teal-600 to-emerald-600 px-5 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg hover:shadow-teal-500/20 active:scale-95"
           >
-            <FileText className="mr-2 h-3.5 w-3.5" />
-            Export PDF
+            Create Ticket
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="overflow-hidden border-slate-200/60 dark:border-teal-500/10 dark:bg-[#09090b] shadow-sm transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-200">Utilization Rate</CardTitle>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">Active assets in use</p>
-            </div>
-            <div className="rounded-full bg-slate-50 dark:bg-teal-900/30 p-2 text-slate-500 dark:text-teal-300">
-              <Activity className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="flex items-end justify-between">
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">84%</span>
-                  <span className="flex items-center text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                    <TrendingUp className="mr-0.5 h-3 w-3" />
-                    +2.4%
-                  </span>
-                </div>
-                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Target: &gt; 80%</p>
-              </div>
-              <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/20 dark:hover:bg-emerald-500/20 font-medium">Healthy</Badge>
-            </div>
-            <div className="mt-6">
-              <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-1.5 font-medium uppercase tracking-wider">
-                <span>Current Status</span>
-                <span>Optimized</span>
-              </div>
-              <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-teal-950/60 overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-400 shadow-sm transition-all duration-500" style={{ width: '84%' }} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Building Map Visualization */}
+      <BuildingFloorMap />
 
-        <Card className="overflow-hidden border-slate-200/60 dark:border-teal-500/10 dark:bg-[#09090b] shadow-sm transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-200">Maintenance</CardTitle>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">Avg. events per month</p>
-            </div>
-            <div className="rounded-full bg-slate-50 dark:bg-teal-900/30 p-2 text-slate-500 dark:text-teal-300">
-              <Wrench className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="flex items-end justify-between">
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">37</span>
-                  <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                    High demand
-                  </span>
-                </div>
-                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Preventive & corrective</p>
+      {/* KPI Section */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
+        {reportKpis.map((kpi) => (
+          <div
+            key={kpi.label}
+            className={`flex flex-col gap-2 rounded-2xl border bg-linear-to-br p-4 transition-all hover:shadow-lg hover:translate-y-[-2px] dark:hover:shadow-teal-900/10 dark:bg-[#09090b] ${kpi.color}`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider opacity-75 dark:opacity-90">{kpi.label}</span>
+              <div className="rounded-lg bg-white/30 p-1.5 dark:bg-black/20">
+                {kpi.icon}
               </div>
-              <Badge className="bg-amber-50 text-amber-700 hover:bg-amber-50 border-amber-100 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/20 dark:hover:bg-amber-500/20 font-medium">Monitor</Badge>
             </div>
-            <div className="mt-6 flex items-end justify-between gap-1.5 h-12">
-              {[35, 42, 38, 45, 37, 48].map((val, idx) => (
-                <div key={idx} className="group relative flex-1">
-                  <div
-                    className="w-full rounded-t-sm bg-slate-200 dark:bg-teal-900/40 transition-all group-hover:bg-slate-400 dark:group-hover:bg-teal-500"
-                    style={{ height: `${val}%` }}
-                  />
-                  {idx === 5 && (
-                    <div className="absolute -top-1 left-0 right-0 h-1 bg-slate-900 dark:bg-teal-400 rounded-full" />
+            <div className="flex items-end justify-between">
+              <p className={`text-3xl font-bold tracking-tight ${kpi.valueColor}`}>
+                {kpi.value}
+              </p>
+              <div className="flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                <TrendingUp className="h-3 w-3" />
+                <span>+4%</span>
+              </div>
+            </div>
+            <p className="text-[10px] font-medium opacity-60 dark:opacity-70">{kpi.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Main Table Card */}
+      <Card className="overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl transition-all dark:border-teal-500/10 dark:bg-[#09090b] dark:shadow-teal-900/20">
+        <CardHeader className="relative border-b border-slate-100 pb-4 dark:border-teal-800/20">
+          <div className="flex flex-wrap items-center justify-between gap-4 pr-10">
+            <div>
+              <CardTitle className="text-base font-bold">Case Directory</CardTitle>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Detailed record of hardware malfunctions and repair history.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Filter cases..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-8 w-48 rounded-full border border-slate-200 bg-white/50 pl-8 text-[11px] outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-white/5 dark:bg-white/5"
+                />
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader className="bg-slate-100/30 dark:bg-teal-950/20">
+              <TableRow className="border-slate-100 dark:border-teal-800/20">
+                <TableHead className="w-[120px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">Asset Tag</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">Name</TableHead>
+                <TableHead className="w-[180px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">User</TableHead>
+                <TableHead className="w-[140px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">Date of Reported</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">Description</TableHead>
+                <TableHead className="w-[100px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60 text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredReports.map((report) => (
+                <TableRow
+                  key={report.id}
+                  className="group cursor-pointer border-b border-slate-50 transition-all hover:bg-slate-100/40 dark:border-teal-800/10 dark:hover:bg-teal-900/10"
+                  onClick={() => setSelectedReport(report)}
+                >
+                  <TableCell className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 dark:bg-teal-900/30">
+                        <Box className="h-3.5 w-3.5 text-slate-500 dark:text-teal-400" />
+                      </div>
+                      <span className="font-mono text-xs font-bold text-slate-700 dark:text-teal-300">
+                        {report.assetTag}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {report.name}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-teal-500 to-emerald-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
+                        {report.initials}
+                      </div>
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                        {report.user}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                      <Calendar className="h-3 w-3" />
+                      {report.date}
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <span className="line-clamp-1 text-xs text-slate-600 dark:text-slate-400">
+                      {report.description}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-right">
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      className="h-8 w-8 rounded-full border-slate-200 bg-white p-0 hover:bg-teal-50 hover:text-teal-600 dark:border-white/10 dark:bg-white/5 dark:hover:bg-teal-500/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedReport(report);
+                      }}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredReports.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center text-sm text-slate-500 dark:text-slate-400">
+                    No cases match your filter.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Case Details Modal */}
+      <Modal
+        open={!!selectedReport}
+        onClose={() => setSelectedReport(null)}
+        title={selectedReport ? "Incident Investigation" : ""}
+        description={selectedReport ? `Overview of Case #${selectedReport.id}` : ""}
+        className="max-w-4xl"
+        contentClassName="px-0 py-0"
+      >
+        {selectedReport && (
+          <div className="flex flex-col bg-slate-50/50 dark:bg-[#020617]">
+            {/* Modal Header/Subheader */}
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-teal-800/15 bg-white dark:bg-[#09090b]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-500/10 dark:bg-teal-500/20">
+                    <ShieldAlert className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">{selectedReport.name}</h2>
+                    <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                      <span className="font-mono text-teal-600 dark:text-teal-400">{selectedReport.assetTag}</span>
+                      <span className="h-1 w-1 rounded-full bg-slate-300" />
+                      <span>Logged by {selectedReport.user}</span>
+                    </div>
+                  </div>
+                </div>
+                <Badge
+                  variant={selectedReport.status === "open" ? "danger" : selectedReport.status === "in_progress" ? "warning" : "success"}
+                  className="px-3 py-1 text-[11px] font-bold uppercase"
+                >
+                  {selectedReport.status.replace('_', ' ')}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="grid gap-0 md:grid-cols-[1fr_320px]">
+              <div className="p-6 space-y-6">
+                {/* Description Box */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-3.5 w-3.5 text-teal-600" />
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Statement of Problem</h3>
+                  </div>
+                  <div className="rounded-xl border border-slate-100 bg-white p-4 text-sm leading-relaxed text-slate-700 shadow-sm dark:border-teal-800/15 dark:bg-white/5 dark:text-slate-300">
+                    {selectedReport.description}
+                  </div>
+                </div>
+
+                {/* Evidence/Images */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="h-3.5 w-3.5 text-teal-600" />
+                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Visual Evidence</h3>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400">{selectedReport.images?.length ?? 0} Attached</span>
+                  </div>
+
+                  {selectedReport.images && selectedReport.images.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      {selectedReport.images.map((src, index) => (
+                        <div
+                          key={src}
+                          className="group relative aspect-video overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-white/5 dark:bg-white/5"
+                        >
+                          <Image
+                            src={src}
+                            alt={`Evidence ${index + 1}`}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                          <button className="absolute bottom-3 right-3 rounded-full bg-white/20 p-2 text-white backdrop-blur-md transition-all hover:bg-white hover:text-teal-600 opacity-0 group-hover:opacity-100">
+                            <ExternalLink className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex aspect-video items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-10 text-center dark:border-white/5 dark:bg-white/5">
+                      <div className="space-y-1">
+                        <ImageIcon className="mx-auto h-8 w-8 text-slate-300" />
+                        <p className="text-xs text-slate-400">No photos provided for this case.</p>
+                      </div>
+                    </div>
                   )}
                 </div>
-              ))}
-            </div>
-            <div className="mt-2 flex justify-between text-[9px] font-medium text-slate-400 dark:text-slate-500 uppercase">
-              <span>Oct</span>
-              <span>Nov</span>
-              <span>Dec</span>
-              <span>Jan</span>
-              <span>Feb</span>
-              <span>Mar</span>
-            </div>
-          </CardContent>
-        </Card>
+              </div>
 
-        <Card className="overflow-hidden border-slate-200/60 dark:border-teal-500/10 dark:bg-[#09090b] shadow-sm transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-200">Distribution</CardTitle>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">Total reach: 12 Locations</p>
-            </div>
-            <div className="rounded-full bg-slate-50 dark:bg-teal-900/30 p-2 text-slate-500 dark:text-teal-300">
-              <PieChart className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-3.5">
-              {[
-                { label: "IT & Infra", value: "26%", color: "bg-teal-600 dark:bg-teal-500" },
-                { label: "Operations", value: "24%", color: "bg-teal-500 dark:bg-teal-400" },
-                { label: "Finance", value: "18%", color: "bg-cyan-500 dark:bg-cyan-400" },
-                { label: "HR & Admin", value: "14%", color: "bg-sky-400 dark:bg-sky-400" },
-                { label: "Marketing", value: "18%", color: "bg-slate-300 dark:bg-slate-600" },
-              ].map((item) => (
-                <div key={item.label} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-medium text-slate-600 dark:text-slate-300">{item.label}</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">{item.value}</span>
+              {/* Sidebar Info */}
+              <div className="border-l border-slate-100 bg-slate-50/50 p-6 dark:border-teal-800/15 dark:bg-black/20">
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Case Metadata</h3>
+                    <div className="space-y-4">
+                      {[
+                        { label: "Asset Code", value: selectedReport.assetTag, icon: Box },
+                        { label: "Reported On", value: selectedReport.date, icon: Calendar },
+                        { label: "Logged By", value: selectedReport.user, icon: User },
+                        { label: "System ID", value: selectedReport.id, icon: FileText },
+                      ].map((item) => (
+                        <div key={item.label} className="flex gap-3">
+                          <div className="mt-1 h-3.5 w-3.5 text-teal-600">
+                            <item.icon className="h-full w-full" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{item.label}</span>
+                            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">{item.value}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-teal-950/60">
-                    <div className={cn("h-full rounded-full transition-all duration-700", item.color)} style={{ width: item.value }} />
+
+                  <div className="pt-6 border-t border-slate-200 dark:border-teal-800/15">
+                    <Button className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-teal-600 dark:hover:bg-teal-500">
+                      Update Case Status
+                    </Button>
+                    <p className="mt-3 text-[10px] text-center text-slate-400 px-4 leading-tight">
+                      Changes will be logged in the system audit history.
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-slate-200/60 dark:border-teal-500/10 dark:bg-[#09090b] shadow-sm transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">Assets per Department</CardTitle>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 dark:text-slate-500">
-              <BarChart3 className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="relative h-64 pt-6">
-              <div className="absolute inset-0 flex items-end justify-between gap-4 pb-8 px-2">
-                {[
-                  { label: "IT", h: 90, count: 124 },
-                  { label: "Ops", h: 80, count: 98 },
-                  { label: "Fin", h: 65, count: 72 },
-                  { label: "HR", h: 50, count: 45 },
-                  { label: "Other", h: 55, count: 52 },
-                ].map((bar) => (
-                  <div
-                    key={bar.label}
-                    className="group relative flex flex-1 flex-col items-center justify-end gap-3"
-                  >
-                    <div className="invisible absolute -top-8 mb-2 whitespace-nowrap rounded bg-slate-900 dark:bg-teal-800 px-2 py-1 text-[10px] font-bold text-white opacity-0 transition-all group-hover:visible group-hover:opacity-100">
-                      {bar.count} units
-                    </div>
-                    <div className="flex h-full w-full items-end rounded-xl bg-slate-50/50 dark:bg-teal-950/30 p-1.5 transition-colors group-hover:bg-slate-100/80 dark:group-hover:bg-teal-900/30">
-                      <div
-                        className="mx-auto w-full rounded-lg bg-gradient-to-t from-teal-600 to-teal-400 dark:from-teal-500 dark:to-cyan-400 shadow-sm transition-all duration-1000 group-hover:from-teal-500 group-hover:to-cyan-300"
-                        style={{ height: `${bar.h}%` }}
-                      />
-                    </div>
-                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 transition-colors group-hover:text-slate-900 dark:group-hover:text-slate-200">
-                      {bar.label}
-                    </span>
-                  </div>
-                ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200/60 dark:border-teal-500/10 dark:bg-[#09090b] shadow-sm transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">Asset Movement Trend</CardTitle>
-            <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 px-3 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-              <MoveUpRight className="h-3 w-3" />
-              <span>12% Uptrend</span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="relative h-64 overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-teal-950/30 p-4">
-              <div className="absolute left-4 top-4 flex flex-col gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Monthly Avg</span>
-                <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">4,281</span>
-              </div>
-              <svg
-                viewBox="0 0 320 160"
-                className="h-full w-full transform transition-transform duration-700 hover:scale-[1.02]"
-                preserveAspectRatio="none"
-              >
-                <path
-                  fill="url(#fill-gradient)"
-                  d="M0,120 C40,110 60,85 80,90 C100,95 120,105 140,90 C160,75 180,65 200,70 C220,75 240,55 260,50 C280,45 300,55 320,50 L320,160 L0,160 Z"
-                  className="transition-all duration-1000"
-                />
-                <path
-                  fill="none"
-                  stroke="url(#line-gradient)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M0,120 C40,110 60,85 80,90 C100,95 120,105 140,90 C160,75 180,65 200,70 C220,75 240,55 260,50 C280,45 300,55 320,50"
-                  className="transition-all duration-1000"
-                />
-                <defs>
-                  <linearGradient id="line-gradient" x1="0" x2="1" y1="0" y2="0">
-                    <stop offset="0%" stopColor="#14b8a6" />
-                    <stop offset="100%" stopColor="#22d3ee" />
-                  </linearGradient>
-                  <linearGradient id="fill-gradient" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#14b8a6" stopOpacity="0.2" />
-                    <stop offset="100%" stopColor="#14b8a6" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                Data shows consistent growth in asset transitions.
-              </p>
-              <Button variant="link" className="h-auto p-0 text-[11px] font-bold text-teal-600 dark:text-teal-400 decoration-teal-600 dark:decoration-teal-400 underline-offset-4">
-                View detailed logs <ChevronRight className="ml-1 h-3 w-3" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

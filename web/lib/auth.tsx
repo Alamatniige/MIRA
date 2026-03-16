@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/login'];
+  const publicRoutes = ['/login', '/forgot-password', '/setup-password'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   useEffect(() => {

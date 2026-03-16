@@ -71,10 +71,7 @@ export function MorTemplate({ morData }: MorTemplateProps) {
             {formatDocumentDate(morData.date || new Date().toISOString())}
           </div>
           <div>
-            <span className="font-bold">Status:</span>
-            <span className="ml-2 uppercase border border-black px-2 py-0.5 text-[10px] font-bold tracking-wider font-sans">
-              {morData.status || 'Pending'}
-            </span>
+
           </div>
         </div>
 

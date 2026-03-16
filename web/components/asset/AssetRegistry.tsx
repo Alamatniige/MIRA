@@ -20,7 +20,7 @@ import {
 import { Modal } from '@/components/ui/modal';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
-import { sileo } from 'sileo';
+import { toast } from 'sonner';
 
 /* ──────────────────────────────── helpers ──────────────────────────────── */
 
@@ -303,6 +303,7 @@ export function AssetRegistry() {
   const [floorFilter, setFloorFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [editImageFiles, setEditImageFiles] = useState<File[]>([]);
@@ -533,10 +534,8 @@ export function AssetRegistry() {
         setQrOpen(true);
       }
       setOpen(false);
-      sileo.success({
-        title: 'Asset Saved',
+      toast.success('Asset Saved', {
         description: 'The asset has been successfully registered.',
-        fill: '#000000',
       });
 
       // Reset form
@@ -560,7 +559,7 @@ export function AssetRegistry() {
       setImagePreviews([]);
     } catch (err) {
       console.error(err);
-      sileo.error({ title: 'Error', description: 'Failed to save asset. Please try again.' });
+      toast.error('Error', { description: 'Failed to save asset. Please try again.' });
     } finally {
       setIsGeneratingQr(false);
     }
@@ -599,6 +598,7 @@ export function AssetRegistry() {
 
   const handleUpdateAsset = async () => {
     if (!selectedEditAsset) return;
+    setIsUpdating(true);
     try {
       const updatedAsset = await updateAsset({
         id: selectedEditAsset.id,
@@ -619,14 +619,14 @@ export function AssetRegistry() {
 
       setSelectedViewAsset(updatedAsset);
       closeEditModal();
-      sileo.success({
-        title: 'Asset Updated',
+      toast.success('Asset Updated', {
         description: 'The asset has been successfully updated.',
-        fill: '#000000',
       });
     } catch (err) {
       console.error(err);
-      sileo.error({ title: 'Error', description: 'Failed to update asset. Please try again.' });
+      toast.error('Error', { description: 'Failed to update asset. Please try again.' });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -636,14 +636,12 @@ export function AssetRegistry() {
       await deleteAsset(selectedDeleteAsset.id);
       setDeleteModal(false);
       setSelectedDeleteAsset(null);
-      sileo.success({
-        title: 'Asset Deleted',
+      toast.success('Asset Deleted', {
         description: 'The asset has been successfully removed.',
-        fill: '#000000',
       });
     } catch (err) {
       console.error(err);
-      sileo.error({ title: 'Error', description: 'Failed to delete asset. Please try again.' });
+      toast.error('Error', { description: 'Failed to delete asset. Please try again.' });
     }
   };
 
@@ -2384,10 +2382,36 @@ export function AssetRegistry() {
                   type="button"
                   variant="default"
                   size="sm"
-                  className="h-8 rounded-full px-6 text-[11px] font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm"
+                  disabled={isUpdating}
+                  className="h-8 rounded-full px-6 text-[11px] font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm flex items-center justify-center gap-1.5"
                   onClick={handleUpdateAsset}
                 >
-                  Save Changes
+                  {isUpdating ? (
+                    <>
+                      <svg
+                        className="animate-spin h-3.5 w-3.5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
                 </Button>
               </div>
             </div>
