@@ -1050,7 +1050,7 @@ export function AssetRegistry() {
                   />
                 </div>
                 <p className="mt-5 text-[15px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">
-                  {selectedQrAsset.id ? `${selectedQrAsset.id.slice(0, 8)}...` : ''}
+                  {selectedQrAsset.tag}
                 </p>
                 <p className="mt-1.5 text-[12px] text-slate-500">{selectedQrAsset.assetName}</p>
               </div>

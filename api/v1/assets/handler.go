@@ -14,7 +14,10 @@ import (
 	"strings"
 
 	"mira-api/internal/db"
+	"mira-api/middleware"
+	"mira-api/v1/notifications"
 	"mira-api/v1/qr"
+	userv1 "mira-api/v1/user"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -189,6 +192,21 @@ func AddAsset(w http.ResponseWriter, r *http.Request) {
 		}
 		db.DB.Create(&generatedQr)
 	}
+
+	actorName := "Unknown"
+	if actorID, ok := r.Context().Value(middleware.UserIDKey).(string); ok && actorID != "" {
+		var actor userv1.User
+		if err := db.DB.Select("id", `"fullName"`).First(&actor, "id = ?", actorID).Error; err == nil {
+			actorName = actor.FullName
+		}
+	}
+
+	go notifications.Emit(
+		notifications.TypeAssetRegistered,
+		"New asset registered",
+		fmt.Sprintf("%s registered %s (%s).", actorName, newAsset.AssetName, newAsset.Tag),
+		actorName,
+	)
 
 	w.WriteHeader(http.StatusCreated)
 

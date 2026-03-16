@@ -3,9 +3,11 @@ package assignments
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"mira-api/internal/db"
 	"mira-api/middleware"
 	asset "mira-api/v1/assets"
+	"mira-api/v1/notifications"
 	userv1 "mira-api/v1/user"
 	"net/http"
 	"time"
@@ -102,6 +104,13 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
 		return
 	}
+
+	go notifications.Emit(
+		notifications.TypeAssetAssigned,
+		"Asset assigned",
+		fmt.Sprintf("%s assigned %s (%s).", issuer.FullName, asset.AssetName, asset.Tag),
+		issuer.FullName,
+	)
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(assignment)

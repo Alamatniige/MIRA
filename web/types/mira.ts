@@ -100,3 +100,20 @@ export interface User {
   lastActive?: string;
   assetsCount?: number;
 }
+
+export type NotificationType =
+  | 'report_created'
+  | 'asset_assigned'
+  | 'asset_registered'
+  | 'asset_request'
+  | 'maintenance_scheduled';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  description: string;
+  performedBy: string;
+  read: boolean;
+  createdAt: string;
+}

@@ -2,7 +2,11 @@ package issues
 
 import (
 	"encoding/json"
+	"fmt"
 	"mira-api/internal/db"
+	"mira-api/middleware"
+	"mira-api/v1/notifications"
+	userv1 "mira-api/v1/user"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -41,8 +45,22 @@ func CreateIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	actorName := "Unknown"
+	if actorID, ok := r.Context().Value(middleware.UserIDKey).(string); ok && actorID != "" {
+		var actor userv1.User
+		if err := db.DB.Select("id", `"fullName"`).First(&actor, "id = ?", actorID).Error; err == nil {
+			actorName = actor.FullName
+		}
+	}
 
+	go notifications.Emit(
+		notifications.TypeReportCreated,
+		"New issue reported",
+		fmt.Sprintf("%s reported an issue for asset %s.", actorName, newIssue.AssetID),
+		actorName,
+	)
+
+	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(newIssue)
 }

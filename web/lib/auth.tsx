@@ -1,138 +1,145 @@
-"use client";
+'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { apiClient } from './api-client';
 
 interface User {
-    id: string;
-    email: string;
-    full_name?: string;
-    role?: {
-        name: string;
-    };
+  id: string;
+  email: string;
+  fullName?: string;
+  role?: {
+    name: string;
+  };
 }
 
 interface AuthContextType {
-    user: User | null;
-    token: string | null;
-    login: (email: string, password: string) => Promise<void>;
-    logout: () => Promise<void>;
-    isLoading: boolean;
+  user: User | null;
+  token: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
-    const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
-    useEffect(() => {
-        // Hydrate from localStorage
-        const savedToken = localStorage.getItem('mira_token');
-        const savedUser = localStorage.getItem('mira_user');
+  useEffect(() => {
+    // Hydrate from localStorage
+    const savedToken = localStorage.getItem('mira_token');
+    const savedUser = localStorage.getItem('mira_user');
 
-        if (savedToken && savedUser) {
-            try {
-                const parsedUser = JSON.parse(savedUser) as User;
+    if (savedToken && savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser) as User;
 
-                // RBAC: Only Admins are allowed in this console
-                if (parsedUser.role?.name !== 'Admin') {
-                    console.warn("Non-admin user session detected during hydration. Clearing session.");
-                    logout();
-                    return;
-                }
-
-                setToken(savedToken);
-                setUser(parsedUser);
-            } catch (e) {
-                console.error("Failed to parse saved user", e);
-                logout();
-            }
+        // RBAC: Only Admins are allowed in this console
+        if (parsedUser.role?.name !== 'Admin') {
+          console.warn('Non-admin user session detected during hydration. Clearing session.');
+          logout();
+          return;
         }
-        setIsLoading(false);
-    }, []);
 
-    const login = async (email: string, password: string) => {
-        setIsLoading(true);
-        try {
-            const response = await apiClient<{ message: string; data: { access_token: string; user: User } }>('/login', {
-                method: 'POST',
-                body: JSON.stringify({ email, password }),
-            });
+        setToken(savedToken);
+        setUser(parsedUser);
+      } catch (e) {
+        console.error('Failed to parse saved user', e);
+        logout();
+      }
+    }
+    setIsLoading(false);
+  }, []);
 
-            const { access_token, user: userData } = response.data;
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const response = await apiClient<{
+        message: string;
+        data: { access_token: string; user: User };
+      }>('/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
 
-            // RBAC: Check if user is an Admin
-            if (userData.role?.name !== 'Admin') {
-                throw new Error("Access denied. Only administrators are allowed to enter the IT Admin Console.");
-            }
+      const { access_token, user: userData } = response.data;
 
-            setToken(access_token);
-            setUser(userData);
-            localStorage.setItem('mira_token', access_token);
-            localStorage.setItem('mira_user', JSON.stringify(userData));
+      // RBAC: Check if user is an Admin
+      if (userData.role?.name !== 'Admin') {
+        throw new Error(
+          'Access denied. Only administrators are allowed to enter the IT Admin Console.',
+        );
+      }
 
-            router.push('/dashboard');
-        } catch (error: any) {
-            console.error('Login error:', error);
+      setToken(access_token);
+      setUser(userData);
+      localStorage.setItem('mira_token', access_token);
+      localStorage.setItem('mira_user', JSON.stringify(userData));
 
-            // Map common error patterns to user-friendly messages
-            const message = error.message || '';
-            if (message.toLowerCase().includes('unauthorized') ||
-                message.toLowerCase().includes('invalid login credentials') ||
-                message.toLowerCase().includes('login failed')) {
-                throw new Error("Invalid email or password. Please try again.");
-            }
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Login error:', error);
 
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      // Map common error patterns to user-friendly messages
+      const message = error.message || '';
+      if (
+        message.toLowerCase().includes('unauthorized') ||
+        message.toLowerCase().includes('invalid login credentials') ||
+        message.toLowerCase().includes('login failed')
+      ) {
+        throw new Error('Invalid email or password. Please try again.');
+      }
 
-    const logout = async () => {
-        try {
-            if (token) {
-                // Call the backend logout API, we ignore errors since we're clearing local state anyway
-                await apiClient('/logout', { method: 'POST' }).catch(() => { });
-            } else {
-                // Just to give the UI a tiny moment to show the spinner if there's no backend request
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-        } finally {
-            setToken(null);
-            setUser(null);
-            localStorage.removeItem('mira_token');
-            localStorage.removeItem('mira_user');
-            router.push('/login');
-        }
-    };
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    // Public routes that don't require authentication
-    const publicRoutes = ['/login'];
-    const isPublicRoute = publicRoutes.includes(pathname);
+  const logout = async () => {
+    try {
+      if (token) {
+        // Call the backend logout API, we ignore errors since we're clearing local state anyway
+        await apiClient('/logout', { method: 'POST' }).catch(() => {});
+      } else {
+        // Just to give the UI a tiny moment to show the spinner if there's no backend request
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    } finally {
+      setToken(null);
+      setUser(null);
+      localStorage.removeItem('mira_token');
+      localStorage.removeItem('mira_user');
+      router.push('/login');
+    }
+  };
 
-    useEffect(() => {
-        if (!isLoading && !token && !isPublicRoute) {
-            router.push('/login');
-        }
-    }, [isLoading, token, pathname, isPublicRoute, router]);
+  // Public routes that don't require authentication
+  const publicRoutes = ['/login'];
+  const isPublicRoute = publicRoutes.includes(pathname);
 
-    return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
-            {children}
-        </AuthContext.Provider>
-    );
+  useEffect(() => {
+    if (!isLoading && !token && !isPublicRoute) {
+      router.push('/login');
+    }
+  }, [isLoading, token, pathname, isPublicRoute, router]);
+
+  return (
+    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

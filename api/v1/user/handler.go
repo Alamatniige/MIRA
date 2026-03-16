@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"mira-api/internal/db"
+	"mira-api/middleware"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -19,19 +20,25 @@ import (
 )
 
 func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
-	var users []User
-	// Fetching the first user with their role and asset count
-	if result := db.DB.Model(&User{}).
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var user User
+	result := db.DB.Model(&User{}).
 		Select("users.*, (SELECT COUNT(*) FROM \"assetsAssignment\" WHERE \"assetsAssignment\".\"userId\" = users.id AND \"assetsAssignment\".\"returnedDate\" IS NULL) as assetsCount").
 		Preload("Role").
-		Limit(1).
-		Find(&users); result.Error != nil {
+		Where("id = ?", userID).
+		First(&user)
+	if result.Error != nil {
 		http.Error(w, "Error fetching user: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
+	json.NewEncoder(w).Encode(user)
 }
 
 func AddUser(w http.ResponseWriter, r *http.Request) {

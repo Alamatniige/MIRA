@@ -14,6 +14,7 @@ import (
 	"mira-api/v1/assignments"
 	"mira-api/v1/auth"
 	"mira-api/v1/issues"
+	"mira-api/v1/notifications"
 	"mira-api/v1/qr"
 	report "mira-api/v1/reports"
 	"mira-api/v1/supabase"
@@ -50,6 +51,7 @@ func main() {
 		&assignments.AssetAssignment{},
 		&issues.IssueReport{},
 		&qr.QrCode{},
+		&notifications.Notification{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
@@ -68,6 +70,7 @@ func main() {
 	qr.RegisterRoutes(r)
 	issues.RegisterRoutes(r)
 	report.RegisterRoutes(r)
+	notifications.RegisterRoutes(r)
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Welcome to MIRA API!")

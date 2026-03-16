@@ -204,7 +204,7 @@ export function AssignmentView() {
   ];
 
   const issuerNameFallback =
-    currentUser?.full_name?.trim() || currentUserName || 'Asset Management Officer';
+    currentUser?.fullName?.trim() || currentUserName || 'Asset Management Officer';
 
   const buildMorData = ({
     assetLabel,
