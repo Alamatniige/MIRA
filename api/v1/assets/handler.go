@@ -248,7 +248,8 @@ func AddAssetFloor(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newAssetFloor := AssetFloor{
-		Name: req.Name,
+		Name:  req.Name,
+		Level: req.Level,
 	}
 
 	if result := db.DB.Create(&newAssetFloor); result.Error != nil {
@@ -270,7 +271,24 @@ func AddAssetRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newAssetRoom := AssetRoom{
-		Name: req.Name,
+		Name:    req.Name,
+		FloorId: req.FloorId,
+		X:       20,
+		Y:       20,
+		Width:   100,
+		Height:  80,
+	}
+	if req.X != nil {
+		newAssetRoom.X = *req.X
+	}
+	if req.Y != nil {
+		newAssetRoom.Y = *req.Y
+	}
+	if req.Width != nil {
+		newAssetRoom.Width = *req.Width
+	}
+	if req.Height != nil {
+		newAssetRoom.Height = *req.Height
 	}
 
 	if result := db.DB.Create(&newAssetRoom); result.Error != nil {
@@ -317,6 +335,141 @@ func GetAssetRooms(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(rooms)
+}
+
+// Update asset floor
+func UpdateAssetFloor(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	var floor AssetFloor
+	if result := db.DB.First(&floor, "id = ?", id); result.Error != nil {
+		http.Error(w, "Floor not found", http.StatusNotFound)
+		return
+	}
+
+	var req UpdateAssetFloorRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Name != nil {
+		floor.Name = *req.Name
+	}
+	if req.Level != nil {
+		floor.Level = req.Level
+	}
+
+	if result := db.DB.Save(&floor); result.Error != nil {
+		http.Error(w, "Error updating floor: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(floor)
+}
+
+// Delete asset floor
+func DeleteAssetFloor(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	var count int64
+	if result := db.DB.Model(&Asset{}).Where(`"floor" = ?`, id).Count(&count); result.Error != nil {
+		http.Error(w, "Error checking asset references: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+	if count > 0 {
+		http.Error(w, "Cannot delete floor: assets are currently assigned to this floor", http.StatusConflict)
+		return
+	}
+
+	// Also check if any rooms reference this floor
+	var roomCount int64
+	if result := db.DB.Model(&AssetRoom{}).Where(`"floorId" = ?`, id).Count(&roomCount); result.Error != nil {
+		http.Error(w, "Error checking room references: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+	if roomCount > 0 {
+		http.Error(w, "Cannot delete floor: rooms are assigned to this floor", http.StatusConflict)
+		return
+	}
+
+	if result := db.DB.Delete(&AssetFloor{}, id); result.Error != nil {
+		http.Error(w, "Error deleting floor: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// Update asset room
+func UpdateAssetRoom(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	var room AssetRoom
+	if result := db.DB.First(&room, "id = ?", id); result.Error != nil {
+		http.Error(w, "Room not found", http.StatusNotFound)
+		return
+	}
+
+	var req UpdateAssetRoomRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Name != nil {
+		room.Name = *req.Name
+	}
+	if req.FloorId != nil {
+		room.FloorId = req.FloorId
+	}
+	if req.X != nil {
+		room.X = *req.X
+	}
+	if req.Y != nil {
+		room.Y = *req.Y
+	}
+	if req.Width != nil {
+		room.Width = *req.Width
+	}
+	if req.Height != nil {
+		room.Height = *req.Height
+	}
+
+	if result := db.DB.Save(&room); result.Error != nil {
+		http.Error(w, "Error updating room: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(room)
+}
+
+// Delete asset room
+func DeleteAssetRoom(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	var count int64
+	if result := db.DB.Model(&Asset{}).Where(`"room" = ?`, id).Count(&count); result.Error != nil {
+		http.Error(w, "Error checking asset references: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+	if count > 0 {
+		http.Error(w, "Cannot delete room: assets are currently assigned to this room", http.StatusConflict)
+		return
+	}
+
+	if result := db.DB.Delete(&AssetRoom{}, id); result.Error != nil {
+		http.Error(w, "Error deleting room: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // Update asset

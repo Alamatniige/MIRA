@@ -7,7 +7,9 @@ type AssetMutationPayload = {
   serialNumber: string;
   specification: string;
   roomName?: string;
+  roomExtra?: { floorId?: number | null; x?: number; y?: number; width?: number; height?: number };
   floorName?: string;
+  floorExtra?: { level?: number };
   tag: string;
   currentStatus: string;
 };
@@ -190,7 +192,10 @@ export function useAssets() {
   );
 
   const resolveOrCreateRoom = useCallback(
-    async (name: string): Promise<number | null> => {
+    async (
+      name: string,
+      extra?: { floorId?: number | null; x?: number; y?: number; width?: number; height?: number },
+    ): Promise<number | null> => {
       const trimmedName = name.trim();
       if (!trimmedName) {
         return null;
@@ -204,7 +209,7 @@ export function useAssets() {
       const response = await fetch(`/api/assets/rooms`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ name: trimmedName }),
+        body: JSON.stringify({ name: trimmedName, ...extra }),
       });
       const data = await parseJson<AssetRoom & { message?: string }>(response);
 
@@ -225,7 +230,7 @@ export function useAssets() {
   );
 
   const resolveOrCreateFloor = useCallback(
-    async (name: string): Promise<number | null> => {
+    async (name: string, extra?: { level?: number }): Promise<number | null> => {
       const trimmedName = name.trim();
       if (!trimmedName) {
         return null;
@@ -241,7 +246,7 @@ export function useAssets() {
       const response = await fetch(`/api/assets/floors`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ name: trimmedName }),
+        body: JSON.stringify({ name: trimmedName, ...extra }),
       });
       const data = await parseJson<AssetFloor & { message?: string }>(response);
 
@@ -291,8 +296,8 @@ export function useAssets() {
   const createAsset = useCallback(
     async (payload: CreateAssetPayload): Promise<Asset> => {
       const typeId = await resolveOrCreateType(payload.assetTypeName || '');
-      const roomId = await resolveOrCreateRoom(payload.roomName || '');
-      const floorId = await resolveOrCreateFloor(payload.floorName || '');
+      const roomId = await resolveOrCreateRoom(payload.roomName || '', payload.roomExtra);
+      const floorId = await resolveOrCreateFloor(payload.floorName || '', payload.floorExtra);
       const imageUrls = await uploadAssetImages(payload.imageFiles || []);
 
       const response = await fetch(`/api/assets`, {
@@ -344,10 +349,10 @@ export function useAssets() {
         ? await resolveOrCreateType(payload.assetTypeName)
         : (payload.assetTypeId ?? null);
       const roomId = payload.roomName
-        ? await resolveOrCreateRoom(payload.roomName)
+        ? await resolveOrCreateRoom(payload.roomName, payload.roomExtra)
         : (payload.roomId ?? null);
       const floorId = payload.floorName
-        ? await resolveOrCreateFloor(payload.floorName)
+        ? await resolveOrCreateFloor(payload.floorName, payload.floorExtra)
         : (payload.floorId ?? null);
       const newImageUrls = await uploadAssetImages(payload.newImageFiles || []);
 
@@ -409,6 +414,100 @@ export function useAssets() {
       await fetchAssets();
     },
     [fetchAssets, getHeaders],
+  );
+
+  const computeAutoPosition = useCallback(
+    (floorId: number | null): { x: number; y: number; width: number; height: number } => {
+      const COLS = 5;
+      const W = 120;
+      const H = 80;
+      const GAP = 20;
+      const roomsOnFloor = assetRooms.filter((r) => r.floorId === floorId);
+      const count = roomsOnFloor.length;
+      const col = count % COLS;
+      const row = Math.floor(count / COLS);
+      return {
+        x: GAP + col * (W + GAP),
+        y: GAP + row * (H + GAP),
+        width: W,
+        height: H,
+      };
+    },
+    [assetRooms],
+  );
+
+  const updateRoom = useCallback(
+    async (
+      id: number,
+      payload: {
+        name?: string;
+        floorId?: number | null;
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+      },
+    ): Promise<AssetRoom> => {
+      const response = await fetch(`/api/assets/rooms/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await parseJson<AssetRoom & { message?: string }>(response);
+      if (!response.ok || !data?.id) {
+        throw new Error(data?.message || 'Failed to update room');
+      }
+      await fetchRoomsAndFloors();
+      return data;
+    },
+    [fetchRoomsAndFloors, getHeaders],
+  );
+
+  const deleteRoom = useCallback(
+    async (id: number): Promise<void> => {
+      const response = await fetch(`/api/assets/rooms/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
+      if (!response.ok) {
+        const data = await parseJson<{ message?: string }>(response);
+        throw new Error(data?.message || 'Failed to delete room');
+      }
+      await fetchRoomsAndFloors();
+    },
+    [fetchRoomsAndFloors, getHeaders],
+  );
+
+  const updateFloor = useCallback(
+    async (id: number, payload: { name?: string; level?: number | null }): Promise<AssetFloor> => {
+      const response = await fetch(`/api/assets/floors/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await parseJson<AssetFloor & { message?: string }>(response);
+      if (!response.ok || !data?.id) {
+        throw new Error(data?.message || 'Failed to update floor');
+      }
+      await fetchRoomsAndFloors();
+      return data;
+    },
+    [fetchRoomsAndFloors, getHeaders],
+  );
+
+  const deleteFloor = useCallback(
+    async (id: number): Promise<void> => {
+      const response = await fetch(`/api/assets/floors/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
+      if (!response.ok) {
+        const data = await parseJson<{ message?: string }>(response);
+        throw new Error(data?.message || 'Failed to delete floor');
+      }
+      await fetchRoomsAndFloors();
+    },
+    [fetchRoomsAndFloors, getHeaders],
   );
 
   const generateNextTag = useCallback(
@@ -473,6 +572,7 @@ export function useAssets() {
     isLoading,
     error,
     refresh: fetchAssets,
+    fetchRoomsAndFloors,
     createAsset,
     updateAsset,
     deleteAsset,
@@ -480,6 +580,11 @@ export function useAssets() {
     resolveOrCreateType,
     resolveOrCreateRoom,
     resolveOrCreateFloor,
+    computeAutoPosition,
+    updateRoom,
+    deleteRoom,
+    updateFloor,
+    deleteFloor,
     generateNextTag,
     getAvailabilityStatus,
 

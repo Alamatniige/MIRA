@@ -17,6 +17,12 @@ func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/assets/rooms", middleware.AuthMiddleware(AddAssetRoom)).Methods("POST")
 	r.HandleFunc("/assets/floors", middleware.AuthMiddleware(AddAssetFloor)).Methods("POST")
 	
+	// Room & Floor ID routes
+	r.HandleFunc("/assets/rooms/{id}", middleware.AuthMiddleware(UpdateAssetRoom)).Methods("PUT")
+	r.HandleFunc("/assets/rooms/{id}", middleware.AuthMiddleware(DeleteAssetRoom)).Methods("DELETE")
+	r.HandleFunc("/assets/floors/{id}", middleware.AuthMiddleware(UpdateAssetFloor)).Methods("PUT")
+	r.HandleFunc("/assets/floors/{id}", middleware.AuthMiddleware(DeleteAssetFloor)).Methods("DELETE")
+
 	// Dynamic ID routes must go last
 	r.HandleFunc("/assets/{id}", middleware.AuthMiddleware(GetAssetDetails)).Methods("GET")
 	r.HandleFunc("/assets/{id}", middleware.AuthMiddleware(UpdateAsset)).Methods("PUT")

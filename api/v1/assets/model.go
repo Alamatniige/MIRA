@@ -36,6 +36,7 @@ func (AssetType) TableName() string {
 type AssetFloor struct {
 	ID        int       `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name" gorm:"not null"`
+	Level     *int      `json:"level" gorm:"column:level"`
 	CreatedAt time.Time `json:"createdAt" gorm:"column:created_at;autoCreateTime"`
 }
 
@@ -46,6 +47,11 @@ func (AssetFloor) TableName() string {
 type AssetRoom struct {
 	ID        int       `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name" gorm:"not null"`
+	FloorId   *int      `json:"floorId" gorm:"column:floorId"`
+	X         int       `json:"x" gorm:"column:x;default:20"`
+	Y         int       `json:"y" gorm:"column:y;default:20"`
+	Width     int       `json:"width" gorm:"column:width;default:100"`
+	Height    int       `json:"height" gorm:"column:height;default:80"`
 	CreatedAt time.Time `json:"createdAt" gorm:"column:created_at;autoCreateTime"`
 }
 
@@ -70,11 +76,31 @@ type CreateAssetTypeRequest struct {
 }
 
 type CreateAssetFloorRequest struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
+	Level *int   `json:"level"`
+}
+
+type UpdateAssetFloorRequest struct {
+	Name  *string `json:"name"`
+	Level *int    `json:"level"`
 }
 
 type CreateAssetRoomRequest struct {
-	Name string `json:"name"`
+	Name    string `json:"name"`
+	FloorId *int   `json:"floorId"`
+	X       *int   `json:"x"`
+	Y       *int   `json:"y"`
+	Width   *int   `json:"width"`
+	Height  *int   `json:"height"`
+}
+
+type UpdateAssetRoomRequest struct {
+	Name    *string `json:"name"`
+	FloorId *int    `json:"floorId"`
+	X       *int    `json:"x"`
+	Y       *int    `json:"y"`
+	Width   *int    `json:"width"`
+	Height  *int    `json:"height"`
 }
 
 func (Asset) TableName() string {

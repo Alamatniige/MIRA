@@ -21,6 +21,9 @@ import { Modal } from '@/components/ui/modal';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import { AddLocationModal } from './modals/AddLocationModal';
+import { LocationSelect } from '@/components/ui/location-select';
+import { MapPin } from 'lucide-react';
 
 /* ──────────────────────────────── helpers ──────────────────────────────── */
 
@@ -318,13 +321,10 @@ export function AssetRegistry() {
   const [newType, setNewType] = useState('');
   const [localCategories, setLocalCategories] = useState<Record<string, number>>({});
 
-  const [isAddingRoom, setIsAddingRoom] = useState(false);
-  const [newRoom, setNewRoom] = useState('');
-  const [localRooms, setLocalRooms] = useState<Record<string, number>>({});
-
-  const [isAddingFloor, setIsAddingFloor] = useState(false);
-  const [newFloor, setNewFloor] = useState('');
-  const [localFloors, setLocalFloors] = useState<Record<string, number>>({});
+  // Location modal state
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [locationReturn, setLocationReturn] = useState<'add' | 'edit' | 'standalone' | null>(null);
+  const [locationInitialTab, setLocationInitialTab] = useState<'floors' | 'rooms'>('floors');
 
   const [formData, setFormData] = useState({
     tag: '',
@@ -433,11 +433,7 @@ export function AssetRegistry() {
     setEditModal(false);
     setSelectedEditAsset(null);
     setIsAddingType(false);
-    setIsAddingRoom(false);
-    setIsAddingFloor(false);
     setNewType('');
-    setNewRoom('');
-    setNewFloor('');
     setEditImageFiles([]);
     setEditImagePreviews([]);
     setGallerySource(null);
@@ -471,6 +467,8 @@ export function AssetRegistry() {
   const {
     assets,
     assetsTypes,
+    assetRooms,
+    assetFloors,
     filterOptions,
     total,
     unavailable,
@@ -479,6 +477,7 @@ export function AssetRegistry() {
     createAsset,
     updateAsset,
     deleteAsset,
+    fetchRoomsAndFloors,
     generateNextTag,
     getAvailabilityStatus,
   } = useAssets();
@@ -550,11 +549,7 @@ export function AssetRegistry() {
         specification: '',
       });
       setIsAddingType(false);
-      setIsAddingRoom(false);
-      setIsAddingFloor(false);
       setNewType('');
-      setNewRoom('');
-      setNewFloor('');
       setImageFiles([]);
       setImagePreviews([]);
     } catch (err) {
@@ -563,6 +558,47 @@ export function AssetRegistry() {
     } finally {
       setIsGeneratingQr(false);
     }
+  };
+
+  const handleLocationSaved = async (type: 'room' | 'floor', name: string, floorName?: string) => {
+    await fetchRoomsAndFloors();
+
+    // Only return to the originating asset modal when a room is saved
+    if (type === 'room' && locationReturn) {
+      if (locationReturn === 'add') {
+        setFormData((p) => ({ ...p, room: name, floor: floorName ?? '' }));
+        setLocationOpen(false);
+        setOpen(true);
+      } else if (locationReturn === 'edit') {
+        setSelectedEditAsset((p) =>
+          p
+            ? {
+                ...p,
+                roomRel: { id: 0, name, createdAt: '' },
+                floorRel: { id: 0, name: floorName ?? '', createdAt: '' },
+              }
+            : p,
+        );
+        setLocationOpen(false);
+        setEditModal(true);
+      }
+      setLocationReturn(null);
+    }
+    // Floor saved, or standalone — keep modal open, just refreshed
+  };
+
+  const openLocationFromAdd = () => {
+    setOpen(false);
+    setLocationReturn('add');
+    setLocationInitialTab('floors');
+    setLocationOpen(true);
+  };
+
+  const openLocationFromEdit = () => {
+    setEditModal(false);
+    setLocationReturn('edit');
+    setLocationInitialTab('floors');
+    setLocationOpen(true);
   };
 
   useEffect(() => {
@@ -662,14 +698,29 @@ export function AssetRegistry() {
               Centralized view of all IT hardware assets managed by the department.
             </p>
           </div>
-          <Button
-            size="sm"
-            className="h-9 rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-5 text-xs font-semibold shadow-sm hover:shadow-lg transition-all active:scale-95"
-            onClick={() => setOpen(true)}
-          >
-            <span className="mr-1.5 text-sm leading-none">+</span>
-            Add Asset
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 rounded-full px-4 text-xs font-semibold"
+              onClick={() => {
+                setLocationReturn('standalone');
+                setLocationInitialTab('floors');
+                setLocationOpen(true);
+              }}
+            >
+              <MapPin className="h-3.5 w-3.5" />
+              Manage Locations
+            </Button>
+            <Button
+              size="sm"
+              className="h-9 rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-5 text-xs font-semibold shadow-sm hover:shadow-lg transition-all active:scale-95"
+              onClick={() => setOpen(true)}
+            >
+              <span className="mr-1.5 text-sm leading-none">+</span>
+              Add Asset
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -937,11 +988,7 @@ export function AssetRegistry() {
                                 setEditImageFiles([]);
                                 setEditImagePreviews([]);
                                 setIsAddingType(false);
-                                setIsAddingRoom(false);
-                                setIsAddingFloor(false);
                                 setNewType('');
-                                setNewRoom('');
-                                setNewFloor('');
                                 setGallerySource(null);
                                 setEditModal(true);
                                 setSelectedEditAsset(asset);
@@ -1206,8 +1253,8 @@ export function AssetRegistry() {
               </div>
             </div>
 
-            {/* Row 2: Status + Room + Floor */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Row 2: Status + Location */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   Status
@@ -1229,120 +1276,20 @@ export function AssetRegistry() {
               </div>
               <div>
                 <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  Room
+                  Location
                 </label>
-                {!isAddingRoom ? (
-                  <select
-                    className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
-                    value={formData.room}
-                    onChange={(e) => {
-                      if (e.target.value === 'Add another room') {
-                        setIsAddingRoom(true);
-                        setFormData((p) => ({ ...p, room: '' }));
-                      } else {
-                        setFormData((p) => ({ ...p, room: e.target.value }));
-                      }
-                    }}
-                  >
-                    <option value="" disabled>
-                      Select room
-                    </option>
-                    {Array.from(new Set([...filterOptions.rooms, ...Object.keys(localRooms)])).map(
-                      (o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
-                      ),
-                    )}
-                    <option value="Add another room" className="font-semibold text-primary">
-                      Add another room
-                    </option>
-                  </select>
-                ) : (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="New room..."
-                      className="h-8 text-[11px] flex-1"
-                      value={newRoom}
-                      onChange={(e) => setNewRoom(e.target.value)}
-                      autoFocus
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-8 px-2"
-                      onClick={() => {
-                        if (newRoom.trim()) {
-                          setLocalRooms((p) => ({ ...p, [newRoom.trim()]: 0 }));
-                          setFormData((p) => ({ ...p, room: newRoom.trim() }));
-                        }
-                        setIsAddingRoom(false);
-                        setNewRoom('');
-                      }}
-                    >
-                      OK
-                    </Button>
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  Floor
-                </label>
-                {!isAddingFloor ? (
-                  <select
-                    className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
-                    value={formData.floor}
-                    onChange={(e) => {
-                      if (e.target.value === 'Add another floor') {
-                        setIsAddingFloor(true);
-                        setFormData((p) => ({ ...p, floor: '' }));
-                      } else {
-                        setFormData((p) => ({ ...p, floor: e.target.value }));
-                      }
-                    }}
-                  >
-                    <option value="" disabled>
-                      Select floor
-                    </option>
-                    {Array.from(
-                      new Set([...filterOptions.floors, ...Object.keys(localFloors)]),
-                    ).map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                    <option value="Add another floor" className="font-semibold text-primary">
-                      Add another floor
-                    </option>
-                  </select>
-                ) : (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="New floor..."
-                      className="h-8 text-[11px] flex-1"
-                      value={newFloor}
-                      onChange={(e) => setNewFloor(e.target.value)}
-                      autoFocus
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-8 px-2"
-                      onClick={() => {
-                        if (newFloor.trim()) {
-                          setLocalFloors((p) => ({ ...p, [newFloor.trim()]: 0 }));
-                          setFormData((p) => ({ ...p, floor: newFloor.trim() }));
-                        }
-                        setIsAddingFloor(false);
-                        setNewFloor('');
-                      }}
-                    >
-                      OK
-                    </Button>
-                  </div>
+                <LocationSelect
+                  rooms={assetRooms}
+                  floors={assetFloors}
+                  value={formData.room}
+                  onChange={(roomName, floorName) =>
+                    setFormData((p) => ({ ...p, room: roomName, floor: floorName }))
+                  }
+                  onAddNew={openLocationFromAdd}
+                  placeholder="Search room..."
+                />
+                {formData.room && formData.floor && (
+                  <p className="mt-1 text-[10px] text-slate-400">Floor: {formData.floor}</p>
                 )}
               </div>
             </div>
@@ -1532,8 +1479,6 @@ export function AssetRegistry() {
                 onClick={() => {
                   setOpen(false);
                   setIsAddingType(false);
-                  setIsAddingRoom(false);
-                  setIsAddingFloor(false);
                 }}
               >
                 Close
@@ -2043,159 +1988,33 @@ export function AssetRegistry() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Room */}
-                <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
-                  <label
-                    htmlFor="edit-room"
-                    className="text-[11px] font-semibold text-slate-700 dark:text-slate-300"
-                  >
-                    Room
-                  </label>
-                  {!isAddingRoom ? (
-                    <select
-                      id="edit-room"
-                      value={selectedEditAsset.roomRel?.name || ''}
-                      onChange={(e) => {
-                        if (e.target.value === 'Add another room') {
-                          setIsAddingRoom(true);
-                          setSelectedEditAsset((p) =>
-                            p ? { ...p, roomRel: { id: 0, name: '', createdAt: '' } } : p,
-                          );
-                        } else {
-                          setSelectedEditAsset((p) =>
-                            p
-                              ? { ...p, roomRel: { id: 0, name: e.target.value, createdAt: '' } }
-                              : p,
-                          );
-                        }
-                      }}
-                      className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                    >
-                      <option value="" disabled>
-                        Select room
-                      </option>
-                      {Array.from(
-                        new Set([...filterOptions.rooms, ...Object.keys(localRooms)]),
-                      ).map((o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
-                      ))}
-                      <option value="Add another room" className="font-semibold text-primary">
-                        Add another room
-                      </option>
-                    </select>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="New room..."
-                        className="h-8 text-[11px] flex-1"
-                        value={newRoom}
-                        onChange={(e) => setNewRoom(e.target.value)}
-                        autoFocus
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-8 px-2"
-                        onClick={() => {
-                          if (newRoom.trim()) {
-                            setLocalRooms((p) => ({ ...p, [newRoom.trim()]: 0 }));
-                            setSelectedEditAsset((p) =>
-                              p
-                                ? { ...p, roomRel: { id: 0, name: newRoom.trim(), createdAt: '' } }
-                                : p,
-                            );
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  Location
+                </label>
+                <LocationSelect
+                  rooms={assetRooms}
+                  floors={assetFloors}
+                  value={selectedEditAsset.roomRel?.name || ''}
+                  onChange={(roomName, floorName) =>
+                    setSelectedEditAsset((p) =>
+                      p
+                        ? {
+                            ...p,
+                            roomRel: { id: 0, name: roomName, createdAt: '' },
+                            floorRel: { id: 0, name: floorName, createdAt: '' },
                           }
-                          setIsAddingRoom(false);
-                          setNewRoom('');
-                        }}
-                      >
-                        OK
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Floor */}
-                <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
-                  <label
-                    htmlFor="edit-floor"
-                    className="text-[11px] font-semibold text-slate-700 dark:text-slate-300"
-                  >
-                    Floor
-                  </label>
-                  {!isAddingFloor ? (
-                    <select
-                      id="edit-floor"
-                      value={selectedEditAsset.floorRel?.name || ''}
-                      onChange={(e) => {
-                        if (e.target.value === 'Add another floor') {
-                          setIsAddingFloor(true);
-                          setSelectedEditAsset((p) =>
-                            p ? { ...p, floorRel: { id: 0, name: '', createdAt: '' } } : p,
-                          );
-                        } else {
-                          setSelectedEditAsset((p) =>
-                            p
-                              ? { ...p, floorRel: { id: 0, name: e.target.value, createdAt: '' } }
-                              : p,
-                          );
-                        }
-                      }}
-                      className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                    >
-                      <option value="" disabled>
-                        Select floor
-                      </option>
-                      {Array.from(
-                        new Set([...filterOptions.floors, ...Object.keys(localFloors)]),
-                      ).map((o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
-                      ))}
-                      <option value="Add another floor" className="font-semibold text-primary">
-                        Add another floor
-                      </option>
-                    </select>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="New floor..."
-                        className="h-8 text-[11px] flex-1"
-                        value={newFloor}
-                        onChange={(e) => setNewFloor(e.target.value)}
-                        autoFocus
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-8 px-2"
-                        onClick={() => {
-                          if (newFloor.trim()) {
-                            setLocalFloors((p) => ({ ...p, [newFloor.trim()]: 0 }));
-                            setSelectedEditAsset((p) =>
-                              p
-                                ? {
-                                    ...p,
-                                    floorRel: { id: 0, name: newFloor.trim(), createdAt: '' },
-                                  }
-                                : p,
-                            );
-                          }
-                          setIsAddingFloor(false);
-                          setNewFloor('');
-                        }}
-                      >
-                        OK
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                        : p,
+                    )
+                  }
+                  onAddNew={openLocationFromEdit}
+                  placeholder="Search room..."
+                />
+                {selectedEditAsset.roomRel?.name && selectedEditAsset.floorRel?.name && (
+                  <p className="text-[10px] text-slate-400">
+                    Floor: {selectedEditAsset.floorRel.name}
+                  </p>
+                )}
               </div>
 
               {/* Image section synced with Add modal layout */}
@@ -2635,6 +2454,20 @@ export function AssetRegistry() {
           </div>
         )}
       </div>
+
+      {/* ── Location Modal ── */}
+      <AddLocationModal
+        open={locationOpen}
+        onClose={() => {
+          setLocationOpen(false);
+          setLocationReturn(null);
+          if (locationReturn === 'add') setOpen(true);
+          if (locationReturn === 'edit') setEditModal(true);
+        }}
+        onSaved={handleLocationSaved}
+        onRefresh={fetchRoomsAndFloors}
+        initialTab={locationInitialTab}
+      />
     </>
   );
 }

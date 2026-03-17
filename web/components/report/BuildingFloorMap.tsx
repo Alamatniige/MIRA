@@ -1,13 +1,14 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Stage, Layer, Rect, Line, Group, Text, Circle } from "react-konva";
-import { floors } from "./floorData";
-import { Room } from "./Room";
-import { cn } from "@/lib/utils";
-import { Layers, ZoomIn, ZoomOut, Maximize2, Move, Building2, MousePointer2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Konva from "konva";
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Stage, Layer, Rect, Line, Group, Text, Circle } from 'react-konva';
+import type { FloorData } from './floorData';
+import { Room } from './Room';
+import { useFloorMap } from '@/hooks/useReports';
+import { cn } from '@/lib/utils';
+import { Layers, ZoomIn, ZoomOut, Maximize2, Move, Building2, MousePointer2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Konva from 'konva';
 
 const VIEW_HEIGHT = 450;
 const TOWER_WIDTH = 180;
@@ -19,13 +20,15 @@ const PLAN_VIRTUAL_HEIGHT = 300;
 
 // Side view of the tower
 const TowerElevation = ({
+  floors,
   selectedFloorIdx,
   onFloorSelect,
-  isDarkMode
+  isDarkMode,
 }: {
-  selectedFloorIdx: number,
-  onFloorSelect: (idx: number) => void,
-  isDarkMode: boolean
+  floors: FloorData[];
+  selectedFloorIdx: number;
+  onFloorSelect: (idx: number) => void;
+  isDarkMode: boolean;
 }) => {
   const floorHeight = 50;
   const buildingWidth = 100;
@@ -40,19 +43,24 @@ const TowerElevation = ({
         y={startY + 20}
         width={buildingWidth + 40}
         height={4}
-        fill={isDarkMode ? "#27272a" : "#e2e8f0"}
+        fill={isDarkMode ? '#27272a' : '#e2e8f0'}
         cornerRadius={2}
       />
 
       {/* Antenna */}
       <Line
-        points={[buildingWidth / 2, startY - (floors.length * floorHeight), buildingWidth / 2, startY - (floors.length * floorHeight) - 30]}
-        stroke={isDarkMode ? "#52525b" : "#94a3b8"}
+        points={[
+          buildingWidth / 2,
+          startY - floors.length * floorHeight,
+          buildingWidth / 2,
+          startY - floors.length * floorHeight - 30,
+        ]}
+        stroke={isDarkMode ? '#52525b' : '#94a3b8'}
         strokeWidth={2}
       />
       <Circle
         x={buildingWidth / 2}
-        y={startY - (floors.length * floorHeight) - 30}
+        y={startY - floors.length * floorHeight - 30}
         radius={3}
         fill="#ef4444" // red blinky light
       />
@@ -60,11 +68,11 @@ const TowerElevation = ({
       {/* Building Face */}
       <Rect
         x={0}
-        y={startY - (floors.length * floorHeight)}
+        y={startY - floors.length * floorHeight}
         width={buildingWidth}
         height={floors.length * floorHeight + 20}
-        fill={isDarkMode ? "#18181b" : "#ffffff"}
-        stroke={isDarkMode ? "#27272a" : "#e2e8f0"}
+        fill={isDarkMode ? '#18181b' : '#ffffff'}
+        stroke={isDarkMode ? '#27272a' : '#e2e8f0'}
         strokeWidth={1}
         cornerRadius={[4, 4, 0, 0]}
       />
@@ -73,7 +81,7 @@ const TowerElevation = ({
       {[...floors].reverse().map((floor, rIdx) => {
         const idx = floors.length - 1 - rIdx;
         const isSelected = selectedFloorIdx === idx;
-        const yPos = startY - ((idx + 1) * floorHeight);
+        const yPos = startY - (idx + 1) * floorHeight;
 
         return (
           <Group
@@ -82,24 +90,24 @@ const TowerElevation = ({
             onClick={() => onFloorSelect(idx)}
             onMouseEnter={(e) => {
               const container = e.target.getStage()?.container();
-              if (container) container.style.cursor = "pointer";
+              if (container) container.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const container = e.target.getStage()?.container();
-              if (container) container.style.cursor = "default";
+              if (container) container.style.cursor = 'default';
             }}
           >
             {/* Floor Slab / Box */}
             <Rect
               width={buildingWidth}
               height={floorHeight}
-              fill={isSelected ? "rgba(20, 184, 166, 0.1)" : "transparent"}
-              stroke={isSelected ? "#14b8a6" : "transparent"}
+              fill={isSelected ? 'rgba(20, 184, 166, 0.1)' : 'transparent'}
+              stroke={isSelected ? '#14b8a6' : 'transparent'}
               strokeWidth={isSelected ? 2 : 0}
             />
 
             {/* Windows */}
-            {[0, 1, 2].map(winIdx => (
+            {[0, 1, 2].map((winIdx) => (
               <Rect
                 key={winIdx}
                 x={12 + winIdx * 30}
@@ -107,9 +115,9 @@ const TowerElevation = ({
                 width={16}
                 height={20}
                 cornerRadius={2}
-                fill={isSelected ? "#14b8a6" : isDarkMode ? "#27272a" : "#f1f5f9"}
+                fill={isSelected ? '#14b8a6' : isDarkMode ? '#27272a' : '#f1f5f9'}
                 opacity={isSelected ? 0.8 : 1}
-                shadowColor={isSelected ? "#14b8a6" : "transparent"}
+                shadowColor={isSelected ? '#14b8a6' : 'transparent'}
                 shadowBlur={10}
               />
             ))}
@@ -121,8 +129,8 @@ const TowerElevation = ({
               text={floor.label}
               fontSize={10}
               fontFamily="Inter, sans-serif"
-              fontStyle={isSelected ? "bold" : "normal"}
-              fill={isSelected ? "#14b8a6" : isDarkMode ? "#94a3b8" : "#64748b"}
+              fontStyle={isSelected ? 'bold' : 'normal'}
+              fill={isSelected ? '#14b8a6' : isDarkMode ? '#94a3b8' : '#64748b'}
             />
           </Group>
         );
@@ -132,6 +140,7 @@ const TowerElevation = ({
 };
 
 export function BuildingFloorMap() {
+  const { floors, isLoading: floorsLoading } = useFloorMap();
   const [currentFloorIdx, setCurrentFloorIdx] = useState(0);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
@@ -149,29 +158,29 @@ export function BuildingFloorMap() {
       if (containerRef.current) {
         setDimensions({
           width: containerRef.current.clientWidth,
-          height: VIEW_HEIGHT
+          height: VIEW_HEIGHT,
         });
       }
     };
     measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
   }, []);
 
   // Detect dark mode
   useEffect(() => {
-    const update = () => setIsDarkMode(document.documentElement.classList.contains("dark"));
+    const update = () => setIsDarkMode(document.documentElement.classList.contains('dark'));
     update();
     const observer = new MutationObserver(update);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
   }, []);
 
   const currentFloor = floors[currentFloorIdx];
-  const selectedRoom = currentFloor.rooms.find(r => r.id === selectedRoomId);
+  const selectedRoom = currentFloor?.rooms.find((r) => r.id === selectedRoomId);
 
-  const handleZoomIn = () => setScale(p => Math.min(p + 0.2, 3));
-  const handleZoomOut = () => setScale(p => Math.max(p - 0.2, 0.5));
+  const handleZoomIn = () => setScale((p) => Math.min(p + 0.2, 3));
+  const handleZoomOut = () => setScale((p) => Math.max(p - 0.2, 0.5));
   const handleReset = () => {
     setScale(1);
     setStagePos({ x: 0, y: 0 });
@@ -200,13 +209,32 @@ export function BuildingFloorMap() {
     });
   };
 
+  if (floorsLoading) {
+    return (
+      <div className="flex items-center justify-center rounded-[2.5rem] border border-slate-200/60 bg-white/40 dark:border-white/5 dark:bg-[#09090b]/40 h-[500px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+          <p className="text-xs text-slate-400">Loading floor map…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (floors.length === 0) {
+    return (
+      <div className="flex items-center justify-center rounded-[2.5rem] border border-slate-200/60 bg-white/40 dark:border-white/5 dark:bg-[#09090b]/40 h-[500px]">
+        <p className="text-sm text-slate-400">
+          No floors configured yet. Add floors and rooms from the Asset page.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 overflow-hidden">
       <div className="flex flex-col gap-6 rounded-[2.5rem] border border-slate-200/60 bg-white/40 p-1 dark:border-white/5 dark:bg-[#09090b]/40 backdrop-blur-3xl overflow-hidden shadow-2xl">
-
         {/* Main Side-by-Side Area */}
         <div className="flex flex-col lg:flex-row gap-0 items-stretch" ref={containerRef}>
-
           {/* Left: Tower View Elevator Side */}
           <div className="w-full lg:w-[240px] border-b lg:border-b-0 lg:border-r border-slate-200/50 dark:border-white/5 p-6 bg-linear-to-b from-transparent to-slate-50/50 dark:to-white/2">
             <div className="flex items-center gap-3 mb-8">
@@ -214,7 +242,9 @@ export function BuildingFloorMap() {
                 <Building2 className="h-5 w-5 text-teal-600 dark:text-teal-400" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Tower Structure</h3>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Tower Structure
+                </h3>
                 <p className="text-[10px] text-slate-500">MIRA Headquarters</p>
               </div>
             </div>
@@ -223,6 +253,7 @@ export function BuildingFloorMap() {
               <Stage width={240} height={400}>
                 <Layer>
                   <TowerElevation
+                    floors={floors}
                     selectedFloorIdx={currentFloorIdx}
                     onFloorSelect={(idx) => {
                       setCurrentFloorIdx(idx);
@@ -237,26 +268,30 @@ export function BuildingFloorMap() {
 
             <div className="mt-6 p-4 rounded-2xl bg-teal-500/5 border border-teal-500/10 dark:bg-teal-500/10">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase">Live Connectivity</span>
+                <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase">
+                  Live Connectivity
+                </span>
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </div>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Floor {currentFloor.level} active. Tracking {currentFloor.rooms.reduce((acc, r) => acc + (r.assetCount || 0), 0)} assets.
+                Floor {currentFloor?.level} active. Tracking{' '}
+                {currentFloor?.rooms.reduce((acc, r) => acc + (r.assetCount || 0), 0) ?? 0} assets.
               </p>
             </div>
           </div>
 
           {/* Right: Detailed Floor Plan */}
           <div className="relative flex-1 min-h-[450px] bg-slate-50/20 dark:bg-black/10 overflow-hidden">
-
             {/* Floating Plan Info */}
             <div className="absolute top-6 left-8 z-10 pointer-events-none">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400 text-[10px] font-bold uppercase tracking-wider">
-                    {currentFloor.label}
+                    {currentFloor?.label}
                   </span>
-                  <span className="text-xl font-bold text-slate-900 dark:text-white">Detailed Floor Map</span>
+                  <span className="text-xl font-bold text-slate-900 dark:text-white">
+                    Detailed Floor Map
+                  </span>
                 </div>
                 <div className="text-[11px] text-slate-400 flex items-center gap-2">
                   <MousePointer2 className="h-3 w-3" />
@@ -274,19 +309,22 @@ export function BuildingFloorMap() {
                 onWheel={handleWheel}
                 scaleX={scale}
                 scaleY={scale}
-                x={stagePos.x + (dimensions.width > 1024 ? 80 : dimensions.width / 2 - (PLAN_WIDTH * scale) / 2)}
+                x={
+                  stagePos.x +
+                  (dimensions.width > 1024 ? 80 : dimensions.width / 2 - (PLAN_WIDTH * scale) / 2)
+                }
                 y={stagePos.y + (VIEW_HEIGHT / 2 - (PLAN_VIRTUAL_HEIGHT * scale) / 2)}
                 draggable
                 onDragStart={(e) => {
                   const container = e.target.getStage()?.container();
-                  if (container) container.style.cursor = "grabbing";
+                  if (container) container.style.cursor = 'grabbing';
                 }}
                 onDragEnd={(e) => {
                   setStagePos({ x: e.target.x(), y: e.target.y() });
                   const container = e.target.getStage()?.container();
-                  if (container) container.style.cursor = "grab";
+                  if (container) container.style.cursor = 'grab';
                 }}
-                style={{ cursor: "grab" }}
+                style={{ cursor: 'grab' }}
               >
                 <Layer>
                   {/* Grid Lines */}
@@ -294,19 +332,19 @@ export function BuildingFloorMap() {
                     <React.Fragment key={i}>
                       <Line
                         points={[i * GRID_SIZE, -100, i * GRID_SIZE, 500]}
-                        stroke={isDarkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)"}
+                        stroke={isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'}
                         strokeWidth={1}
                       />
                       <Line
                         points={[-100, i * GRID_SIZE, 800, i * GRID_SIZE]}
-                        stroke={isDarkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)"}
+                        stroke={isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'}
                         strokeWidth={1}
                       />
                     </React.Fragment>
                   ))}
 
                   {/* Rooms */}
-                  {currentFloor.rooms.map((room) => (
+                  {(currentFloor?.rooms ?? []).map((room) => (
                     <Room
                       key={room.id}
                       {...room}
@@ -321,14 +359,35 @@ export function BuildingFloorMap() {
             {/* View Controls */}
             <div className="absolute top-6 right-8 z-10 flex flex-col gap-2">
               <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-xl">
-                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl" onClick={handleZoomIn}><ZoomIn className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl" onClick={handleZoomOut}><ZoomOut className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl" onClick={handleReset}><Maximize2 className="h-4 w-4" /></Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-xl"
+                  onClick={handleZoomIn}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-xl"
+                  onClick={handleZoomOut}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-xl"
+                  onClick={handleReset}
+                >
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
                 <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
                 <Button
                   size="icon"
-                  variant={isPanning ? "default" : "ghost"}
-                  className={cn("h-8 w-8 rounded-xl", isPanning && "bg-teal-500 text-white")}
+                  variant={isPanning ? 'default' : 'ghost'}
+                  className={cn('h-8 w-8 rounded-xl', isPanning && 'bg-teal-500 text-white')}
                   onClick={() => setIsPanning(!isPanning)}
                 >
                   <Move className="h-4 w-4" />
@@ -345,15 +404,22 @@ export function BuildingFloorMap() {
                       <Layers className="h-6 w-6 text-teal-600 dark:text-teal-400" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-slate-900 dark:text-white">{selectedRoom.label}</h4>
+                      <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+                        {selectedRoom.label}
+                      </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Room ID: <span className="font-mono">{selectedRoom.id}</span> · Floor: {currentFloor.level}
+                        Room ID: <span className="font-mono">{selectedRoom.id}</span> · Floor:{' '}
+                        {currentFloor.level}
                       </p>
                     </div>
                   </div>
                   <div className="px-6 border-l border-slate-100 dark:border-white/5 flex flex-col items-end">
-                    <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest">Active Devices</span>
-                    <span className="text-2xl font-bold text-slate-900 dark:text-white">{selectedRoom.assetCount || 0}</span>
+                    <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest">
+                      Active Devices
+                    </span>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {selectedRoom.assetCount || 0}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -366,15 +432,21 @@ export function BuildingFloorMap() {
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full bg-teal-500" />
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Selected Room</span>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">
+                Selected Room
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full border-2 border-slate-200 dark:border-white/10" />
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Available Zone</span>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">
+                Available Zone
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Gateway Uplink</span>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">
+                Gateway Uplink
+              </span>
             </div>
           </div>
           <p className="text-[9px] font-medium text-slate-400 tracking-wider uppercase">

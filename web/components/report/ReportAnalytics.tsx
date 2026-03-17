@@ -1,12 +1,19 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FullPageLoader } from "@/components/ui/loader";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Modal } from "@/components/ui/modal";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { FullPageLoader } from '@/components/ui/loader';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Modal } from '@/components/ui/modal';
 import {
   FileText,
   Image as ImageIcon,
@@ -25,11 +32,12 @@ import {
   ShieldAlert,
   Search,
   Download,
-  Eye
-} from "lucide-react";
-import Image from "next/image";
-import { cn } from "@/lib/utils";
-import { BuildingFloorMap } from "./BuildingFloorMap";
+  Eye,
+} from 'lucide-react';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
+import { BuildingFloorMap } from './BuildingFloorMap';
+import { useIssueReports } from '@/hooks/useReports';
 
 type Report = {
   id: string;
@@ -38,102 +46,84 @@ type Report = {
   user: string;
   date: string;
   description: string;
-  status: "open" | "in_progress" | "resolved";
+  status: 'open' | 'in_progress' | 'resolved';
   images?: string[];
-  initials?: string; // Added initials for avatar
+  initials?: string;
 };
-
-const MOCK_REPORTS: Report[] = [
-  {
-    id: "RPT-00123",
-    assetTag: "AST-100245",
-    name: "Dell Latitude 7420",
-    user: "Juan Dela Cruz",
-    initials: "JD",
-    date: "2026-03-10",
-    description:
-      "Laptop intermittently shutting down when on battery. Observed during client presentation.",
-    status: "open",
-    images: ["/placeholder-assets/laptop-1.jpg", "/placeholder-assets/laptop-2.jpg"],
-  },
-  {
-    id: "RPT-00124",
-    assetTag: "AST-100301",
-    name: "HP LaserJet Pro M404dn",
-    user: "Maria Santos",
-    initials: "MS",
-    date: "2026-03-08",
-    description:
-      "Paper jamming frequently on tray 2, especially on bulk print jobs above 50 pages.",
-    status: "in_progress",
-    images: ["/placeholder-assets/printer-1.jpg"],
-  },
-  {
-    id: "RPT-00125",
-    assetTag: "AST-100112",
-    name: "CCTV Lobby Camera #3",
-    user: "Security Team",
-    initials: "ST",
-    date: "2026-03-05",
-    description:
-      "Video feed showing artifacts at night. Possible IR sensor or lens issue.",
-    status: "resolved",
-    images: ["/placeholder-assets/cctv-1.jpg", "/placeholder-assets/cctv-2.jpg"],
-  },
-];
 
 const kpis = (reports: Report[]) => [
   {
-    label: "Total Incidents",
+    label: 'Total Incidents',
     value: reports.length.toString(),
-    sub: "All reported asset issues",
+    sub: 'All reported asset issues',
     icon: <Activity className="h-5 w-5" />,
-    color: "from-slate-500/10 to-slate-600/10 text-slate-700 border-slate-200/60 dark:from-slate-500/15 dark:to-slate-400/5 dark:text-slate-300 dark:border-slate-400/20",
-    valueColor: "text-slate-800 dark:text-slate-100",
+    color:
+      'from-slate-500/10 to-slate-600/10 text-slate-700 border-slate-200/60 dark:from-slate-500/15 dark:to-slate-400/5 dark:text-slate-300 dark:border-slate-400/20',
+    valueColor: 'text-slate-800 dark:text-slate-100',
   },
   {
-    label: "Open Cases",
-    value: reports.filter(r => r.status === "open").length.toString(),
-    sub: "Awaiting triage",
+    label: 'Open Cases',
+    value: reports.filter((r) => r.status === 'open').length.toString(),
+    sub: 'Awaiting triage',
     icon: <AlertCircle className="h-5 w-5" />,
-    color: "from-red-500/10 to-red-600/10 text-red-700 border-red-200/60 dark:from-red-500/15 dark:to-red-400/5 dark:text-red-300 dark:border-red-500/20",
-    valueColor: "text-red-800 dark:text-red-300",
+    color:
+      'from-red-500/10 to-red-600/10 text-red-700 border-red-200/60 dark:from-red-500/15 dark:to-red-400/5 dark:text-red-300 dark:border-red-500/20',
+    valueColor: 'text-red-800 dark:text-red-300',
   },
   {
-    label: "In Progress",
-    value: reports.filter(r => r.status === "in_progress").length.toString(),
-    sub: "Technician assigned",
+    label: 'In Progress',
+    value: reports.filter((r) => r.status === 'in_progress').length.toString(),
+    sub: 'Technician assigned',
     icon: <Clock className="h-5 w-5" />,
-    color: "from-amber-500/10 to-amber-600/10 text-amber-700 border-amber-200/60 dark:from-amber-500/15 dark:to-amber-400/5 dark:text-amber-300 dark:border-amber-500/20",
-    valueColor: "text-amber-800 dark:text-amber-200",
+    color:
+      'from-amber-500/10 to-amber-600/10 text-amber-700 border-amber-200/60 dark:from-amber-500/15 dark:to-amber-400/5 dark:text-amber-300 dark:border-amber-500/20',
+    valueColor: 'text-amber-800 dark:text-amber-200',
   },
   {
-    label: "Resolved",
-    value: reports.filter(r => r.status === "resolved").length.toString(),
-    sub: "Closed this month",
+    label: 'Resolved',
+    value: reports.filter((r) => r.status === 'resolved').length.toString(),
+    sub: 'Closed this month',
     icon: <CheckCircle2 className="h-5 w-5" />,
-    color: "from-emerald-500/10 to-emerald-600/10 text-emerald-700 border-emerald-200/60 dark:from-emerald-500/15 dark:to-emerald-400/5 dark:text-emerald-300 dark:border-emerald-500/20",
-    valueColor: "text-emerald-800 dark:text-emerald-200",
+    color:
+      'from-emerald-500/10 to-emerald-600/10 text-emerald-700 border-emerald-200/60 dark:from-emerald-500/15 dark:to-emerald-400/5 dark:text-emerald-300 dark:border-emerald-500/20',
+    valueColor: 'text-emerald-800 dark:text-emerald-200',
   },
 ];
 
 export function ReportAnalytics() {
+  const { reports: rawReports, isLoading: reportsLoading } = useIssueReports();
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Map API IssueReport → local Report shape
+  const reports: Report[] = rawReports.map((r) => ({
+    id: r.id,
+    assetTag: r.assetTag || r.assetId,
+    name: r.assetName || 'Unknown Asset',
+    user: r.userName || 'Unknown User',
+    date: r.reportAt ? new Date(r.reportAt).toLocaleDateString('en-CA') : '',
+    description: r.description,
+    status: r.status as Report['status'],
+    images: [],
+    initials: r.userName
+      ? r.userName
+          .split(' ')
+          .filter(Boolean)
+          .map((n) => n[0].toUpperCase())
+          .join('')
+      : '?',
+  }));
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!reportsLoading) setIsLoading(false);
+  }, [reportsLoading]);
 
-  if (isLoading) {
+  if (isLoading || reportsLoading) {
     return <FullPageLoader label="Loading reports..." />;
   }
 
-  const filteredReports = MOCK_REPORTS.filter((report) => {
+  const filteredReports = reports.filter((report) => {
     const query = searchQuery.toLowerCase();
     return (
       report.name.toLowerCase().includes(query) ||
@@ -143,19 +133,19 @@ export function ReportAnalytics() {
     );
   });
 
-  const reportKpis = kpis(MOCK_REPORTS);
+  const reportKpis = kpis(reports);
 
   return (
     <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1.5">
-
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Reports
           </h1>
           <p className="max-w-2xl text-sm text-slate-500 dark:text-slate-400">
-            Real-time monitoring of asset performance issues, maintenance requests, and resolution tracking.
+            Real-time monitoring of asset performance issues, maintenance requests, and resolution
+            tracking.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -187,15 +177,13 @@ export function ReportAnalytics() {
             className={`flex flex-col gap-2 rounded-2xl border bg-linear-to-br p-4 transition-all hover:shadow-lg hover:translate-y-[-2px] dark:hover:shadow-teal-900/10 dark:bg-[#09090b] ${kpi.color}`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider opacity-75 dark:opacity-90">{kpi.label}</span>
-              <div className="rounded-lg bg-white/30 p-1.5 dark:bg-black/20">
-                {kpi.icon}
-              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider opacity-75 dark:opacity-90">
+                {kpi.label}
+              </span>
+              <div className="rounded-lg bg-white/30 p-1.5 dark:bg-black/20">{kpi.icon}</div>
             </div>
             <div className="flex items-end justify-between">
-              <p className={`text-3xl font-bold tracking-tight ${kpi.valueColor}`}>
-                {kpi.value}
-              </p>
+              <p className={`text-3xl font-bold tracking-tight ${kpi.valueColor}`}>{kpi.value}</p>
               <div className="flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
                 <TrendingUp className="h-3 w-3" />
                 <span>+4%</span>
@@ -234,12 +222,24 @@ export function ReportAnalytics() {
           <Table>
             <TableHeader className="bg-slate-100/30 dark:bg-teal-950/20">
               <TableRow className="border-slate-100 dark:border-teal-800/20">
-                <TableHead className="w-[120px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">Asset Tag</TableHead>
-                <TableHead className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">Name</TableHead>
-                <TableHead className="w-[180px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">User</TableHead>
-                <TableHead className="w-[140px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">Date of Reported</TableHead>
-                <TableHead className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">Description</TableHead>
-                <TableHead className="w-[100px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60 text-right">Action</TableHead>
+                <TableHead className="w-[120px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                  Asset Tag
+                </TableHead>
+                <TableHead className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                  Name
+                </TableHead>
+                <TableHead className="w-[180px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                  User
+                </TableHead>
+                <TableHead className="w-[140px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                  Date of Reported
+                </TableHead>
+                <TableHead className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                  Description
+                </TableHead>
+                <TableHead className="w-[100px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60 text-right">
+                  Action
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -302,7 +302,10 @@ export function ReportAnalytics() {
               ))}
               {filteredReports.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-sm text-slate-500 dark:text-slate-400">
+                  <TableCell
+                    colSpan={6}
+                    className="h-32 text-center text-sm text-slate-500 dark:text-slate-400"
+                  >
                     No cases match your filter.
                   </TableCell>
                 </TableRow>
@@ -316,8 +319,8 @@ export function ReportAnalytics() {
       <Modal
         open={!!selectedReport}
         onClose={() => setSelectedReport(null)}
-        title={selectedReport ? "Incident Investigation" : ""}
-        description={selectedReport ? `Overview of Case #${selectedReport.id}` : ""}
+        title={selectedReport ? 'Incident Investigation' : ''}
+        description={selectedReport ? `Overview of Case #${selectedReport.id}` : ''}
         className="max-w-4xl"
         contentClassName="px-0 py-0"
       >
@@ -331,16 +334,26 @@ export function ReportAnalytics() {
                     <ShieldAlert className="h-6 w-6 text-teal-600 dark:text-teal-400" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">{selectedReport.name}</h2>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                      {selectedReport.name}
+                    </h2>
                     <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                      <span className="font-mono text-teal-600 dark:text-teal-400">{selectedReport.assetTag}</span>
+                      <span className="font-mono text-teal-600 dark:text-teal-400">
+                        {selectedReport.assetTag}
+                      </span>
                       <span className="h-1 w-1 rounded-full bg-slate-300" />
                       <span>Logged by {selectedReport.user}</span>
                     </div>
                   </div>
                 </div>
                 <Badge
-                  variant={selectedReport.status === "open" ? "danger" : selectedReport.status === "in_progress" ? "warning" : "success"}
+                  variant={
+                    selectedReport.status === 'open'
+                      ? 'danger'
+                      : selectedReport.status === 'in_progress'
+                        ? 'warning'
+                        : 'success'
+                  }
                   className="px-3 py-1 text-[11px] font-bold uppercase"
                 >
                   {selectedReport.status.replace('_', ' ')}
@@ -354,7 +367,9 @@ export function ReportAnalytics() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Activity className="h-3.5 w-3.5 text-teal-600" />
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Statement of Problem</h3>
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      Statement of Problem
+                    </h3>
                   </div>
                   <div className="rounded-xl border border-slate-100 bg-white p-4 text-sm leading-relaxed text-slate-700 shadow-sm dark:border-teal-800/15 dark:bg-white/5 dark:text-slate-300">
                     {selectedReport.description}
@@ -366,9 +381,13 @@ export function ReportAnalytics() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <ImageIcon className="h-3.5 w-3.5 text-teal-600" />
-                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Visual Evidence</h3>
+                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                        Visual Evidence
+                      </h3>
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400">{selectedReport.images?.length ?? 0} Attached</span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      {selectedReport.images?.length ?? 0} Attached
+                    </span>
                   </div>
 
                   {selectedReport.images && selectedReport.images.length > 0 ? (
@@ -406,21 +425,27 @@ export function ReportAnalytics() {
               <div className="border-l border-slate-100 bg-slate-50/50 p-6 dark:border-teal-800/15 dark:bg-black/20">
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Case Metadata</h3>
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      Case Metadata
+                    </h3>
                     <div className="space-y-4">
                       {[
-                        { label: "Asset Code", value: selectedReport.assetTag, icon: Box },
-                        { label: "Reported On", value: selectedReport.date, icon: Calendar },
-                        { label: "Logged By", value: selectedReport.user, icon: User },
-                        { label: "System ID", value: selectedReport.id, icon: FileText },
+                        { label: 'Asset Code', value: selectedReport.assetTag, icon: Box },
+                        { label: 'Reported On', value: selectedReport.date, icon: Calendar },
+                        { label: 'Logged By', value: selectedReport.user, icon: User },
+                        { label: 'System ID', value: selectedReport.id, icon: FileText },
                       ].map((item) => (
                         <div key={item.label} className="flex gap-3">
                           <div className="mt-1 h-3.5 w-3.5 text-teal-600">
                             <item.icon className="h-full w-full" />
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{item.label}</span>
-                            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">{item.value}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                              {item.label}
+                            </span>
+                            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                              {item.value}
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -444,4 +469,3 @@ export function ReportAnalytics() {
     </div>
   );
 }
-
