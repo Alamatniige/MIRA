@@ -101,7 +101,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.tealLight.withOpacity(isDark ? 0.3 : 0.4),
+                    AppColors.tealLight.withValues(alpha: isDark ? 0.3 : 0.4),
                     Colors.transparent,
                   ],
                   stops: const [0.2, 1.0],
@@ -119,7 +119,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Colors.white.withOpacity(isDark ? 0.05 : 0.2),
+                    Colors.white.withValues(alpha: isDark ? 0.05 : 0.2),
                     Colors.transparent,
                   ],
                   stops: const [0.1, 1.0],
@@ -166,10 +166,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.statusActive.withOpacity(0.15),
+                  color: AppColors.statusActive.withValues(alpha: 0.15),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.statusActive.withOpacity(0.2),
+                      color: AppColors.statusActive.withValues(alpha: 0.2),
                       blurRadius: 30,
                       spreadRadius: 10,
                     ),
@@ -181,7 +181,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 height: 70,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.statusActive.withOpacity(0.3),
+                  color: AppColors.statusActive.withValues(alpha: 0.3),
                 ),
               ),
               Container(
@@ -229,7 +229,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -251,7 +251,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 30,
             offset: const Offset(0, -5),
           ),
@@ -300,10 +300,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       horizontal: 16,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.statusReported.withOpacity(0.1),
+                      color: AppColors.statusReported.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppColors.statusReported.withOpacity(0.3),
+                        color: AppColors.statusReported.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -364,7 +364,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final bgColor = isDark ? AppColors.darkBackground : AppColors.gray50;
     final borderColor = isFocused
         ? primaryColor
-        : (isDark ? Colors.white.withOpacity(0.05) : AppColors.gray200);
+        : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,7 +387,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             boxShadow: isFocused
                 ? [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.15),
+                      color: primaryColor.withValues(alpha: 0.15),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

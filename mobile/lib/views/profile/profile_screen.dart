@@ -155,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       (isDark
                                               ? AppColors.tealLight
                                               : AppColors.tealPrimary)
-                                          .withOpacity(0.08),
+                                          .withValues(alpha: 0.08),
                                 ),
                               ),
                               // Middle glowing ring
@@ -168,7 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       (isDark
                                               ? AppColors.tealLight
                                               : AppColors.tealPrimary)
-                                          .withOpacity(0.15),
+                                          .withValues(alpha: 0.15),
                                 ),
                               ),
                               // Core Avatar
@@ -180,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.tealPrimary.withOpacity(
+                                      color: AppColors.tealPrimary.withValues(alpha: 
                                         0.4,
                                       ),
                                       blurRadius: 24,
@@ -227,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   (isDark
                                           ? AppColors.tealLight
                                           : AppColors.tealPrimary)
-                                      .withOpacity(0.1),
+                                      .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -298,7 +298,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             (isDark
                                                     ? AppColors.darkOnSurface
                                                     : AppColors.navy)
-                                                .withOpacity(0.08),
+                                                .withValues(alpha: 0.08),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
                                       child: Icon(
@@ -354,7 +354,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ).toggleDarkMode(),
                                       activeColor: AppColors.tealLight,
                                       activeTrackColor: AppColors.tealLight
-                                          .withOpacity(0.3),
+                                          .withValues(alpha: 0.3),
                                     ),
                                   ],
                                 ),
@@ -377,13 +377,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     vertical: 18,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.statusReported.withOpacity(
+                                    color: AppColors.statusReported.withValues(alpha: 
                                       0.1,
                                     ),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
                                       color: AppColors.statusReported
-                                          .withOpacity(0.3),
+                                          .withValues(alpha: 0.3),
                                       width: 1,
                                     ),
                                   ),
@@ -508,14 +508,14 @@ class _PremiumInfoCard extends StatelessWidget {
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.04) : AppColors.gray100,
+          color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
             color: Theme.of(
               context,
-            ).colorScheme.shadow.withOpacity(isDark ? 0.2 : 0.04),
+            ).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -554,7 +554,7 @@ class _PremiumInfoRow extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, size: 22, color: color),
@@ -592,7 +592,7 @@ class _PremiumInfoRow extends StatelessWidget {
             padding: const EdgeInsets.only(left: 76, right: 20),
             child: Divider(
               height: 1,
-              color: (isDark ? Colors.white : AppColors.gray400).withOpacity(
+              color: (isDark ? Colors.white : AppColors.gray400).withValues(alpha: 
                 0.1,
               ),
             ),

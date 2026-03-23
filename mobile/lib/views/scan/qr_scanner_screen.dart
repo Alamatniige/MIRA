@@ -140,12 +140,12 @@ class _QrScannerScreenState extends State<QrScannerScreen>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.tealLight.withOpacity(0.8),
+                  color: AppColors.tealLight.withValues(alpha: 0.8),
                   width: 3,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.tealLight.withOpacity(0.3),
+                    color: AppColors.tealLight.withValues(alpha: 0.3),
                     blurRadius: 24,
                     spreadRadius: 2,
                   ),
@@ -171,7 +171,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                                 gradient: LinearGradient(
                                   colors: [
                                     Colors.transparent,
-                                    AppColors.tealLight.withOpacity(0.8),
+                                    AppColors.tealLight.withValues(alpha: 0.8),
                                     Colors.transparent,
                                   ],
                                 ),
@@ -275,7 +275,7 @@ class _ScannerOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black.withOpacity(0.5)
+      ..color = Colors.black.withValues(alpha: 0.5)
       ..style = PaintingStyle.fill;
 
     final path = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
@@ -316,7 +316,7 @@ class _ScanResultSheet extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withOpacity(0.15),
+            color: AppColors.navy.withValues(alpha: 0.15),
             blurRadius: 24,
             offset: const Offset(0, -4),
           ),

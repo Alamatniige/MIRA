@@ -117,16 +117,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     padding: const EdgeInsets.all(24),
                                     decoration: BoxDecoration(
                                       color: isDark 
-                                          ? AppColors.darkSurfaceVariant.withOpacity(0.5)
-                                          : AppColors.tealMuted.withOpacity(0.5),
+                                          ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5)
+                                          : AppColors.tealMuted.withValues(alpha: 0.5),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
                                       Icons.history_rounded,
                                       size: 56,
                                       color: isDark 
-                                          ? AppColors.tealLight.withOpacity(0.7)
-                                          : AppColors.tealPrimary.withOpacity(0.7),
+                                          ? AppColors.tealLight.withValues(alpha: 0.7)
+                                          : AppColors.tealPrimary.withValues(alpha: 0.7),
                                     ),
                                   ),
                                   const SizedBox(height: 24),
@@ -224,12 +224,12 @@ class _FilterPill extends StatelessWidget {
             border: Border.all(
               color: isSelected 
                   ? Colors.transparent 
-                  : (isDark ? Colors.white.withOpacity(0.08) : AppColors.gray200),
+                  : (isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200),
               width: 1,
             ),
             boxShadow: isSelected ? [
               BoxShadow(
-                color: primaryColor.withOpacity(0.3),
+                color: primaryColor.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -305,7 +305,7 @@ class _TimelineItem extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -317,7 +317,7 @@ class _TimelineItem extends StatelessWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: color.withOpacity(0.5),
+                            color: color.withValues(alpha: 0.5),
                             blurRadius: 10,
                             spreadRadius: 2,
                           ),
@@ -336,8 +336,8 @@ class _TimelineItem extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            color.withOpacity(0.5),
-                            (isDark ? Colors.white : AppColors.gray400).withOpacity(0.1),
+                            color.withValues(alpha: 0.5),
+                            (isDark ? Colors.white : AppColors.gray400).withValues(alpha: 0.1),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(2),
@@ -366,13 +366,13 @@ class _TimelineItem extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: isDark 
-                            ? Colors.white.withOpacity(0.04) 
+                            ? Colors.white.withValues(alpha: 0.04) 
                             : AppColors.gray100,
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.shadow.withOpacity(isDark ? 0.2 : 0.04),
+                          color: Theme.of(context).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.04),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -398,7 +398,7 @@ class _TimelineItem extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: color.withOpacity(0.1),
+                                color: color.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -438,7 +438,7 @@ class _TimelineItem extends StatelessWidget {
                           _formatDateFull(activity.dateTime),
                           style: TextStyle(
                             fontSize: 13,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                             fontWeight: FontWeight.w500,
                           ),
                         ),

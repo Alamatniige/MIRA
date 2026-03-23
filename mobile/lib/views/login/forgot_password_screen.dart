@@ -220,7 +220,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -242,7 +242,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 30,
             offset: const Offset(0, -5),
           ),
@@ -284,10 +284,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
-              color: AppColors.statusReported.withOpacity(0.1),
+              color: AppColors.statusReported.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.statusReported.withOpacity(0.3),
+                color: AppColors.statusReported.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -328,7 +328,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             style: TextButton.styleFrom(
               overlayColor:
                   (isDark ? AppColors.tealLight : AppColors.tealPrimary)
-                      .withOpacity(0.1),
+                      .withValues(alpha: 0.1),
             ),
             child: Text(
               'Back to Sign In',
@@ -363,7 +363,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     final borderColor = isFocused
         ? primaryColor
-        : (isDark ? Colors.white.withOpacity(0.05) : AppColors.gray200);
+        : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,7 +386,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             boxShadow: isFocused
                 ? [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.15),
+                      color: primaryColor.withValues(alpha: 0.15),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

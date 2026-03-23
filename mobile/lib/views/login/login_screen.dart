@@ -173,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.tealLight.withOpacity(isDark ? 0.3 : 0.4),
+                    AppColors.tealLight.withValues(alpha: isDark ? 0.3 : 0.4),
                     Colors.transparent,
                   ],
                   stops: const [0.2, 1.0],
@@ -193,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Colors.white.withOpacity(isDark ? 0.05 : 0.2),
+                    Colors.white.withValues(alpha: isDark ? 0.05 : 0.2),
                     Colors.transparent,
                   ],
                   stops: const [0.1, 1.0],
@@ -232,10 +232,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFEAB308).withOpacity(0.15),
+                  color: const Color(0xFFEAB308).withValues(alpha: 0.15),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFEAB308).withOpacity(0.2),
+                      color: const Color(0xFFEAB308).withValues(alpha: 0.2),
                       blurRadius: 30,
                       spreadRadius: 10,
                     ),
@@ -248,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 90,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFEAB308).withOpacity(0.3),
+                  color: const Color(0xFFEAB308).withValues(alpha: 0.3),
                 ),
               ),
               // Core Icon Circle
@@ -299,7 +299,7 @@ class _LoginScreenState extends State<LoginScreen> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -321,7 +321,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 30,
             offset: const Offset(0, -5),
           ),
@@ -430,7 +430,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             (isDark
                                     ? AppColors.tealLight
                                     : AppColors.tealPrimary)
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                       ),
                       child: Text(
                         'Forgot Password?',
@@ -455,10 +455,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       horizontal: 16,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.statusReported.withOpacity(0.1),
+                      color: AppColors.statusReported.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppColors.statusReported.withOpacity(0.3),
+                        color: AppColors.statusReported.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -521,7 +521,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // Border logic inside the elevated container
     final borderColor = isFocused
         ? primaryColor
-        : (isDark ? Colors.white.withOpacity(0.05) : AppColors.gray200);
+        : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,7 +547,7 @@ class _LoginScreenState extends State<LoginScreen> {
             boxShadow: isFocused
                 ? [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.15),
+                      color: primaryColor.withValues(alpha: 0.15),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

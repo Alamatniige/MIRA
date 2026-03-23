@@ -29,7 +29,7 @@ class MiraGradientButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.tealPrimary.withOpacity(0.3),
+            color: AppColors.tealPrimary.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

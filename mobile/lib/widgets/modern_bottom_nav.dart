@@ -28,17 +28,17 @@ class ModernBottomNav extends StatelessWidget {
               color: isDark ? AppColors.darkSurface : Colors.white,
               borderRadius: BorderRadius.circular(36),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.08) : AppColors.gray200,
+                color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200,
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.tealPrimary.withOpacity(isDark ? 0.3 : 0.15),
+                  color: AppColors.tealPrimary.withValues(alpha: isDark ? 0.3 : 0.15),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
                 BoxShadow(
-                  color: isDark ? Colors.black.withOpacity(0.4) : AppColors.navy.withOpacity(0.08),
+                  color: isDark ? Colors.black.withValues(alpha: 0.4) : AppColors.navy.withValues(alpha: 0.08),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -69,7 +69,7 @@ class ModernBottomNav extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.tealPrimary.withOpacity(0.5),
+                          color: AppColors.tealPrimary.withValues(alpha: 0.5),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -129,7 +129,7 @@ class _NavItemWidget extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isSelected 
-                ? primaryColor.withOpacity(0.12) 
+                ? primaryColor.withValues(alpha: 0.12) 
                 : Colors.transparent,
             shape: BoxShape.circle,
           ),

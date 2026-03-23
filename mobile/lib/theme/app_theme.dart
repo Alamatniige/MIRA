@@ -114,15 +114,15 @@ class GlassCard extends StatelessWidget {
         child: Container(
           padding: padding ?? const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: (tintColor ?? Colors.white).withOpacity(0.75),
+            color: (tintColor ?? Colors.white).withValues(alpha: 0.75),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.navy.withOpacity(0.06),
+                color: AppColors.navy.withValues(alpha: 0.06),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -159,12 +159,12 @@ class ElevatedCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withOpacity(0.06),
+            color: AppColors.navy.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             blurRadius: 0,
             offset: const Offset(0, -1),
           ),
@@ -210,7 +210,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.white,
         elevation: 0,
-        shadowColor: AppColors.navy.withOpacity(0.06),
+        shadowColor: AppColors.navy.withValues(alpha: 0.06),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         margin: EdgeInsets.zero,
       ),
@@ -328,7 +328,7 @@ class AppTheme {
           return AppColors.gray500;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.tealLight.withOpacity(0.5);
+          if (states.contains(WidgetState.selected)) return AppColors.tealLight.withValues(alpha: 0.5);
           return AppColors.darkSurfaceVariant;
         }),
       ),

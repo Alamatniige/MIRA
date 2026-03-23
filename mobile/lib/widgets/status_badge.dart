@@ -9,10 +9,10 @@ class StatusBadge extends StatelessWidget {
 
   static Color _bgColor(String s) {
     final lower = s.toLowerCase();
-    if (lower == 'active') return AppColors.statusActive.withOpacity(0.15);
-    if (lower == 'maintenance') return AppColors.statusMaintenance.withOpacity(0.15);
-    if (lower == 'reported' || lower == 'issue') return AppColors.statusReported.withOpacity(0.15);
-    if (lower == 'disposed') return AppColors.statusDisposed.withOpacity(0.2);
+    if (lower == 'active') return AppColors.statusActive.withValues(alpha: 0.15);
+    if (lower == 'maintenance') return AppColors.statusMaintenance.withValues(alpha: 0.15);
+    if (lower == 'reported' || lower == 'issue') return AppColors.statusReported.withValues(alpha: 0.15);
+    if (lower == 'disposed') return AppColors.statusDisposed.withValues(alpha: 0.2);
     return AppColors.gray200;
   }
 

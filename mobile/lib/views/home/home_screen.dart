@@ -98,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   border: Border.all(color: AppColors.gray200),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.teal.withOpacity(0.06),
+                      color: AppColors.teal.withValues(alpha: 0.06),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -171,7 +171,7 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withOpacity(0.04),
+            color: AppColors.navy.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -192,7 +192,7 @@ class _StatCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 20),
