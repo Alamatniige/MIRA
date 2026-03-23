@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../controllers/profile_controller.dart';
+import '../../models/types.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/theme_mode_scope.dart';
-import '../../data/mock_data.dart';
 
 /// Profile - stunning premium layout matching the dashboard and history pages
 class ProfileScreen extends StatefulWidget {
-  final VoidCallback onLogout;
+  final Future<void> Function() onLogout;
 
   const ProfileScreen({super.key, required this.onLogout});
 
@@ -16,28 +17,91 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   bool _isLoggingOut = false;
+  UserProfile? _profile;
+  String? _errorMessage;
+
+  final _controller = ProfileController();
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 1), () {
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await _controller.loadProfile();
       if (mounted) {
         setState(() {
+          _profile = profile;
           _isLoading = false;
         });
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.gray50,
       body: SafeArea(
         child: _isLoading || _isLoggingOut
-            ? const Center(child: CircularProgressIndicator(color: AppColors.tealPrimary))
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.tealPrimary),
+              )
+            : _errorMessage != null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: AppColors.statusReported,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Failed to load profile',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _isLoading = true;
+                            _errorMessage = null;
+                          });
+                          _loadProfile();
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
             : CustomScrollView(
                 physics: const BouncingScrollPhysics(
                   parent: AlwaysScrollableScrollPhysics(),
@@ -87,7 +151,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 height: 140,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: (isDark ? AppColors.tealLight : AppColors.tealPrimary).withOpacity(0.08),
+                                  color:
+                                      (isDark
+                                              ? AppColors.tealLight
+                                              : AppColors.tealPrimary)
+                                          .withOpacity(0.08),
                                 ),
                               ),
                               // Middle glowing ring
@@ -96,7 +164,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 height: 120,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: (isDark ? AppColors.tealLight : AppColors.tealPrimary).withOpacity(0.15),
+                                  color:
+                                      (isDark
+                                              ? AppColors.tealLight
+                                              : AppColors.tealPrimary)
+                                          .withOpacity(0.15),
                                 ),
                               ),
                               // Core Avatar
@@ -108,7 +180,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.tealPrimary.withOpacity(0.4),
+                                      color: AppColors.tealPrimary.withOpacity(
+                                        0.4,
+                                      ),
                                       blurRadius: 24,
                                       offset: const Offset(0, 8),
                                     ),
@@ -116,7 +190,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    mockUserName[0].toUpperCase(),
+                                    (_profile != null &&
+                                                _profile!.fullName.isNotEmpty
+                                            ? _profile!.fullName[0]
+                                            : '?')
+                                        .toUpperCase(),
                                     style: const TextStyle(
                                       fontSize: 40,
                                       fontWeight: FontWeight.w800,
@@ -130,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 24),
                           Text(
-                            mockUserName,
+                            _profile?.fullName ?? '',
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w800,
@@ -140,17 +218,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: (isDark ? AppColors.tealLight : AppColors.tealPrimary).withOpacity(0.1),
+                              color:
+                                  (isDark
+                                          ? AppColors.tealLight
+                                          : AppColors.tealPrimary)
+                                      .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              'Engineering Team',
+                              _profile?.department ?? '',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? AppColors.tealLight : AppColors.tealPrimary,
+                                color: isDark
+                                    ? AppColors.tealLight
+                                    : AppColors.tealPrimary,
                               ),
                             ),
                           ),
@@ -169,28 +256,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               _PremiumInfoRow(
                                 icon: Icons.badge_rounded,
-                                label: 'Employee ID',
-                                value: mockUserId,
+                                label: 'Role',
+                                value: _profile?.roleName ?? '',
                                 color: AppColors.bluePrimary,
                               ),
                               _PremiumInfoRow(
                                 icon: Icons.email_rounded,
                                 label: 'Email Address',
-                                value: mockUserEmail,
+                                value: _profile?.email ?? '',
                                 color: AppColors.tealPrimary,
+                              ),
+                              _PremiumInfoRow(
+                                icon: Icons.phone_rounded,
+                                label: 'Phone Number',
+                                value: _profile?.phoneNumber ?? '',
+                                color: AppColors.navy,
                               ),
                               _PremiumInfoRow(
                                 icon: Icons.inventory_2_rounded,
                                 label: 'Assigned Assets',
-                                value: '${mockMyAssets.length} Items',
+                                value: '${_profile?.assetsCount ?? 0} Items',
                                 color: AppColors.statusMaintenance,
                                 isLast: true,
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 20),
-                          
+
                           // Settings Card
                           _PremiumInfoCard(
                             children: [
@@ -201,45 +294,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: (isDark ? AppColors.darkOnSurface : AppColors.navy).withOpacity(0.08),
+                                        color:
+                                            (isDark
+                                                    ? AppColors.darkOnSurface
+                                                    : AppColors.navy)
+                                                .withOpacity(0.08),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
                                       child: Icon(
-                                        isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                                        isDark
+                                            ? Icons.dark_mode_rounded
+                                            : Icons.light_mode_rounded,
                                         size: 22,
-                                        color: isDark ? AppColors.darkOnSurface : AppColors.navy,
+                                        color: isDark
+                                            ? AppColors.darkOnSurface
+                                            : AppColors.navy,
                                       ),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'App Appearance',
                                             style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
-                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            ThemeModeScope.of(context).isDarkMode ? 'Dark Mode' : 'Light Mode',
+                                            ThemeModeScope.of(
+                                                  context,
+                                                ).isDarkMode
+                                                ? 'Dark Mode'
+                                                : 'Light Mode',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w700,
-                                              color: Theme.of(context).colorScheme.onSurface,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
                                     Switch(
-                                      value: ThemeModeScope.of(context).isDarkMode,
-                                      onChanged: (_) => ThemeModeScope.of(context).toggleDarkMode(),
+                                      value: ThemeModeScope.of(
+                                        context,
+                                      ).isDarkMode,
+                                      onChanged: (_) => ThemeModeScope.of(
+                                        context,
+                                      ).toggleDarkMode(),
                                       activeColor: AppColors.tealLight,
-                                      activeTrackColor: AppColors.tealLight.withOpacity(0.3),
+                                      activeTrackColor: AppColors.tealLight
+                                          .withOpacity(0.3),
                                     ),
                                   ],
                                 ),
@@ -258,12 +373,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 onTap: () => _showLogoutDialog(context),
                                 borderRadius: BorderRadius.circular(20),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 18),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 18,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.statusReported.withOpacity(0.1),
+                                    color: AppColors.statusReported.withOpacity(
+                                      0.1,
+                                    ),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: AppColors.statusReported.withOpacity(0.3),
+                                      color: AppColors.statusReported
+                                          .withOpacity(0.3),
                                       width: 1,
                                     ),
                                   ),
@@ -307,15 +427,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text(
           'Log out',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 22,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 22),
         ),
         content: Text(
           'Are you sure you want to log out of your account?',
@@ -345,18 +460,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx); // Pop the dialog
-              
+
               setState(() {
                 _isLoggingOut = true;
               });
-              
-              // Simulate network request for logout
-              await Future.delayed(const Duration(seconds: 1));
-              
+
+              // Capture navigator before async gap
+              final navigator = Navigator.of(context);
+              await widget.onLogout();
+
               if (mounted) {
                 // Pop the profile screen so we return to root layout where AuthWrapper handles the switch
-                Navigator.of(context).pop();
-                widget.onLogout();
+                navigator.pop();
               }
             },
             style: ElevatedButton.styleFrom(
@@ -370,9 +485,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             child: const Text(
               'Log out',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -400,7 +513,9 @@ class _PremiumInfoCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.shadow.withOpacity(isDark ? 0.2 : 0.04),
+            color: Theme.of(
+              context,
+            ).colorScheme.shadow.withOpacity(isDark ? 0.2 : 0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -429,7 +544,7 @@ class _PremiumInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Column(
       children: [
         Padding(
@@ -442,11 +557,7 @@ class _PremiumInfoRow extends StatelessWidget {
                   color: color.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  icon,
-                  size: 22,
-                  color: color,
-                ),
+                child: Icon(icon, size: 22, color: color),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -481,7 +592,9 @@ class _PremiumInfoRow extends StatelessWidget {
             padding: const EdgeInsets.only(left: 76, right: 20),
             child: Divider(
               height: 1,
-              color: (isDark ? Colors.white : AppColors.gray400).withOpacity(0.1),
+              color: (isDark ? Colors.white : AppColors.gray400).withOpacity(
+                0.1,
+              ),
             ),
           ),
       ],

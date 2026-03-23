@@ -2,49 +2,74 @@ import 'package:flutter/material.dart';
 import '../../controllers/forgot_password_controller.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/mira_gradient_button.dart';
-import 'otp_verification_screen.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({super.key});
+class ResetPasswordScreen extends StatefulWidget {
+  const ResetPasswordScreen({super.key, required this.controller});
+
+  final ForgotPasswordController controller;
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final _emailController = TextEditingController();
-  final FocusNode _emailFocus = FocusNode();
-  final _controller = ForgotPasswordController();
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final FocusNode _newPasswordFocus = FocusNode();
+  final FocusNode _confirmFocus = FocusNode();
+
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
 
   @override
   void initState() {
     super.initState();
-    _emailFocus.addListener(() => setState(() {}));
-    _controller.addListener(() => setState(() {}));
+    _newPasswordFocus.addListener(() => setState(() {}));
+    _confirmFocus.addListener(() => setState(() {}));
+    widget.controller.addListener(_onControllerChange);
+  }
+
+  void _onControllerChange() {
+    if (!mounted) return;
+    setState(() {});
+    if (widget.controller.step == ForgotPasswordStep.success) {
+      _showSuccessAndGoToLogin();
+    }
+  }
+
+  void _showSuccessAndGoToLogin() {
+    // Pop back to login, clearing the entire forgot-password stack.
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          'Password reset successful! Please sign in with your new password.',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: AppColors.tealPrimary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _emailFocus.dispose();
-    _controller.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    _newPasswordFocus.dispose();
+    _confirmFocus.dispose();
+    widget.controller.removeListener(_onControllerChange);
     super.dispose();
   }
 
   Future<void> _handleReset() async {
-    await _controller.submitEmail(_emailController.text);
-
-    if (!mounted) return;
-    if (_controller.step == ForgotPasswordStep.otp) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => OTPVerificationScreen(
-            email: _controller.email,
-            controller: _controller,
-          ),
-        ),
-      );
-    }
+    await widget.controller.resetPassword(
+      _newPasswordController.text,
+      _confirmPasswordController.text,
+    );
+    // On success _onControllerChange navigates away.
   }
 
   @override
@@ -55,7 +80,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       backgroundColor: AppColors.tealDark,
       body: Stack(
         children: [
-          // Background Gradient Base
           Container(
             decoration: BoxDecoration(
               gradient: isDark
@@ -67,8 +91,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
             ),
           ),
-
-          // Large floating orb 1 (Top Right)
           Positioned(
             top: -100,
             right: -80,
@@ -79,7 +101,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.tealLight.withValues(alpha: isDark ? 0.3 : 0.4),
+                    AppColors.tealLight.withOpacity(isDark ? 0.3 : 0.4),
                     Colors.transparent,
                   ],
                   stops: const [0.2, 1.0],
@@ -87,8 +109,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ),
           ),
-
-          // Large floating orb 2 (Bottom Left)
           Positioned(
             bottom: -80,
             left: -120,
@@ -99,7 +119,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Colors.white.withValues(alpha: isDark ? 0.05 : 0.2),
+                    Colors.white.withOpacity(isDark ? 0.05 : 0.2),
                     Colors.transparent,
                   ],
                   stops: const [0.1, 1.0],
@@ -107,8 +127,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ),
           ),
-
-          // Main Content
           SafeArea(
             bottom: false,
             child: Column(
@@ -118,8 +136,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ],
             ),
           ),
-
-          // Custom Back Button
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(top: 8.0, left: 8.0),
@@ -142,7 +158,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       child: Column(
         children: [
-          // Glowing Centerpiece
           Stack(
             alignment: Alignment.center,
             children: [
@@ -151,14 +166,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(
-                    0xFFEAB308,
-                  ).withAlpha((0.15 * 255).toInt()),
+                  color: AppColors.statusActive.withOpacity(0.15),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(
-                        0xFFEAB308,
-                      ).withAlpha((0.2 * 255).toInt()),
+                      color: AppColors.statusActive.withOpacity(0.2),
                       blurRadius: 30,
                       spreadRadius: 10,
                     ),
@@ -170,7 +181,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 height: 70,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFEAB308).withAlpha((0.3 * 255).toInt()),
+                  color: AppColors.statusActive.withOpacity(0.3),
                 ),
               ),
               Container(
@@ -178,14 +189,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 width: 50,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFACC15), Color(0xFFEAB308)],
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF4ADE80), Color(0xFF22C55E)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFEAB308),
+                      color: AppColors.statusActive,
                       blurRadius: 15,
                       offset: Offset(0, 4),
                     ),
@@ -193,7 +204,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 child: const Center(
                   child: Icon(
-                    Icons.lock_reset_rounded,
+                    Icons.lock_open_rounded,
                     size: 28,
                     color: Colors.white,
                   ),
@@ -201,11 +212,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 24),
-
           const Text(
-            'Recover Account',
+            'New Password',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w800,
@@ -216,9 +225,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Enter your email to reset password',
+            'Choose a strong password for your account',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w500,
               color: Colors.white.withOpacity(0.8),
             ),
@@ -257,110 +266,102 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           physics: const BouncingScrollPhysics(),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(32, 48, 32, 32),
-            child: _buildForm(context, theme, isDark),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPasswordField(
+                  context: context,
+                  label: 'New Password',
+                  controller: _newPasswordController,
+                  node: _newPasswordFocus,
+                  obscure: _obscureNew,
+                  onToggleObscure: () =>
+                      setState(() => _obscureNew = !_obscureNew),
+                  hintText: 'At least 8 characters',
+                ),
+                const SizedBox(height: 24),
+                _buildPasswordField(
+                  context: context,
+                  label: 'Confirm New Password',
+                  controller: _confirmPasswordController,
+                  node: _confirmFocus,
+                  obscure: _obscureConfirm,
+                  onToggleObscure: () =>
+                      setState(() => _obscureConfirm = !_obscureConfirm),
+                  hintText: 'Re-enter your new password',
+                ),
+
+                if (widget.controller.error != null) ...[
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.statusReported.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.statusReported.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          color: AppColors.statusReported,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            widget.controller.error!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.statusReported,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 48),
+
+                MiraGradientButton(
+                  label: widget.controller.isLoading
+                      ? 'SAVING...'
+                      : 'SET NEW PASSWORD',
+                  isLoading: widget.controller.isLoading,
+                  onPressed: widget.controller.isLoading ? null : _handleReset,
+                ),
+
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildForm(BuildContext context, ThemeData theme, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildModernTextField(
-          context: context,
-          label: 'Email Address',
-          controller: _emailController,
-          node: _emailFocus,
-          icon: Icons.email_rounded,
-          keyboardType: TextInputType.emailAddress,
-          hintText: 'hello@company.com',
-        ),
-
-        if (_controller.error != null) ...[
-          const SizedBox(height: 24),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: AppColors.statusReported.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.statusReported.withOpacity(0.3),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.error_outline_rounded,
-                  color: AppColors.statusReported,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _controller.error!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.statusReported,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-
-        const SizedBox(height: 48),
-
-        MiraGradientButton(
-          label: _controller.isLoading ? 'SENDING...' : 'SEND RESET CODE',
-          isLoading: _controller.isLoading,
-          onPressed: _controller.isLoading ? null : _handleReset,
-        ),
-
-        const SizedBox(height: 24),
-
-        Center(
-          child: TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(
-              overlayColor:
-                  (isDark ? AppColors.tealLight : AppColors.tealPrimary)
-                      .withOpacity(0.1),
-            ),
-            child: Text(
-              'Back to Sign In',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: isDark ? AppColors.gray300 : AppColors.gray600,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 40),
-      ],
-    );
-  }
-
-  Widget _buildModernTextField({
+  Widget _buildPasswordField({
     required BuildContext context,
     required String label,
     required TextEditingController controller,
     required FocusNode node,
-    required IconData icon,
-    TextInputType? keyboardType,
+    required bool obscure,
+    required VoidCallback onToggleObscure,
     required String hintText,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isFocused = node.hasFocus;
-
     final primaryColor = isDark ? AppColors.tealLight : AppColors.tealPrimary;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.gray50;
-
     final borderColor = isFocused
         ? primaryColor
         : (isDark ? Colors.white.withOpacity(0.05) : AppColors.gray200);
@@ -398,18 +399,29 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             child: TextField(
               controller: controller,
               focusNode: node,
-              keyboardType: keyboardType,
+              obscureText: obscure,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
                 color: isDark ? Colors.white : AppColors.navy,
               ),
               cursorColor: primaryColor,
+              onChanged: (_) => widget.controller.clearError(),
               decoration: InputDecoration(
                 prefixIcon: Icon(
-                  icon,
+                  Icons.lock_rounded,
                   color: isFocused ? primaryColor : AppColors.gray400,
                   size: 22,
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    obscure
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                    color: AppColors.gray400,
+                    size: 22,
+                  ),
+                  onPressed: onToggleObscure,
                 ),
                 hintText: hintText,
                 hintStyle: const TextStyle(

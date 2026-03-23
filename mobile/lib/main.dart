@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'core/storage/token_storage.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_mode_scope.dart';
 import 'views/welcome/welcome_screen.dart';
@@ -66,20 +67,17 @@ class _AppInitialScreenState extends State<AppInitialScreen> {
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) {
-        final slideAnimation = Tween<Offset>(
-          begin: const Offset(0.06, 0.04),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-        ));
+        final slideAnimation =
+            Tween<Offset>(
+              begin: const Offset(0.06, 0.04),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            );
 
         return FadeTransition(
           opacity: animation,
-          child: SlideTransition(
-            position: slideAnimation,
-            child: child,
-          ),
+          child: SlideTransition(position: slideAnimation, child: child),
         );
       },
       child: _showWelcome
@@ -87,9 +85,7 @@ class _AppInitialScreenState extends State<AppInitialScreen> {
               key: const ValueKey('welcome'),
               onGetStarted: _onGetStarted,
             )
-          : const AuthWrapper(
-              key: ValueKey('auth'),
-            ),
+          : const AuthWrapper(key: ValueKey('auth')),
     );
   }
 }
@@ -103,17 +99,44 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   bool _isLoggedIn = false;
+  bool _isCheckingSession = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingSession();
+  }
+
+  Future<void> _checkExistingSession() async {
+    final hasToken = await TokenStorage().hasAccessToken();
+    if (mounted) {
+      setState(() {
+        _isLoggedIn = hasToken;
+        _isCheckingSession = false;
+      });
+    }
+  }
 
   void _onLoginSuccess() {
     setState(() => _isLoggedIn = true);
   }
 
-  void _onLogout() {
-    setState(() => _isLoggedIn = false);
+  Future<void> _onLogout() async {
+    await TokenStorage().clearSession();
+    if (mounted) {
+      setState(() => _isLoggedIn = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingSession) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.tealPrimary),
+        ),
+      );
+    }
     if (!_isLoggedIn) {
       return LoginScreen(onLoginSuccess: _onLoginSuccess);
     }
@@ -122,7 +145,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 }
 
 class MainShell extends StatefulWidget {
-  final VoidCallback onLogout;
+  final Future<void> Function() onLogout;
 
   const MainShell({super.key, required this.onLogout});
 
@@ -179,16 +202,12 @@ class _MainShellState extends State<MainShell> {
           // Loading Overlay
           if (_isLoading)
             Container(
-              color: isDark 
-                  ? AppColors.darkBackground 
-                  : AppColors.gray50,
+              color: isDark ? AppColors.darkBackground : AppColors.gray50,
               child: const Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.tealPrimary,
-                ),
+                child: CircularProgressIndicator(color: AppColors.tealPrimary),
               ),
             ),
-          
+
           // Floating Bottom Navigation Bar
           Positioned(
             left: 0,

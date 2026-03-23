@@ -33,26 +33,30 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     with TickerProviderStateMixin {
   late final PageController _pageController;
   late final AnimationController _blobController;
-  
+
   int _currentPage = 0;
   bool _ctaPressed = false;
 
   List<OnboardingData> get _pages => [
     OnboardingData(
       title: 'Smart IT Inventory',
-      subtitle: 'Turn your messy asset list into an organized, always up-to-date workspace with effortless tracking.',
+      subtitle:
+          'Turn your messy asset list into an organized, always up-to-date workspace with effortless tracking.',
       illustration: 'assets/illustrations/scan.png',
       accentColor: AppColors.tealPrimary,
     ),
     OnboardingData(
       title: 'Real-time Visibility',
-      subtitle: 'Monitor hardware status, assign items to team members, and manage lifecycle events in one glance.',
-      illustration: 'assets/illustrations/scan.png', // Reusing same for now as per current assets
+      subtitle:
+          'Monitor hardware status, assign items to team members, and manage lifecycle events in one glance.',
+      illustration:
+          'assets/illustrations/scan.png', // Reusing same for now as per current assets
       accentColor: AppColors.tealPrimary,
     ),
     OnboardingData(
       title: 'Seamless Reporting',
-      subtitle: 'Generate detailed reports and history logs for compliance and internal audits without the headache.',
+      subtitle:
+          'Generate detailed reports and history logs for compliance and internal audits without the headache.',
       illustration: 'assets/illustrations/scan.png',
       accentColor: AppColors.tealPrimary,
     ),
@@ -62,7 +66,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   void initState() {
     super.initState();
     _pageController = PageController();
-    
+
     _blobController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 20),
@@ -103,14 +107,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    
+
     return Scaffold(
       backgroundColor: AppColors.gray50,
       body: Stack(
         children: [
           // 1. Dynamic Background
           _buildBackground(size),
-          
+
           // 2. Main Content
           SafeArea(
             child: Column(
@@ -119,7 +123,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Align(
                   alignment: Alignment.topRight,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: TextButton(
                       onPressed: _finishOnboarding,
                       style: TextButton.styleFrom(
@@ -132,7 +139,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     ),
                   ),
                 ),
-                
+
                 // Onboarding Pages
                 Expanded(
                   child: PageView.builder(
@@ -144,7 +151,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     },
                   ),
                 ),
-                
+
                 // Bottom Actions: Indicators & CTA
                 _buildBottomSection(),
               ],
@@ -167,24 +174,32 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 gradient: AppColors.softBackgroundGradient,
               ),
             ),
-            
+
             // Moving Blobs
             _buildBlob(
               size: size.width * 1.2,
-              color: AppColors.tealMuted.withOpacity(0.4),
-              top: -size.height * 0.2 + (sin(_blobController.value * 2 * pi) * 40),
-              left: -size.width * 0.3 + (cos(_blobController.value * 2 * pi) * 30),
+              color: AppColors.tealMuted.withValues(alpha: 0.4),
+              top:
+                  -size.height * 0.2 +
+                  (sin(_blobController.value * 2 * pi) * 40),
+              left:
+                  -size.width * 0.3 +
+                  (cos(_blobController.value * 2 * pi) * 30),
             ),
-            
+
             _buildBlob(
               size: size.width * 0.9,
-              color: AppColors.bluePrimary.withOpacity(0.08),
-              bottom: size.height * 0.1 + (cos(_blobController.value * 2 * pi) * 50),
-              right: -size.width * 0.2 + (sin(_blobController.value * 2 * pi) * 40),
+              color: AppColors.bluePrimary.withValues(alpha: 0.08),
+              bottom:
+                  size.height * 0.1 +
+                  (cos(_blobController.value * 2 * pi) * 50),
+              right:
+                  -size.width * 0.2 +
+                  (sin(_blobController.value * 2 * pi) * 40),
             ),
 
             // Subtle Grain/Texture overlay could go here
-            
+
             // Blur for the blobs
             Positioned.fill(
               child: BackdropFilter(
@@ -214,10 +229,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       child: Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }
@@ -242,13 +254,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        page.accentColor.withOpacity(0.2),
-                        page.accentColor.withOpacity(0),
+                        page.accentColor.withValues(alpha: 0.2),
+                        page.accentColor.withValues(alpha: 0),
                       ],
                     ),
                   ),
                 ),
-                
+
                 // Image
                 Hero(
                   tag: 'onboarding_image',
@@ -261,9 +273,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ],
             ),
           ),
-          
+
           const SizedBox(height: 48),
-          
+
           // Content Card
           Flexible(
             flex: 2,
@@ -315,29 +327,30 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 height: 8,
                 width: _currentPage == index ? 24 : 8,
                 decoration: BoxDecoration(
-                  color: _currentPage == index 
-                      ? _pages[_currentPage].accentColor 
+                  color: _currentPage == index
+                      ? _pages[_currentPage].accentColor
                       : AppColors.gray300,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
             ),
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           // CTA Button
           MiraButton(
-            label: _currentPage == _pages.length - 1 ? 'Get Started' : 'Continue',
+            label: _currentPage == _pages.length - 1
+                ? 'Get Started'
+                : 'Continue',
             icon: Icons.arrow_forward_rounded,
             backgroundColor: _pages[_currentPage].accentColor,
             onPressed: _handleNext,
           ),
-          
+
           const SizedBox(height: 12),
         ],
       ),
     );
   }
 }
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../controllers/login_controller.dart';
+import '../../core/network/api_exception.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/mira_gradient_button.dart';
 import 'forgot_password_screen.dart';
@@ -15,6 +16,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _loginController = LoginController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -37,20 +39,16 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loadSavedCredentials() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedEmail = prefs.getString('remembered_email');
-    final savedPassword = prefs.getString('remembered_password');
-    final rememberMe = prefs.getBool('remember_me') ?? false;
-
-    if (rememberMe && savedEmail != null) {
-      setState(() {
-        _emailController.text = savedEmail;
-        if (savedPassword != null) {
-          _passwordController.text = savedPassword;
-        }
-        _rememberMe = true;
-      });
+    final remembered = await _loginController.loadRememberedLogin();
+    if (!mounted) {
+      return;
     }
+
+    setState(() {
+      _rememberMe = remembered.rememberMe;
+      _emailController.text = remembered.email ?? '';
+      _passwordController.text = remembered.password ?? '';
+    });
   }
 
   @override
@@ -67,8 +65,6 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
       _isLoading = true;
     });
-
-    await Future.delayed(const Duration(milliseconds: 1000));
 
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -88,20 +84,59 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Save or clear credentials based on "Remember Me"
-    final prefs = await SharedPreferences.getInstance();
-    if (_rememberMe) {
-      await prefs.setBool('remember_me', true);
-      await prefs.setString('remembered_email', email);
-      await prefs.setString('remembered_password', password); // In a real app, use secure storage
-    } else {
-      await prefs.setBool('remember_me', false);
-      await prefs.remove('remembered_email');
-      await prefs.remove('remembered_password');
+    try {
+      await _loginController.signIn(
+        email: email,
+        password: password,
+        rememberMe: _rememberMe,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _isLoading = false);
+      widget.onLoginSuccess();
+    } on ApiException catch (e) {
+      debugPrint(
+        '[LoginScreen] ApiException status=${e.statusCode} message=${e.message} cause=${e.cause}',
+      );
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _error = _mapLoginError(e);
+        _isLoading = false;
+      });
+    } catch (_) {
+      debugPrint('[LoginScreen] Unknown login error');
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _error = 'Unable to sign in right now. Please try again.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _mapLoginError(ApiException error) {
+    final message = error.message.trim();
+    if (message.isNotEmpty) {
+      return message;
     }
 
-    setState(() => _isLoading = false);
-    widget.onLoginSuccess();
+    if (error.statusCode == 401) {
+      return 'Invalid email or password.';
+    }
+
+    if (error.statusCode == 408) {
+      return 'Request timed out. Please check your network and try again.';
+    }
+
+    return 'Unable to sign in right now. Please try again.';
   }
 
   @override
@@ -331,44 +366,52 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Checkbox(
-                            value: _rememberMe,
-                            onChanged: (value) =>
-                                setState(() => _rememberMe = value ?? false),
-                            activeColor: isDark
-                                ? AppColors.tealLight
-                                : AppColors.tealPrimary,
-                            checkColor: isDark
-                                ? AppColors.darkSurface
-                                : Colors.white,
-                            side: BorderSide(
-                              color: isDark
-                                  ? AppColors.gray600
-                                  : AppColors.gray400,
-                              width: 1.5,
+                    InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => setState(() => _rememberMe = !_rememberMe),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: Checkbox(
+                                value: _rememberMe,
+                                onChanged: (value) => setState(
+                                  () => _rememberMe = value ?? false,
+                                ),
+                                activeColor: isDark
+                                    ? AppColors.tealLight
+                                    : AppColors.tealPrimary,
+                                checkColor: isDark
+                                    ? AppColors.darkSurface
+                                    : Colors.white,
+                                side: BorderSide(
+                                  color: isDark
+                                      ? AppColors.gray600
+                                      : AppColors.gray400,
+                                  width: 1.5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Remember me',
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: isDark
+                                    ? AppColors.gray300
+                                    : AppColors.gray600,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Remember me',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: isDark
-                                ? AppColors.gray300
-                                : AppColors.gray600,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                     TextButton(
                       onPressed: () {

@@ -37,7 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final maintenanceCount = controller.maintenanceAssetsCount;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.gray50,
       body: SafeArea(
@@ -68,8 +68,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: isDark 
-                                            ? AppColors.tealLight 
+                                        color: isDark
+                                            ? AppColors.tealLight
                                             : AppColors.tealPrimary,
                                         letterSpacing: 0.5,
                                       ),
@@ -80,7 +80,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       style: TextStyle(
                                         fontSize: 34,
                                         fontWeight: FontWeight.w800,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
                                         letterSpacing: -0.5,
                                         height: 1.15,
                                       ),
@@ -100,7 +102,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     gradient: AppColors.primaryGradient,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.tealPrimary.withOpacity(0.3),
+                                        color: AppColors.tealPrimary.withValues(
+                                          alpha: 0.3,
+                                        ),
                                         blurRadius: 16,
                                         offset: const Offset(0, 4),
                                       ),
@@ -123,7 +127,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -176,11 +182,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Text(
                             'My Assets',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: Theme.of(context).colorScheme.onSurface,
-                              letterSpacing: -0.3,
-                            ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  letterSpacing: -0.3,
+                                ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -192,10 +201,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .shadow
-                                      .withOpacity(0.04),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.shadow.withValues(alpha: 0.04),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -226,12 +234,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       : SliverPadding(
                           padding: const EdgeInsets.fromLTRB(24, 0, 24, 110),
                           sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate((context, index) {
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
                               final asset = controller.myAssets[index];
                               return _AssetListCard(
                                 asset: asset,
-                                onTap: () =>
-                                    DashboardController().openDetails(context, asset),
+                                onTap: () => DashboardController().openDetails(
+                                  context,
+                                  asset,
+                                ),
                               );
                             }, childCount: controller.myAssets.length),
                           ),
@@ -255,13 +268,13 @@ class _EmptyAssetsState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.tealMuted.withOpacity(0.5),
+              color: AppColors.tealMuted.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.inventory_2_outlined,
               size: 56,
-              color: AppColors.tealPrimary.withOpacity(0.7),
+              color: AppColors.tealPrimary.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 24),
@@ -304,7 +317,7 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surfaceColor = Theme.of(context).colorScheme.surface;
-    
+
     return Container(
       width: 156,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -313,15 +326,14 @@ class _SummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withOpacity(0.08),
+            color: accentColor.withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: Theme.of(context)
-                .colorScheme
-                .shadow
-                .withOpacity(isDark ? 0.2 : 0.04),
+            color: Theme.of(
+              context,
+            ).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -338,7 +350,7 @@ class _SummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.12),
+                  color: accentColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: accentColor, size: 22),
@@ -419,7 +431,7 @@ class _AssetListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = _statusAccentColor();
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Material(
@@ -434,16 +446,15 @@ class _AssetListCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withOpacity(0.04)
-                    : AppColors.gray100.withOpacity(0.5),
+                    ? Colors.white.withValues(alpha: 0.04)
+                    : AppColors.gray100.withValues(alpha: 0.5),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .shadow
-                      .withOpacity(isDark ? 0.1 : 0.03),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.shadow.withValues(alpha: isDark ? 0.1 : 0.03),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -455,13 +466,17 @@ class _AssetListCard extends StatelessWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurfaceVariant : AppColors.gray50,
+                    color: isDark
+                        ? AppColors.darkSurfaceVariant
+                        : AppColors.gray50,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Center(
                     child: Icon(
                       _iconForCategory(asset.category),
-                      color: isDark ? AppColors.tealLight : AppColors.tealPrimary,
+                      color: isDark
+                          ? AppColors.tealLight
+                          : AppColors.tealPrimary,
                       size: 26,
                     ),
                   ),
@@ -501,7 +516,9 @@ class _AssetListCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -514,63 +531,6 @@ class _AssetListCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 StatusBadge(status: asset.status),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PremiumFab extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _PremiumFab({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark 
-            ? AppColors.tealLight 
-            : AppColors.tealPrimary,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: (Theme.of(context).brightness == Brightness.dark 
-                ? AppColors.tealLight 
-                : AppColors.tealPrimary).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(20),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.qr_code_scanner_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                SizedBox(width: 12),
-                Text(
-                  'Scan',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
-                  ),
-                ),
               ],
             ),
           ),

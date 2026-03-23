@@ -1,7 +1,10 @@
 package auth
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -12,6 +15,7 @@ import (
 	"mira-api/v1/user"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -54,6 +58,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// 2. Verify password against stored bcrypt hash
 	if err := bcrypt.CompareHashAndPassword([]byte(targetUser.Password), []byte(req.Password)); err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		return
+	}
+
+	clientType := strings.ToLower(strings.TrimSpace(r.Header.Get("X-Client-Type")))
+	if clientType == "mobile" && !strings.EqualFold(targetUser.Role.RoleName, "Staff") {
+		http.Error(w, "Access denied. Mobile app is restricted to staff accounts.", http.StatusUnauthorized)
 		return
 	}
 
@@ -162,5 +172,204 @@ func SetupPassword(w http.ResponseWriter, r *http.Request) {
 			AccessToken: tokenStr,
 			User:        targetUser,
 		},
+	})
+}
+
+// PasswordResetOTP is the GORM model for the password_reset_otps table.
+type PasswordResetOTP struct {
+	ID         string     `gorm:"column:id;primaryKey"`
+	UserID     string     `gorm:"column:user_id"`
+	OTPHash    string     `gorm:"column:otp_hash"`
+	ResetToken *string    `gorm:"column:reset_token"`
+	ExpiresAt  time.Time  `gorm:"column:expires_at"`
+	Used       bool       `gorm:"column:used"`
+	CreatedAt  time.Time  `gorm:"column:created_at"`
+}
+
+func (PasswordResetOTP) TableName() string { return "password_reset_otps" }
+
+// generate6DigitOTP returns a zero-padded 6-digit numeric code.
+func generate6DigitOTP() string {
+	return fmt.Sprintf("%06d", rand.Intn(1_000_000))
+}
+
+// ForgotPassword handles POST /forgot-password.
+// It always returns 200 OK to prevent email enumeration.
+func ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var req ForgotPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	// Look up user — silently succeed even if not found (no enumeration).
+	var targetUser user.User
+	if result := db.DB.Where("email = ?", strings.TrimSpace(req.Email)).First(&targetUser); result.Error != nil {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "If that email is registered, you will receive a reset code shortly.",
+		})
+		return
+	}
+
+	// Invalidate any previous unused OTPs for this user.
+	db.DB.Model(&PasswordResetOTP{}).
+		Where("user_id = ? AND used = false", targetUser.ID).
+		Update("used", true)
+
+	// Generate and hash OTP.
+	otp := generate6DigitOTP()
+	hashedOTP, err := bcrypt.GenerateFromPassword([]byte(otp), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Failed to generate reset code", http.StatusInternalServerError)
+		return
+	}
+
+	record := PasswordResetOTP{
+		ID:        uuid.New().String(),
+		UserID:    targetUser.ID,
+		OTPHash:   string(hashedOTP),
+		ExpiresAt: time.Now().UTC().Add(10 * time.Minute),
+		Used:      false,
+	}
+	if result := db.DB.Create(&record); result.Error != nil {
+		http.Error(w, "Failed to store reset code", http.StatusInternalServerError)
+		return
+	}
+
+	// Fire-and-forget: send OTP email via Next.js / SendGrid.
+	go func(email, name, code string) {
+		payload := map[string]interface{}{
+			"email": email,
+			"name":  name,
+			"otp":   code,
+		}
+		payloadBytes, _ := json.Marshal(payload)
+
+		nextjsURL := os.Getenv("NEXT_PUBLIC_APP_URL")
+		if nextjsURL == "" || nextjsURL == "http://localhost:3000" {
+			nextjsURL = "http://127.0.0.1:3000"
+		}
+
+		req, err := http.NewRequest("POST", nextjsURL+"/api/emails/reset-password", bytes.NewBuffer(payloadBytes))
+		if err != nil {
+			fmt.Printf("ForgotPassword: error creating email request: %v\n", err)
+			return
+		}
+		req.Header.Set("Content-Type", "application/json")
+		client := &http.Client{Timeout: 10 * time.Second}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Printf("ForgotPassword: error sending email request: %v\n", err)
+			return
+		}
+		defer resp.Body.Close()
+		fmt.Printf("ForgotPassword: email dispatch status %d for %s\n", resp.StatusCode, email)
+	}(targetUser.Email, targetUser.FullName, otp)
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "If that email is registered, you will receive a reset code shortly.",
+	})
+}
+
+// VerifyOTP handles POST /verify-otp.
+// On success it returns a short-lived reset_token the client must use to set a new password.
+func VerifyOTP(w http.ResponseWriter, r *http.Request) {
+	var req VerifyOTPRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	email := strings.TrimSpace(req.Email)
+	otp := strings.TrimSpace(req.OTP)
+
+	// Find the most-recent non-used, non-expired OTP for this email.
+	var record PasswordResetOTP
+	result := db.DB.
+		Joins("JOIN users ON users.id = password_reset_otps.user_id").
+		Where("users.email = ? AND password_reset_otps.used = false AND password_reset_otps.expires_at > ?", email, time.Now().UTC()).
+		Order("password_reset_otps.created_at DESC").
+		First(&record)
+
+	if result.Error != nil {
+		http.Error(w, "Invalid or expired code", http.StatusBadRequest)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(record.OTPHash), []byte(otp)); err != nil {
+		http.Error(w, "Invalid or expired code", http.StatusBadRequest)
+		return
+	}
+
+	// Issue a short-lived reset token.
+	resetToken := uuid.New().String()
+	newExpiry := time.Now().UTC().Add(15 * time.Minute)
+
+	if result := db.DB.Model(&record).Updates(map[string]interface{}{
+		"reset_token": resetToken,
+		"expires_at":  newExpiry,
+	}); result.Error != nil {
+		http.Error(w, "Failed to issue reset token", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":     "OTP verified",
+		"reset_token": resetToken,
+	})
+}
+
+// ResetPassword handles POST /reset-password.
+func ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req ResetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	resetToken := strings.TrimSpace(req.ResetToken)
+	newPassword := req.NewPassword
+
+	if resetToken == "" || newPassword == "" {
+		http.Error(w, "reset_token and new_password are required", http.StatusBadRequest)
+		return
+	}
+
+	// Find OTP record by reset_token — must be non-used and non-expired.
+	var record PasswordResetOTP
+	result := db.DB.
+		Where("reset_token = ? AND used = false AND expires_at > ?", resetToken, time.Now().UTC()).
+		First(&record)
+	if result.Error != nil {
+		http.Error(w, "Invalid or expired reset token", http.StatusBadRequest)
+		return
+	}
+
+	// Hash the new password.
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Failed to hash new password", http.StatusInternalServerError)
+		return
+	}
+
+	// Update user password.
+	if result := db.DB.Model(&user.User{}).Where("id = ?", record.UserID).Update("password", string(hashedPassword)); result.Error != nil {
+		http.Error(w, "Failed to update password", http.StatusInternalServerError)
+		return
+	}
+
+	// Mark OTP record as used.
+	db.DB.Model(&record).Update("used", true)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Password reset successful. Please log in with your new password.",
 	})
 }
