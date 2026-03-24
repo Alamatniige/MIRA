@@ -178,12 +178,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 width: 50,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     colors: [Color(0xFFFACC15), Color(0xFFEAB308)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
                       color: Color(0xFFEAB308),
                       blurRadius: 15,

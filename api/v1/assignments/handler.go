@@ -17,6 +17,18 @@ import (
 	"gorm.io/gorm"
 )
 
+func authenticatedUserIDFromContext(r *http.Request) (string, bool) {
+	if userID, ok := r.Context().Value(middleware.UserIDKey).(string); ok && strings.TrimSpace(userID) != "" {
+		return userID, true
+	}
+
+	if fallback, ok := r.Context().Value("userID").(string); ok && strings.TrimSpace(fallback) != "" {
+		return fallback, true
+	}
+
+	return "", false
+}
+
 func deriveAssignmentStatus(acknowledged bool, returnedAt *time.Time, rejectedAt *time.Time) string {
 	if rejectedAt != nil {
 		return "REJECTED"
@@ -42,7 +54,7 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.UserID == "" {
-		if id, ok := r.Context().Value("userID").(string); ok {
+		if id, ok := authenticatedUserIDFromContext(r); ok {
 			req.UserID = id
 		}
 	}
@@ -52,14 +64,10 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	issuerID, ok := r.Context().Value(middleware.UserIDKey).(string)
-	if !ok || issuerID == "" {
-		if fallback, fallbackOk := r.Context().Value("userID").(string); fallbackOk && fallback != "" {
-			issuerID = fallback
-		} else {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
+	issuerID, ok := authenticatedUserIDFromContext(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
 	}
 
 	tx := db.DB.Begin()
@@ -141,8 +149,8 @@ func ReturnAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok || userID == "" {
+	userID, ok := authenticatedUserIDFromContext(r)
+	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -227,14 +235,10 @@ func RejectAssignment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rejectedByUserID, ok := r.Context().Value(middleware.UserIDKey).(string)
-	if !ok || rejectedByUserID == "" {
-		if fallback, fallbackOK := r.Context().Value("userID").(string); fallbackOK && fallback != "" {
-			rejectedByUserID = fallback
-		} else {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
+	rejectedByUserID, ok := authenticatedUserIDFromContext(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
 	}
 
 	tx := db.DB.Begin()
@@ -304,8 +308,8 @@ func RejectAssignment(w http.ResponseWriter, r *http.Request) {
 
 // GetMyActiveAssignments returns active (not yet returned) assignments for the authenticated user.
 func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok || userID == "" {
+	userID, ok := authenticatedUserIDFromContext(r)
+	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}

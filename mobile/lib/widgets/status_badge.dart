@@ -7,36 +7,65 @@ class StatusBadge extends StatelessWidget {
 
   const StatusBadge({super.key, required this.status});
 
+  static String _normalize(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ')
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .join(' ');
+  }
+
   static Color _bgColor(String s) {
-    final lower = s.toLowerCase();
-    if (lower == 'active') return AppColors.statusActive.withValues(alpha: 0.15);
-    if (lower == 'maintenance') return AppColors.statusMaintenance.withValues(alpha: 0.15);
-    if (lower == 'reported' || lower == 'issue') return AppColors.statusReported.withValues(alpha: 0.15);
-    if (lower == 'disposed') return AppColors.statusDisposed.withValues(alpha: 0.2);
+    final lower = _normalize(s);
+    if (lower == 'active' || lower == 'available') {
+      return AppColors.statusActive.withValues(alpha: 0.15);
+    }
+    if (lower == 'maintenance' || lower == 'under maintenance') {
+      return AppColors.statusMaintenance.withValues(alpha: 0.15);
+    }
+    if (lower == 'reported' || lower == 'issue') {
+      return AppColors.statusReported.withValues(alpha: 0.15);
+    }
+    if (lower == 'disposed')
+      return AppColors.statusDisposed.withValues(alpha: 0.2);
     return AppColors.gray200;
   }
 
   static Color _textColor(String s) {
-    final lower = s.toLowerCase();
-    if (lower == 'active') return const Color(0xFF15803D);
-    if (lower == 'maintenance') return const Color(0xFFA16207);
+    final lower = _normalize(s);
+    if (lower == 'active' || lower == 'available')
+      return const Color(0xFF15803D);
+    if (lower == 'maintenance' || lower == 'under maintenance') {
+      return const Color(0xFFA16207);
+    }
     if (lower == 'reported' || lower == 'issue') return const Color(0xFFB91C1C);
     if (lower == 'disposed') return AppColors.gray700;
     return AppColors.gray600;
   }
 
   static Color _dotColor(String s) {
-    final lower = s.toLowerCase();
-    if (lower == 'active') return AppColors.statusActive;
-    if (lower == 'maintenance') return AppColors.statusMaintenance;
-    if (lower == 'reported' || lower == 'issue') return AppColors.statusReported;
+    final lower = _normalize(s);
+    if (lower == 'active' || lower == 'available')
+      return AppColors.statusActive;
+    if (lower == 'maintenance' || lower == 'under maintenance') {
+      return AppColors.statusMaintenance;
+    }
+    if (lower == 'reported' || lower == 'issue')
+      return AppColors.statusReported;
     if (lower == 'disposed') return AppColors.statusDisposed;
     return AppColors.gray500;
   }
 
   String get _displayText {
-    if (status.isEmpty) return status;
-    return '${status[0].toUpperCase()}${status.substring(1).toLowerCase()}';
+    final normalized = _normalize(status);
+    if (normalized.isEmpty) return status;
+    return normalized
+        .split(' ')
+        .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+        .join(' ');
   }
 
   @override

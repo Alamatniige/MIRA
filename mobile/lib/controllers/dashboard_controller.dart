@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../data/mock_data.dart';
 import '../models/asset.dart';
+import '../models/dashboard_data.dart';
+import '../repositories/assets_repository.dart';
 import '../views/assets/asset_detail_screen.dart';
 import '../views/scan/qr_scanner_screen.dart';
 
 class DashboardController {
+  DashboardController({AssetsRepository? assetsRepository})
+    : _assetsRepository = assetsRepository ?? AssetsRepository();
+
+  final AssetsRepository _assetsRepository;
+
   String getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
@@ -13,17 +19,9 @@ class DashboardController {
     return 'Good Evening';
   }
 
-  int get totalAssets => mockMyAssets.length;
-
-  int get activeAssetsCount =>
-      mockMyAssets.where((a) => a.status.toLowerCase() == 'active').length;
-
-  int get maintenanceAssetsCount =>
-      mockMyAssets.where((a) => a.status.toLowerCase() == 'maintenance').length;
-
-  List<Asset> get myAssets => mockMyAssets;
-
-  String get userFirstName => mockUserName.split(' ').first;
+  Future<DashboardData> loadDashboard() {
+    return _assetsRepository.getDashboardData();
+  }
 
   void onScanTap(BuildContext context) {
     Navigator.of(

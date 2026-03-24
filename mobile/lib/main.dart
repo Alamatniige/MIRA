@@ -194,7 +194,10 @@ class _MainShellState extends State<MainShell> {
                   );
                 },
               ),
-              QrScannerScreen(onBack: () => _onTabTapped(0)),
+              if (_currentIndex == 1)
+                QrScannerScreen(onBack: () => _onTabTapped(0))
+              else
+                const SizedBox.shrink(),
               const HistoryScreen(),
             ],
           ),

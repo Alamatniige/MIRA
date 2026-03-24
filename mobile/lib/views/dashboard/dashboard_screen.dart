@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../models/asset.dart';
+import '../../models/dashboard_data.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/status_badge.dart';
 
@@ -15,242 +16,313 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final DashboardController _controller = DashboardController();
+  DashboardData? _dashboardData;
+  String? _errorMessage;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+    _loadDashboard();
+  }
+
+  Future<void> _loadDashboard() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      final dashboardData = await _controller.loadDashboard();
+      if (!mounted) {
+        return;
       }
-    });
+
+      setState(() {
+        _dashboardData = dashboardData;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _errorMessage = error.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = DashboardController();
-    final myCount = controller.totalAssets;
-    final activeCount = controller.activeAssetsCount;
-    final maintenanceCount = controller.maintenanceAssetsCount;
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dashboard = _dashboardData;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.gray50,
       body: SafeArea(
-        child: _isLoading
+        child: _isLoading && dashboard == null
             ? const Center(child: CircularProgressIndicator())
-            : CustomScrollView(
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                slivers: [
-                  // Modern clean header text
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      controller.getGreeting(),
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark
-                                            ? AppColors.tealLight
-                                            : AppColors.tealPrimary,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      controller.userFirstName,
-                                      style: TextStyle(
-                                        fontSize: 34,
-                                        fontWeight: FontWeight.w800,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurface,
-                                        letterSpacing: -0.5,
-                                        height: 1.15,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: widget.onProfileTap,
-                                child: Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: AppColors.primaryGradient,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.tealPrimary.withValues(
-                                          alpha: 0.3,
+            : _errorMessage != null && dashboard == null
+            ? _DashboardErrorState(
+                message: _errorMessage!,
+                onRetry: _loadDashboard,
+              )
+            : RefreshIndicator(
+                onRefresh: _loadDashboard,
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  slivers: [
+                    // Modern clean header text
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _controller.getGreeting(),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark
+                                              ? AppColors.tealLight
+                                              : AppColors.tealPrimary,
+                                          letterSpacing: 0.5,
                                         ),
-                                        blurRadius: 16,
-                                        offset: const Offset(0, 4),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        dashboard?.userFirstName ?? 'User',
+                                        style: TextStyle(
+                                          fontSize: 34,
+                                          fontWeight: FontWeight.w800,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                          letterSpacing: -0.5,
+                                          height: 1.15,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.person_rounded,
-                                      color: Colors.white,
-                                      size: 24,
+                                ),
+                                GestureDetector(
+                                  onTap: widget.onProfileTap,
+                                  child: Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: AppColors.primaryGradient,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.tealPrimary
+                                              .withValues(alpha: 0.3),
+                                          blurRadius: 16,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.person_rounded,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Here\'s your asset overview',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Summary cards - borderless elegant style
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                      child: SizedBox(
-                        height: 150,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          clipBehavior: Clip.none,
-                          children: [
-                            _SummaryCard(
-                              label: 'Total Assets',
-                              value: '$myCount',
-                              icon: Icons.inventory_2_rounded,
-                              accentColor: const Color(0xFF0D9488),
-                            ),
-                            const SizedBox(width: 16),
-                            _SummaryCard(
-                              label: 'Active',
-                              value: '$activeCount',
-                              icon: Icons.check_circle_rounded,
-                              accentColor: const Color(0xFF22C55E),
-                            ),
-                            const SizedBox(width: 16),
-                            _SummaryCard(
-                              label: 'Maintenance',
-                              value: '$maintenanceCount',
-                              icon: Icons.build_rounded,
-                              accentColor: const Color(0xFFEAB308),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // My Assets section header
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            'My Assets',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface,
-                                  letterSpacing: -0.3,
-                                ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.shadow.withValues(alpha: 0.04),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
                               ],
                             ),
-                            child: Text(
-                              '$myCount items',
+                            const SizedBox(height: 12),
+                            Text(
+                              'Here\'s your asset overview',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.onSurfaceVariant,
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  controller.myAssets.isEmpty
-                      ? const SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.all(40),
-                            child: _EmptyAssetsState(),
-                          ),
-                        )
-                      : SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 110),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                            ) {
-                              final asset = controller.myAssets[index];
-                              return _AssetListCard(
-                                asset: asset,
-                                onTap: () => DashboardController().openDetails(
-                                  context,
-                                  asset,
-                                ),
-                              );
-                            }, childCount: controller.myAssets.length),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                        child: SizedBox(
+                          height: 150,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            clipBehavior: Clip.none,
+                            children: [
+                              _SummaryCard(
+                                label: 'Total Assets',
+                                value: '${dashboard?.totalAssets ?? 0}',
+                                icon: Icons.inventory_2_rounded,
+                                accentColor: const Color(0xFF0D9488),
+                              ),
+                              const SizedBox(width: 16),
+                              _SummaryCard(
+                                label: 'Assigned to you',
+                                value: '${dashboard?.activeAssetsCount ?? 0}',
+                                icon: Icons.check_circle_rounded,
+                                accentColor: const Color(0xFF22C55E),
+                              ),
+                              const SizedBox(width: 16),
+                              _SummaryCard(
+                                label: 'Maintenance',
+                                value:
+                                    '${dashboard?.maintenanceAssetsCount ?? 0}',
+                                icon: Icons.build_rounded,
+                                accentColor: const Color(0xFFEAB308),
+                              ),
+                            ],
                           ),
                         ),
-                ],
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Assigned Assets',
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                    letterSpacing: -0.3,
+                                  ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context).colorScheme.shadow
+                                        .withValues(alpha: 0.04),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                '${dashboard?.myAssets.length ?? 0} items',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    dashboard == null || dashboard.myAssets.isEmpty
+                        ? const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.all(40),
+                              child: _EmptyAssetsState(),
+                            ),
+                          )
+                        : SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 110),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate((
+                                context,
+                                index,
+                              ) {
+                                final asset = dashboard.myAssets[index];
+                                return _AssetListCard(
+                                  asset: asset,
+                                  onTap: () =>
+                                      _controller.openDetails(context, asset),
+                                );
+                              }, childCount: dashboard.myAssets.length),
+                            ),
+                          ),
+                  ],
+                ),
               ),
+      ),
+    );
+  }
+}
+
+class _DashboardErrorState extends StatelessWidget {
+  const _DashboardErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              size: 52,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load dashboard',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
+        ),
       ),
     );
   }

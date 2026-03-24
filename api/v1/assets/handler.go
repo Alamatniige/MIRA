@@ -25,6 +25,42 @@ import (
 	"gorm.io/gorm"
 )
 
+const canonicalMaintenanceStatus = "UNDER_MAINTENANCE"
+
+func normalizeStatusToken(value string) string {
+	cleaned := strings.TrimSpace(strings.ToLower(value))
+	cleaned = strings.ReplaceAll(cleaned, "_", " ")
+	cleaned = strings.ReplaceAll(cleaned, "-", " ")
+	cleaned = strings.Join(strings.Fields(cleaned), " ")
+	return cleaned
+}
+
+func isMaintenanceStatus(value string) bool {
+	token := normalizeStatusToken(value)
+	return token == "maintenance" || token == "under maintenance"
+}
+
+func canonicalizeAssetStatusForResponse(value string) string {
+	if isMaintenanceStatus(value) {
+		return canonicalMaintenanceStatus
+	}
+
+	return strings.TrimSpace(value)
+}
+
+func statusMatchesFilter(assetStatus, filterStatus string) bool {
+	filterToken := normalizeStatusToken(filterStatus)
+	if filterToken == "" {
+		return true
+	}
+
+	if isMaintenanceStatus(filterStatus) {
+		return isMaintenanceStatus(assetStatus)
+	}
+
+	return normalizeStatusToken(assetStatus) == filterToken
+}
+
 func removedAssetImageObjectPaths(existingImages, updatedImages []string) []string {
 	if len(existingImages) == 0 {
 		return nil
@@ -131,6 +167,22 @@ func GetAssets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	statusQuery := r.URL.Query().Get("status")
+	if strings.TrimSpace(statusQuery) != "" {
+		filtered := make([]Asset, 0, len(assets))
+		for _, asset := range assets {
+			if statusMatchesFilter(asset.CurrentStatus, statusQuery) {
+				asset.CurrentStatus = canonicalizeAssetStatusForResponse(asset.CurrentStatus)
+				filtered = append(filtered, asset)
+			}
+		}
+		assets = filtered
+	} else {
+		for i := range assets {
+			assets[i].CurrentStatus = canonicalizeAssetStatusForResponse(assets[i].CurrentStatus)
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(assets)
 }
@@ -149,6 +201,8 @@ func GetAssetDetails(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	asset.CurrentStatus = canonicalizeAssetStatusForResponse(asset.CurrentStatus)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)
@@ -169,7 +223,7 @@ func AddAsset(w http.ResponseWriter, r *http.Request) {
 		Specification: req.Specification,
 		Room:          req.Room,
 		Floor:         req.Floor,
-		CurrentStatus: req.CurrentStatus,
+		CurrentStatus: canonicalizeAssetStatusForResponse(req.CurrentStatus),
 		Tag:           req.Tag,
 		Image:         req.Image,
 	}
@@ -501,7 +555,7 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 	asset.Specification = req.Specification
 	asset.Room = req.Room
 	asset.Floor = req.Floor
-	asset.CurrentStatus = req.CurrentStatus
+	asset.CurrentStatus = canonicalizeAssetStatusForResponse(req.CurrentStatus)
 	asset.Image = req.Image
 
 	if result := db.DB.Save(&asset); result.Error != nil {
@@ -538,10 +592,14 @@ func UpdateAssetStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := db.DB.Model(&asset).Update("currentStatus", req.CurrentStatus); result.Error != nil {
+	normalizedStatus := canonicalizeAssetStatusForResponse(req.CurrentStatus)
+
+	if result := db.DB.Model(&asset).Update("currentStatus", normalizedStatus); result.Error != nil {
 		http.Error(w, "Error updating asset status: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	asset.CurrentStatus = normalizedStatus
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)

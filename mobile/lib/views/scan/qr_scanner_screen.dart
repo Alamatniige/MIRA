@@ -17,7 +17,7 @@ class QrScannerScreen extends StatefulWidget {
 }
 
 class _QrScannerScreenState extends State<QrScannerScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final MobileScannerController _controller = MobileScannerController(
     detectionSpeed: DetectionSpeed.normal,
     facing: CameraFacing.back,
@@ -30,6 +30,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scanLineController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -37,7 +38,23 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        _controller.stop();
+        break;
+      case AppLifecycleState.resumed:
+        _controller.start();
+        break;
+      default:
+        break;
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _scanLineController.dispose();
     super.dispose();
@@ -79,6 +96,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   }
 
   void _showScanResultSheet(BuildContext context, Asset asset) {
+    _controller.stop();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -94,10 +112,16 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           );
         },
       ),
-    ).then((_) => setState(() => _hasScanned = false));
+    ).then((_) {
+      if (mounted) {
+        _controller.start();
+        setState(() => _hasScanned = false);
+      }
+    });
   }
 
   void _showInvalidScan(BuildContext context, String code) {
+    _controller.stop();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -113,13 +137,18 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              setState(() => _hasScanned = false);
+              if (mounted) setState(() => _hasScanned = false);
             },
             child: const Text('Scan Again'),
           ),
         ],
       ),
-    ).then((_) => setState(() => _hasScanned = false));
+    ).then((_) {
+      if (mounted) {
+        _controller.start();
+        setState(() => _hasScanned = false);
+      }
+    });
   }
 
   @override

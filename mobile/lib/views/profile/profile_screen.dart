@@ -180,8 +180,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.tealPrimary.withValues(alpha: 
-                                        0.4,
+                                      color: AppColors.tealPrimary.withValues(
+                                        alpha: 0.4,
                                       ),
                                       blurRadius: 24,
                                       offset: const Offset(0, 8),
@@ -352,7 +352,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       onChanged: (_) => ThemeModeScope.of(
                                         context,
                                       ).toggleDarkMode(),
-                                      activeColor: AppColors.tealLight,
+                                      activeThumbColor: AppColors.tealLight,
                                       activeTrackColor: AppColors.tealLight
                                           .withValues(alpha: 0.3),
                                     ),
@@ -377,8 +377,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     vertical: 18,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.statusReported.withValues(alpha: 
-                                      0.1,
+                                    color: AppColors.statusReported.withValues(
+                                      alpha: 0.1,
                                     ),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
@@ -508,7 +508,9 @@ class _PremiumInfoCard extends StatelessWidget {
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.04)
+              : AppColors.gray100,
           width: 1,
         ),
         boxShadow: [
@@ -592,8 +594,8 @@ class _PremiumInfoRow extends StatelessWidget {
             padding: const EdgeInsets.only(left: 76, right: 20),
             child: Divider(
               height: 1,
-              color: (isDark ? Colors.white : AppColors.gray400).withValues(alpha: 
-                0.1,
+              color: (isDark ? Colors.white : AppColors.gray400).withValues(
+                alpha: 0.1,
               ),
             ),
           ),

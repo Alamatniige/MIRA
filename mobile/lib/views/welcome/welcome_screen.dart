@@ -35,7 +35,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late final AnimationController _blobController;
 
   int _currentPage = 0;
-  bool _ctaPressed = false;
 
   List<OnboardingData> get _pages => [
     OnboardingData(
@@ -98,7 +97,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   void _finishOnboarding() async {
-    setState(() => _ctaPressed = true);
     await Future.delayed(const Duration(milliseconds: 150));
     if (!mounted) return;
     widget.onGetStarted();
