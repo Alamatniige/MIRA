@@ -48,6 +48,22 @@ func canonicalizeCurrentStatus(value string) string {
 	return strings.TrimSpace(value)
 }
 
+// canonicalizeAssignmentStatus maps any stored assignmentStatus to one of the
+// canonical values: "Available", "Pending", or "Unavailable".
+// The legacy value "Approved" (written by old code) is treated as "Unavailable".
+func canonicalizeAssignmentStatus(value string) string {
+	token := strings.TrimSpace(strings.ToLower(value))
+	switch token {
+	case "available":
+		return "Available"
+	case "pending":
+		return "Pending"
+	case "unavailable", "approved":
+		return "Unavailable"
+	}
+	return strings.TrimSpace(value)
+}
+
 func statusMatchesFilter(assetStatus, filterStatus string) bool {
 	filterToken := normalizeStatusToken(filterStatus)
 	if filterToken == "" {
@@ -188,7 +204,12 @@ func GetAssetDetails(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	var asset Asset
 
-	if result := db.DB.Preload("AssetTypeRel").Preload("RoomRel").Preload("FloorRel").First(&asset, "id = ?", id); result.Error != nil {
+	result := db.DB.Preload("AssetTypeRel").Preload("RoomRel").Preload("FloorRel").First(&asset, "id = ?", id)
+	if result.Error == gorm.ErrRecordNotFound {
+		// Fallback: try matching by tag (for old QR formats)
+		result = db.DB.Preload("AssetTypeRel").Preload("RoomRel").Preload("FloorRel").First(&asset, `"tag" = ?`, id)
+	}
+	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			http.Error(w, "Asset not found", http.StatusNotFound)
 		} else {
@@ -198,6 +219,7 @@ func GetAssetDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	asset.CurrentStatus = canonicalizeCurrentStatus(asset.CurrentStatus)
+	asset.AssignmentStatus = canonicalizeAssignmentStatus(asset.AssignmentStatus)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)

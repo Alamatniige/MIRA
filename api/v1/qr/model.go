@@ -35,3 +35,28 @@ type ReturnQrValidateResponse struct {
 	Intent  string `json:"intent,omitempty"`
 	Payload string `json:"payload,omitempty"`
 }
+
+// ReturnQrScanRequest is the body for POST /qr/return/scan.
+// The mobile app sends the raw scanned payload from the global return QR.
+type ReturnQrScanRequest struct {
+	ScannedData string `json:"scannedData"`
+}
+
+// ReturnableAssignment is a minimal view of an active assignment returned to the mobile
+// client so the user can pick which asset they want to return.
+type ReturnableAssignment struct {
+	ID         string    `json:"id"`
+	AssetID    string    `json:"assetId"`
+	AssetTag   string    `json:"assetTag"`
+	AssetName  string    `json:"assetName"`
+	Department string    `json:"department"`
+	Status     string    `json:"status"`
+	AssignedAt time.Time `json:"assignedAt"`
+}
+
+// ReturnQrScanResponse is returned by POST /qr/return/scan on success.
+type ReturnQrScanResponse struct {
+	Valid       bool                   `json:"valid"`
+	Intent      string                 `json:"intent"`
+	Assignments []ReturnableAssignment `json:"assignments"`
+}

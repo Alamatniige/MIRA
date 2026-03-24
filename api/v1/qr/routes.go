@@ -11,4 +11,5 @@ func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/qr/scan", middleware.AuthMiddleware(ScanQrCode)).Methods("POST")
 	r.HandleFunc("/qr/return/generate", middleware.AuthMiddleware(GenerateGlobalReturnQr)).Methods("POST")
 	r.HandleFunc("/qr/return/validate", ValidateGlobalReturnQr).Methods("POST")
+	r.HandleFunc("/qr/return/scan", middleware.AuthMiddleware(ScanGlobalReturnQr)).Methods("POST")
 }

@@ -1589,7 +1589,7 @@ export function AssetRegistry() {
                     <div className="group relative flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 aspect-square w-full overflow-hidden">
                       <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-white mb-0 transition-transform duration-300 group-hover:scale-95">
                         <QRCodeSVG
-                          value={`MIRA Asset\nTag: ${selectedViewAsset.tag || selectedViewAsset.id}\nName: ${selectedViewAsset.assetName}\nCategory: ${selectedViewAsset.assetTypeRel?.name}`}
+                          value={`mira-asset:${selectedViewAsset.id}`}
                           size={135}
                           level="H"
                         />

@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"mira-api/internal/db"
+	"mira-api/middleware"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/skip2/go-qrcode"
 )
@@ -130,4 +132,87 @@ func ScanQrCode(w http.ResponseWriter, r *http.Request) {
 	// 4. Return the QR Code details
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(qrCode)
+}
+
+// ScanGlobalReturnQr validates the scanned global return QR payload and returns
+// the authenticated user's active (non-returned, non-rejected) assignments so
+// the mobile client can present an asset picker.
+//
+// POST /qr/return/scan (requires auth)
+// Body: { "scannedData": "mira-return:<token>" }
+func ScanGlobalReturnQr(w http.ResponseWriter, r *http.Request) {
+	var req ReturnQrScanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if strings.TrimSpace(req.ScannedData) != buildGlobalReturnQrPayload() {
+		http.Error(w, "Invalid return QR Code", http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || strings.TrimSpace(userID) == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	type row struct {
+		ID           string    `gorm:"column:id"`
+		AssetID      string    `gorm:"column:assetId"`
+		Tag          string    `gorm:"column:tag"`
+		AssetName    string    `gorm:"column:assetName"`
+		Department   string    `gorm:"column:department"`
+		Acknowledged bool      `gorm:"column:acknowledged"`
+		AssignedDate time.Time `gorm:"column:assignedDate"`
+	}
+
+	var rows []row
+	err := db.DB.Raw(`
+		SELECT
+			a.id,
+			a."assetId",
+			ast.tag,
+			ast."assetName",
+			u.department,
+			a.acknowledged,
+			a."assignedDate"
+		FROM "assetsAssignment" a
+		JOIN assets ast ON ast.id = a."assetId"
+		JOIN users u ON u.id = a."userId"
+		WHERE a."userId" = ?
+		  AND a."returnedDate" IS NULL
+		  AND a."rejectedAt" IS NULL
+		ORDER BY a."assignedDate" DESC
+	`, userID).Scan(&rows).Error
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	assignments := make([]ReturnableAssignment, 0, len(rows))
+	for _, row := range rows {
+		status := "PENDING"
+		if row.Acknowledged {
+			status = "CONFIRMED"
+		}
+		assignments = append(assignments, ReturnableAssignment{
+			ID:         row.ID,
+			AssetID:    row.AssetID,
+			AssetTag:   row.Tag,
+			AssetName:  row.AssetName,
+			Department: row.Department,
+			Status:     status,
+			AssignedAt: row.AssignedDate,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ReturnQrScanResponse{
+		Valid:       true,
+		Intent:      "asset-return",
+		Assignments: assignments,
+	})
 }

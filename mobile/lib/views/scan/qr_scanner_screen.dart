@@ -4,7 +4,9 @@ import '../../theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../models/asset.dart';
 import '../../widgets/status_badge.dart';
+import '../../services/assets_service.dart';
 import '../assets/asset_detail_screen.dart';
+import 'return_asset_sheet.dart';
 
 /// High-end QR Scanner - full screen dark, glowing frame, bottom sheet
 class QrScannerScreen extends StatefulWidget {
@@ -70,6 +72,19 @@ class _QrScannerScreenState extends State<QrScannerScreen>
 
     _hasScanned = true;
 
+    // Global return QR — route to asset picker sheet
+    if (code.startsWith('mira-return:')) {
+      _showReturnAssetSheet(context, code);
+      return;
+    }
+
+    // Asset QR — fetch live details and navigate to detail screen
+    if (code.startsWith('mira-asset:')) {
+      final assetId = code.substring(11);
+      _showAssetFromQr(context, assetId);
+      return;
+    }
+
     String? assetId;
     if (code.startsWith('AST-') || code.startsWith('MIRA-')) {
       final parts = code.split('-');
@@ -95,6 +110,57 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     }
   }
 
+  Future<void> _showAssetFromQr(BuildContext context, String assetId) async {
+    _controller.stop();
+
+    // Show a loading indicator while fetching
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final dto = await AssetsService().getAssetDetails(assetId);
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss loading
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              AssetDetailScreen(asset: dto.toAsset(), liveAsset: dto),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss loading
+      _showInvalidScan(context, 'mira-asset:$assetId');
+      return;
+    }
+
+    if (mounted) {
+      _controller.start();
+      setState(() => _hasScanned = false);
+    }
+  }
+
+  void _showReturnAssetSheet(BuildContext context, String scannedData) {
+    _controller.stop();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (_) => ReturnAssetSheet(scannedData: scannedData),
+    ).then((_) {
+      if (mounted) {
+        _controller.start();
+        setState(() => _hasScanned = false);
+      }
+    });
+  }
+
   void _showScanResultSheet(BuildContext context, Asset asset) {
     _controller.stop();
     showModalBottomSheet(
@@ -105,11 +171,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
         asset: asset,
         onViewDetails: () {
           Navigator.pop(ctx);
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => AssetDetailScreen(asset: asset),
-            ),
-          );
+          // Re-fetch live DTO so liveAsset is available for request/report actions
+          _showAssetFromQr(context, asset.id);
         },
       ),
     ).then((_) {

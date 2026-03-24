@@ -9,6 +9,7 @@ import (
 	"mira-api/v1/notifications"
 	userv1 "mira-api/v1/user"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
@@ -34,9 +35,15 @@ func CreateIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Prefer the authenticated user's ID over whatever was sent in the body
+	reportedBy := strings.TrimSpace(req.ReportedBy)
+	if actorID, ok := r.Context().Value(middleware.UserIDKey).(string); ok && strings.TrimSpace(actorID) != "" {
+		reportedBy = actorID
+	}
+
 	newIssue := IssueReport{
 		AssetID:     req.AssetID,
-		ReportedBy:  req.ReportedBy,
+		ReportedBy:  reportedBy,
 		Description: req.Description,
 		Status:      "Open",
 	}

@@ -146,6 +146,83 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(assignment)
 }
 
+func RequestAssignment(w http.ResponseWriter, r *http.Request) {
+	requestorID, ok := authenticatedUserIDFromContext(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req AssignAssetRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.AssetID == "" {
+		http.Error(w, "assetId is required", http.StatusBadRequest)
+		return
+	}
+
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	var assetRecord asset.Asset
+	if err := tx.First(&assetRecord, "id = ?", req.AssetID).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Asset not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	if assetRecord.AssignmentStatus != "Available" {
+		tx.Rollback()
+		http.Error(w, "Asset is not available for assignment", http.StatusConflict)
+		return
+	}
+
+	assignment := AssetAssignment{
+		AssetID:        req.AssetID,
+		UserID:         requestorID,
+		IssuedByUserID: &requestorID,
+		Notes:          req.Notes,
+	}
+
+	if err := tx.Create(&assignment).Error; err != nil {
+		tx.Rollback()
+		http.Error(w, "Failed to create assignment request", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Model(&assetRecord).Updates(map[string]interface{}{"isAssigned": true, "assignmentStatus": "Pending"}).Error; err != nil {
+		tx.Rollback()
+		http.Error(w, "Failed to update asset status", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
+		return
+	}
+
+	go notifications.Emit(
+		notifications.TypeAssetRequest,
+		"New assignment request",
+		fmt.Sprintf("%s requested asset %s (%s).", requestorID, assetRecord.AssetName, assetRecord.Tag),
+		requestorID,
+	)
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(assignment)
+}
+
 // Return Assigned asset
 func ReturnAsset(w http.ResponseWriter, r *http.Request) {
 	var req AssignAssetRequest
@@ -506,7 +583,7 @@ func ConfirmAssignment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := db.DB.Model(&asset.Asset{}).Where("id = ?", assignment.AssetID).Update("assignmentStatus", "Approved").Error; err != nil {
+	if err := db.DB.Model(&asset.Asset{}).Where("id = ?", assignment.AssetID).Update("assignmentStatus", "Unavailable").Error; err != nil {
 		log.Printf("assignment %s confirmed but failed to update asset assignmentStatus: %v", assignment.ID, err)
 	}
 

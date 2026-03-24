@@ -9,6 +9,7 @@ class AssetResponseDto {
     required this.specification,
     required this.currentStatus,
     required this.isAssigned,
+    this.assignmentStatus,
     this.assetTypeName,
     this.roomName,
     this.floorName,
@@ -21,6 +22,7 @@ class AssetResponseDto {
   final String specification;
   final String currentStatus;
   final bool isAssigned;
+  final String? assignmentStatus;
   final String? assetTypeName;
   final String? roomName;
   final String? floorName;
@@ -38,6 +40,7 @@ class AssetResponseDto {
       specification: (json['specification'] as String? ?? '').trim(),
       currentStatus: (json['currentStatus'] as String? ?? '').trim(),
       isAssigned: json['isAssigned'] as bool? ?? false,
+      assignmentStatus: (json['assignmentStatus'] as String?)?.trim(),
       assetTypeName: (assetType?['name'] as String?)?.trim(),
       roomName: (room?['name'] as String?)?.trim(),
       floorName: (floor?['name'] as String?)?.trim(),
