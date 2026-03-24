@@ -10,8 +10,6 @@ require (
 
 require golang.org/x/crypto v0.48.0
 
-require github.com/lib/pq v1.11.2 // indirect
-
 require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect

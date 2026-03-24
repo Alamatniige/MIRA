@@ -25,8 +25,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const canonicalMaintenanceStatus = "UNDER_MAINTENANCE"
-
 func normalizeStatusToken(value string) string {
 	cleaned := strings.TrimSpace(strings.ToLower(value))
 	cleaned = strings.ReplaceAll(cleaned, "_", " ")
@@ -35,16 +33,18 @@ func normalizeStatusToken(value string) string {
 	return cleaned
 }
 
-func isMaintenanceStatus(value string) bool {
+// canonicalizeCurrentStatus maps any incoming status string to one of the three
+// canonical condition values: "Good", "Under Review", or "Under Maintenance".
+func canonicalizeCurrentStatus(value string) string {
 	token := normalizeStatusToken(value)
-	return token == "maintenance" || token == "under maintenance"
-}
-
-func canonicalizeAssetStatusForResponse(value string) string {
-	if isMaintenanceStatus(value) {
-		return canonicalMaintenanceStatus
+	switch token {
+	case "good", "available":
+		return "Good"
+	case "under maintenance", "maintenance":
+		return "Under Maintenance"
+	case "under review":
+		return "Under Review"
 	}
-
 	return strings.TrimSpace(value)
 }
 
@@ -53,11 +53,6 @@ func statusMatchesFilter(assetStatus, filterStatus string) bool {
 	if filterToken == "" {
 		return true
 	}
-
-	if isMaintenanceStatus(filterStatus) {
-		return isMaintenanceStatus(assetStatus)
-	}
-
 	return normalizeStatusToken(assetStatus) == filterToken
 }
 
@@ -172,14 +167,14 @@ func GetAssets(w http.ResponseWriter, r *http.Request) {
 		filtered := make([]Asset, 0, len(assets))
 		for _, asset := range assets {
 			if statusMatchesFilter(asset.CurrentStatus, statusQuery) {
-				asset.CurrentStatus = canonicalizeAssetStatusForResponse(asset.CurrentStatus)
+				asset.CurrentStatus = canonicalizeCurrentStatus(asset.CurrentStatus)
 				filtered = append(filtered, asset)
 			}
 		}
 		assets = filtered
 	} else {
 		for i := range assets {
-			assets[i].CurrentStatus = canonicalizeAssetStatusForResponse(assets[i].CurrentStatus)
+			assets[i].CurrentStatus = canonicalizeCurrentStatus(assets[i].CurrentStatus)
 		}
 	}
 
@@ -202,7 +197,7 @@ func GetAssetDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	asset.CurrentStatus = canonicalizeAssetStatusForResponse(asset.CurrentStatus)
+	asset.CurrentStatus = canonicalizeCurrentStatus(asset.CurrentStatus)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)
@@ -217,15 +212,17 @@ func AddAsset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newAsset := Asset{
-		AssetName:     req.AssetName,
-		AssetType:     req.AssetType,
-		SerialNumber:  req.SerialNumber,
-		Specification: req.Specification,
-		Room:          req.Room,
-		Floor:         req.Floor,
-		CurrentStatus: canonicalizeAssetStatusForResponse(req.CurrentStatus),
-		Tag:           req.Tag,
-		Image:         req.Image,
+		AssetName:        req.AssetName,
+		AssetType:        req.AssetType,
+		SerialNumber:     req.SerialNumber,
+		Specification:    req.Specification,
+		Room:             req.Room,
+		Floor:            req.Floor,
+		CurrentStatus:    "Good",
+		AssignmentStatus: "Available",
+		IsAssigned:       false,
+		Tag:              req.Tag,
+		Image:            req.Image,
 	}
 
 	// Save the new asset to generate UUID
@@ -555,7 +552,7 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 	asset.Specification = req.Specification
 	asset.Room = req.Room
 	asset.Floor = req.Floor
-	asset.CurrentStatus = canonicalizeAssetStatusForResponse(req.CurrentStatus)
+	asset.CurrentStatus = canonicalizeCurrentStatus(req.CurrentStatus)
 	asset.Image = req.Image
 
 	if result := db.DB.Save(&asset); result.Error != nil {
@@ -592,18 +589,34 @@ func UpdateAssetStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	normalizedStatus := canonicalizeAssetStatusForResponse(req.CurrentStatus)
+	normalizedStatus := canonicalizeCurrentStatus(req.CurrentStatus)
 
-	if result := db.DB.Model(&asset).Update("currentStatus", normalizedStatus); result.Error != nil {
+	statusUpdates := map[string]interface{}{
+		"currentStatus": normalizedStatus,
+	}
+	switch normalizedStatus {
+	case "Under Maintenance":
+		statusUpdates["assignmentStatus"] = "Unavailable"
+		statusUpdates["isAssigned"] = false
+	case "Good":
+		statusUpdates["assignmentStatus"] = "Available"
+		statusUpdates["isAssigned"] = false
+	case "Under Review":
+		statusUpdates["assignmentStatus"] = "Unavailable"
+	}
+
+	if result := db.DB.Model(&asset).Updates(statusUpdates); result.Error != nil {
 		http.Error(w, "Error updating asset status: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	asset.CurrentStatus = normalizedStatus
+	if as, ok := statusUpdates["assignmentStatus"].(string); ok {
+		asset.AssignmentStatus = as
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)
-
 }
 
 // Delete status

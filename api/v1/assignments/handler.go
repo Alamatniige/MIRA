@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"mira-api/internal/db"
 	"mira-api/middleware"
 	asset "mira-api/v1/assets"
@@ -43,6 +44,10 @@ func deriveAssignmentStatus(acknowledged bool, returnedAt *time.Time, rejectedAt
 	}
 
 	return "PENDING"
+}
+
+func normalizeAssetCondition(value string) string {
+	return strings.Join(strings.Fields(strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToLower(value)), "_", " "), "-", " ")), " ")
 }
 
 // Assign assets to user
@@ -87,9 +92,9 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if asset.IsAssigned {
+	if asset.AssignmentStatus != "Available" {
 		tx.Rollback()
-		http.Error(w, "Asset is not available", http.StatusConflict)
+		http.Error(w, "Asset is not available for assignment", http.StatusConflict)
 		return
 	}
 
@@ -118,7 +123,7 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tx.Model(&asset).Update("isAssigned", true).Error; err != nil {
+	if err := tx.Model(&asset).Updates(map[string]interface{}{"isAssigned": true, "assignmentStatus": "Pending"}).Error; err != nil {
 		tx.Rollback()
 		http.Error(w, "Failed to update asset status", http.StatusInternalServerError)
 		return
@@ -194,7 +199,7 @@ func ReturnAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tx.Model(&asset).Update("isAssigned", false).Error; err != nil {
+	if err := tx.Model(&asset).Updates(map[string]interface{}{"isAssigned": false, "assignmentStatus": "Available"}).Error; err != nil {
 		tx.Rollback()
 		http.Error(w, "Failed to update asset status", http.StatusInternalServerError)
 		return
@@ -284,7 +289,7 @@ func RejectAssignment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tx.Model(&asset.Asset{}).Where("id = ?", assignment.AssetID).Update("isAssigned", false).Error; err != nil {
+	if err := tx.Model(&asset.Asset{}).Where("id = ?", assignment.AssetID).Updates(map[string]interface{}{"isAssigned": false, "assignmentStatus": "Available"}).Error; err != nil {
 		tx.Rollback()
 		http.Error(w, "Failed to update asset status", http.StatusInternalServerError)
 		return
@@ -499,6 +504,10 @@ func ConfirmAssignment(w http.ResponseWriter, r *http.Request) {
 	if err := db.DB.Model(&assignment).Update("acknowledged", true).Error; err != nil {
 		http.Error(w, "Failed to confirm assignment", http.StatusInternalServerError)
 		return
+	}
+
+	if err := db.DB.Model(&asset.Asset{}).Where("id = ?", assignment.AssetID).Update("assignmentStatus", "Approved").Error; err != nil {
+		log.Printf("assignment %s confirmed but failed to update asset assignmentStatus: %v", assignment.ID, err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

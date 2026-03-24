@@ -42,18 +42,64 @@ const normalizeStatus = (value: string | null | undefined) =>
     .toLowerCase()
     .replace(/[_\s-]+/g, ' ');
 
+type AssetAssignmentStatus = 'Assigned' | 'Unassigned' | 'Unavailable';
+type AssetConditionStatus = 'Good' | 'Under Review' | 'Under Maintenance' | 'Unknown';
+
+const getAssignmentStatus = (asset: Asset): AssetAssignmentStatus => {
+  const status = (asset.assignmentStatus || '').trim();
+  if (status === 'Approved' || status === 'Pending') return 'Assigned';
+  if (status === 'Unavailable') return 'Unavailable';
+  return 'Unassigned';
+};
+
+const getConditionStatus = (asset: Asset): AssetConditionStatus => {
+  const status = normalizeStatus(asset.currentStatus);
+
+  if (status === 'under maintenance' || status === 'maintenance') {
+    return 'Under Maintenance';
+  }
+
+  if (status === 'under review') {
+    return 'Under Review';
+  }
+
+  if (status === 'good' || status === 'available') {
+    return 'Good';
+  }
+
+  return status ? 'Unknown' : 'Good';
+};
+
+const toApiConditionStatus = (value: string | null | undefined): string => {
+  const status = normalizeStatus(value);
+
+  if (status === 'under maintenance' || status === 'maintenance') {
+    return 'Under Maintenance';
+  }
+
+  if (status === 'under review') {
+    return 'Under Review';
+  }
+
+  if (status === 'good' || status === 'available' || status === '') {
+    return 'Good';
+  }
+
+  return (value || '').trim();
+};
+
 const getAvailabilityBucket = (asset: Asset): 'available' | 'unavailable' | 'underMaintenance' => {
-  // Active assignments (pending/confirmed) should always be unavailable in registry stats.
-  if (asset.isAssigned) {
+  const assignStatus = (asset.assignmentStatus || '').trim();
+
+  if (assignStatus === 'Approved' || assignStatus === 'Pending') {
     return 'unavailable';
   }
 
-  const status = normalizeStatus(asset.currentStatus);
-  if (status === 'under maintenance') {
-    return 'underMaintenance';
-  }
-
-  if (status === 'unavailable') {
+  if (assignStatus === 'Unavailable') {
+    const condition = getConditionStatus(asset);
+    if (condition === 'Under Maintenance') {
+      return 'underMaintenance';
+    }
     return 'unavailable';
   }
 
@@ -311,7 +357,7 @@ export function useAssets() {
           room: roomId,
           floor: floorId,
           tag: payload.tag,
-          currentStatus: payload.currentStatus || 'Available',
+          currentStatus: toApiConditionStatus(payload.currentStatus || 'Good'),
           image: imageUrls,
         }),
       });
@@ -367,7 +413,7 @@ export function useAssets() {
           room: roomId,
           floor: floorId,
           tag: payload.tag,
-          currentStatus: payload.currentStatus,
+          currentStatus: toApiConditionStatus(payload.currentStatus),
           image: [...(payload.existingImages || []), ...newImageUrls],
         }),
       });
@@ -536,6 +582,10 @@ export function useAssets() {
   const filterOptions = useMemo(() => {
     return {
       statuses: Array.from(new Set(assets.map((a) => getAvailabilityStatus(a)))) as string[],
+      assignmentStatuses: Array.from(
+        new Set(assets.map((a) => getAssignmentStatus(a))),
+      ) as string[],
+      conditionStatuses: Array.from(new Set(assets.map((a) => getConditionStatus(a)))) as string[],
       categories:
         assetsTypes.length > 0
           ? assetsTypes.map((t) => t.name)
@@ -564,6 +614,50 @@ export function useAssets() {
     );
   }, [assets]);
 
+  const assignmentStats = useMemo(() => {
+    return assets.reduce(
+      (acc, asset) => {
+        const status = getAssignmentStatus(asset);
+        if (status === 'Assigned') {
+          acc.assigned += 1;
+        } else if (status === 'Unassigned') {
+          acc.unassigned += 1;
+        }
+        return acc;
+      },
+      { assigned: 0, unassigned: 0 },
+    );
+  }, [assets]);
+
+  const availableAssets = useMemo(
+    () =>
+      assets.filter(
+        (a) =>
+          getAssignmentStatus(a) === 'Unassigned' && getConditionStatus(a) !== 'Under Maintenance',
+      ),
+    [assets],
+  );
+
+  const conditionStats = useMemo(() => {
+    return assets.reduce(
+      (acc, asset) => {
+        const condition = getConditionStatus(asset);
+        if (condition === 'Good') {
+          acc.good += 1;
+        } else if (condition === 'Under Review') {
+          acc.underReview += 1;
+        } else if (condition === 'Under Maintenance') {
+          acc.underMaintenance += 1;
+        } else {
+          acc.unknown += 1;
+        }
+
+        return acc;
+      },
+      { good: 0, underReview: 0, underMaintenance: 0, unknown: 0 },
+    );
+  }, [assets]);
+
   return {
     assets,
     assetsTypes,
@@ -587,13 +681,20 @@ export function useAssets() {
     deleteFloor,
     generateNextTag,
     getAvailabilityStatus,
+    getAssignmentStatus,
+    getConditionStatus,
+    availableAssets,
 
     // Stats and Filters
-    assigned: assets.filter((a) => Boolean(a.isAssigned)).length,
+    assigned: assignmentStats.assigned,
+    unassigned: assignmentStats.unassigned,
     total: assets.length,
     unavailable: availabilityStats.unavailable,
     available: availabilityStats.available,
-    underMaintenance: availabilityStats.underMaintenance,
+    underMaintenance: conditionStats.underMaintenance,
+    goodCondition: conditionStats.good,
+    underReviewCondition: conditionStats.underReview,
+    unknownCondition: conditionStats.unknown,
     filterOptions,
   };
 }

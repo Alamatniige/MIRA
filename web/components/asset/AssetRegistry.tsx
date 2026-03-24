@@ -49,9 +49,9 @@ const statCards = [
     valueColor: 'text-teal-800 dark:text-teal-200',
   },
   {
-    label: 'Unavailable',
+    label: 'Assigned',
     value: '896',
-    sub: '69.8% utilization',
+    sub: 'Currently in use',
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -70,9 +70,9 @@ const statCards = [
     valueColor: 'text-blue-800 dark:text-sky-200',
   },
   {
-    label: 'Available',
+    label: 'Unassigned',
     value: '321',
-    sub: 'Ready to deploy',
+    sub: 'Not assigned to users',
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -267,9 +267,20 @@ const categoryMeta: Record<string, CategoryMeta> = {
 };
 
 const statusDot: Record<string, string> = {
-  Unavailable: 'bg-emerald-500',
-  Available: 'bg-slate-400',
+  Good: 'bg-emerald-500',
+  'Under Review': 'bg-blue-400',
   'Under Maintenance': 'bg-amber-400',
+  Unknown: 'bg-slate-400',
+};
+
+const conditionBadge: Record<string, string> = {
+  Good: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-300',
+  'Under Review':
+    'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/20 dark:text-blue-300',
+  'Under Maintenance':
+    'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300',
+  Unknown:
+    'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300',
 };
 
 const avatarColors = [
@@ -300,7 +311,8 @@ export function AssetRegistry() {
   const [selectedEditAsset, setSelectedEditAsset] = useState<Asset | null>(null);
   const [selectedDeleteAsset, setSelectedDeleteAsset] = useState<Asset | null>(null);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [assignmentStatusFilter, setAssignmentStatusFilter] = useState('');
+  const [conditionStatusFilter, setConditionStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [roomFilter, setRoomFilter] = useState('');
   const [floorFilter, setFloorFilter] = useState('');
@@ -330,7 +342,7 @@ export function AssetRegistry() {
     tag: '',
     assetName: '',
     assetType: '',
-    currentStatus: 'Available',
+    currentStatus: 'Good',
     room: '',
     floor: '',
     serialNumber: '',
@@ -471,33 +483,34 @@ export function AssetRegistry() {
     assetFloors,
     filterOptions,
     total,
-    unavailable,
-    available,
+    assigned,
+    unassigned,
     underMaintenance,
     createAsset,
     updateAsset,
     deleteAsset,
     fetchRoomsAndFloors,
     generateNextTag,
-    getAvailabilityStatus,
+    getAssignmentStatus,
+    getConditionStatus,
   } = useAssets();
 
   const safeTotal = total || 0;
-  const safeUnavailable = unavailable || 0;
-  const safeAvailable = available || 0;
+  const safeAssigned = assigned || 0;
+  const safeUnassigned = unassigned || 0;
   const safeUnderMaintenance = underMaintenance || 0;
   const statCardValues: Record<string, { value: string; sub: string }> = {
     'Total Assets': {
       value: safeTotal.toLocaleString(),
       sub: safeTotal > 0 ? 'Live inventory count' : 'No assets registered yet',
     },
-    Unavailable: {
-      value: safeUnavailable.toLocaleString(),
-      sub: safeUnavailable > 0 ? `currently in use` : 'All assets are available',
+    Assigned: {
+      value: safeAssigned.toLocaleString(),
+      sub: safeAssigned > 0 ? `currently in use` : 'No assigned assets',
     },
-    Available: {
-      value: safeAvailable.toLocaleString(),
-      sub: safeAvailable > 0 ? 'Ready to deploy' : 'No assets available',
+    Unassigned: {
+      value: safeUnassigned.toLocaleString(),
+      sub: safeUnassigned > 0 ? 'Not assigned to users' : 'All assets are assigned',
     },
     'Under Maintenance': {
       value: safeUnderMaintenance.toLocaleString(),
@@ -542,7 +555,7 @@ export function AssetRegistry() {
         tag: '',
         assetName: '',
         assetType: '',
-        currentStatus: 'Available',
+        currentStatus: 'Good',
         room: '',
         floor: '',
         serialNumber: '',
@@ -617,12 +630,22 @@ export function AssetRegistry() {
         a.floorRel?.name?.toLowerCase().includes(search.toLowerCase()) ||
         a.tag?.toLowerCase().includes(search.toLowerCase());
 
-      const matchesStatus = !statusFilter || getAvailabilityStatus(a) === statusFilter;
+      const matchesAssignmentStatus =
+        !assignmentStatusFilter || getAssignmentStatus(a) === assignmentStatusFilter;
+      const matchesConditionStatus =
+        !conditionStatusFilter || getConditionStatus(a) === conditionStatusFilter;
       const matchesCategory = !categoryFilter || a.assetTypeRel?.name === categoryFilter;
       const matchesRoom = !roomFilter || a.roomRel?.name === roomFilter;
       const matchesFloor = !floorFilter || a.floorRel?.name === floorFilter;
 
-      return matchesSearch && matchesStatus && matchesCategory && matchesRoom && matchesFloor;
+      return (
+        matchesSearch &&
+        matchesAssignmentStatus &&
+        matchesConditionStatus &&
+        matchesCategory &&
+        matchesRoom &&
+        matchesFloor
+      );
     })
     .sort((a, b) => {
       // Sort by tag ascending (e.g. AS-01, AS-02)
@@ -775,11 +798,18 @@ export function AssetRegistry() {
                 {/* Filters */}
                 {[
                   {
-                    label: 'Status',
-                    options: ['All', ...filterOptions.statuses],
-                    value: statusFilter,
+                    label: 'Assignment Status',
+                    options: ['All', ...filterOptions.assignmentStatuses],
+                    value: assignmentStatusFilter,
                     onChange: (e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setStatusFilter(e.target.value),
+                      setAssignmentStatusFilter(e.target.value),
+                  },
+                  {
+                    label: 'Condition Status',
+                    options: ['All', ...filterOptions.conditionStatuses],
+                    value: conditionStatusFilter,
+                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setConditionStatusFilter(e.target.value),
                   },
                   {
                     label: 'Category',
@@ -844,15 +874,17 @@ export function AssetRegistry() {
           <CardContent className="p-0">
             <Table className="table-fixed w-full">
               <colgroup>
-                <col style={{ width: '14%' }} />
+                <col style={{ width: '12%' }} />
                 {/* Asset Tag */}
-                <col style={{ width: '30%' }} />
+                <col style={{ width: '26%' }} />
                 {/* Asset */}
-                <col style={{ width: '18%' }} />
+                <col style={{ width: '16%' }} />
                 {/* Category */}
-                <col style={{ width: '24%' }} />
-                {/* Location */}
                 <col style={{ width: '14%' }} />
+                {/* Condition Status */}
+                <col style={{ width: '20%' }} />
+                {/* Location */}
+                <col style={{ width: '12%' }} />
                 {/* Actions */}
               </colgroup>
               <TableHeader>
@@ -861,6 +893,7 @@ export function AssetRegistry() {
                     { label: 'Asset Tag', cls: 'pl-5' },
                     { label: 'Asset', cls: 'pl-4' },
                     { label: 'Category', cls: 'pl-4' },
+                    { label: 'Condition Status', cls: 'pl-4' },
                     { label: 'Location', cls: 'pl-4' },
                     { label: 'Actions', cls: 'pl-4 pr-4 text-left' },
                   ].map(({ label, cls }) => (
@@ -877,7 +910,7 @@ export function AssetRegistry() {
               <TableBody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-16 text-center">
+                    <td colSpan={6} className="py-16 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <svg
                           viewBox="0 0 24 24"
@@ -934,6 +967,18 @@ export function AssetRegistry() {
                           >
                             {cat.icon}
                             {displayCategory}
+                          </span>
+                        </TableCell>
+
+                        {/* Condition status */}
+                        <TableCell className="pl-4 py-3 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${conditionBadge[getConditionStatus(asset)] || conditionBadge.Unknown}`}
+                          >
+                            <span
+                              className={`h-2 w-2 rounded-full ${statusDot[getConditionStatus(asset)] || 'bg-slate-400'}`}
+                            ></span>
+                            {getConditionStatus(asset)}
                           </span>
                         </TableCell>
 
@@ -1257,7 +1302,7 @@ export function AssetRegistry() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  Status
+                  Condition Status
                 </label>
                 <select
                   className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
@@ -1265,9 +1310,9 @@ export function AssetRegistry() {
                   onChange={(e) => setFormData((p) => ({ ...p, currentStatus: e.target.value }))}
                 >
                   <option value="" disabled>
-                    Select status
+                    Select condition
                   </option>
-                  {['Available', 'Unavailable', 'Under Maintenance'].map((s) => (
+                  {['Good', 'Under Maintenance'].map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
@@ -1599,16 +1644,24 @@ export function AssetRegistry() {
                     </div>
                     <div>
                       <h4 className="text-[10px] font-bold text-slate-400/80 uppercase tracking-widest mb-1">
-                        Status
+                        Condition Status
                       </h4>
-                      <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold ${conditionBadge[getConditionStatus(selectedViewAsset)] || conditionBadge.Unknown}`}
+                      >
                         <span
-                          className={`h-2.5 w-2.5 rounded-full ${statusDot[selectedViewAsset.currentStatus] || 'bg-slate-400'}`}
+                          className={`h-2 w-2 rounded-full ${statusDot[getConditionStatus(selectedViewAsset)] || 'bg-slate-400'}`}
                         ></span>
-                        <p className="text-[16px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                          {selectedViewAsset.currentStatus}
-                        </p>
-                      </div>
+                        {getConditionStatus(selectedViewAsset)}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-[10px] font-bold text-slate-400/80 uppercase tracking-widest mb-1">
+                        Assignment Status
+                      </h4>
+                      <p className="text-[14px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                        {getAssignmentStatus(selectedViewAsset)}
+                      </p>
                     </div>
                     <div>
                       <h4 className="text-[10px] font-bold text-slate-400/80 uppercase tracking-widest mb-1">
@@ -1815,10 +1868,10 @@ export function AssetRegistry() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`h-2.5 w-2.5 rounded-full ${statusDot[selectedEditAsset.currentStatus] || 'bg-slate-400'}`}
+                    className={`h-2.5 w-2.5 rounded-full ${statusDot[getConditionStatus(selectedEditAsset)] || 'bg-slate-400'}`}
                   ></span>
                   <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">
-                    {selectedEditAsset.currentStatus}
+                    {getConditionStatus(selectedEditAsset)}
                   </span>
                 </div>
               </div>
@@ -1967,7 +2020,7 @@ export function AssetRegistry() {
                 {/* Status */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    Status
+                    Condition Status
                   </label>
                   <select
                     value={selectedEditAsset.currentStatus || ''}
@@ -1977,9 +2030,9 @@ export function AssetRegistry() {
                     className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
                   >
                     <option value="" disabled>
-                      Select Status
+                      Select condition
                     </option>
-                    {['Available', 'Unavailable', 'Under Maintenance'].map((s) => (
+                    {['Good', 'Under Maintenance'].map((s) => (
                       <option key={s} value={s}>
                         {s}
                       </option>

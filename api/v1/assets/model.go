@@ -17,8 +17,9 @@ type Asset struct {
 	RoomRel       *AssetRoom  `json:"roomRel,omitempty" gorm:"foreignKey:Room;references:ID"`
 	Floor         *int        `json:"floor" gorm:"column:floor;type:integer;null"`
 	FloorRel      *AssetFloor `json:"floorRel,omitempty" gorm:"foreignKey:Floor;references:ID"`
-	CurrentStatus string      `json:"currentStatus" gorm:"column:currentStatus;not null"`
-	IsAssigned    bool           `json:"isAssigned" gorm:"column:isAssigned;default:false;not null"`
+	CurrentStatus    string `json:"currentStatus" gorm:"column:currentStatus;not null"`
+	AssignmentStatus string `json:"assignmentStatus" gorm:"column:assignmentStatus;not null;default:Available"`
+	IsAssigned       bool   `json:"isAssigned" gorm:"column:isAssigned;default:false;not null"`
 	Image         []string       `json:"image" gorm:"column:image;type:jsonb;serializer:json"`
 	CreatedAt     time.Time      `json:"createdAt" gorm:"column:createdAt;autoCreateTime"`
 }

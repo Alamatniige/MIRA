@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mira-api/internal/db"
 	"mira-api/middleware"
+	assetv1 "mira-api/v1/assets"
 	"mira-api/v1/notifications"
 	userv1 "mira-api/v1/user"
 	"net/http"
@@ -44,6 +45,12 @@ func CreateIssue(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error creating issue: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Mark the asset as Under Review and block further assignment
+	db.DB.Model(&assetv1.Asset{}).Where("id = ?", req.AssetID).Updates(map[string]interface{}{
+		"currentStatus":    "Under Review",
+		"assignmentStatus": "Unavailable",
+	})
 
 	actorName := "Unknown"
 	if actorID, ok := r.Context().Value(middleware.UserIDKey).(string); ok && actorID != "" {
@@ -89,6 +96,11 @@ func UpdateIssue(w http.ResponseWriter, r *http.Request) {
 	if result := db.DB.Model(&issue).Updates(req); result.Error != nil {
 		http.Error(w, "Error updating issue: "+result.Error.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// If the issue is being confirmed as in-progress, escalate the asset to Under Maintenance
+	if req.Status == "in_progress" {
+		db.DB.Model(&assetv1.Asset{}).Where("id = ?", issue.AssetID).Update("currentStatus", "Under Maintenance")
 	}
 
 	w.Header().Set("Content-Type", "application/json")

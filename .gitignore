@@ -6,3 +6,5 @@ build-errors.log
 .env.*
 !.env.example
 !.env.local
+
+instructions/

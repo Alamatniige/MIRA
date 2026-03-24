@@ -143,7 +143,7 @@ export function AssignmentView() {
     rejectAssignment,
     getGlobalReturnQr,
   } = useAssignments();
-  const { assets, refresh: refreshAssets } = useAssets();
+  const { availableAssets, refresh: refreshAssets } = useAssets();
   const { getCurrentUser } = useUsers();
 
   const { user: currentUser } = useAuth();
@@ -170,14 +170,7 @@ export function AssignmentView() {
     return () => window.removeEventListener('afterprint', handleAfterPrint);
   }, []);
 
-  const occupiedAssetIds = new Set(
-    assignments
-      .filter((a) => a.status !== 'RETURNED' && a.status !== 'REJECTED')
-      .map((a) => a.assetId),
-  );
-  const unassignedAssets = assets.filter((a) => !occupiedAssetIds.has(a.id));
-
-  const filteredAssets = unassignedAssets.filter(
+  const filteredAssets = availableAssets.filter(
     (a) =>
       a.tag.toLowerCase().includes(form.assetQuery.toLowerCase()) ||
       a.assetName.toLowerCase().includes(form.assetQuery.toLowerCase()),
@@ -392,7 +385,10 @@ export function AssignmentView() {
               <Button
                 size="sm"
                 className="h-9 self-start rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-5 text-xs font-semibold text-white shadow-md hover:opacity-90 md:self-auto"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  refreshAssets();
+                  setIsModalOpen(true);
+                }}
               >
                 + Assign Asset
               </Button>

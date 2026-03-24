@@ -1,4 +1,5 @@
-export type AssetStatus = 'AVAILABLE' | 'UNAVAILABLE' | 'UNDER_MAINTENANCE';
+export type AssetConditionStatus = 'Good' | 'Under Review' | 'Under Maintenance';
+export type AssetAssignmentStatus = 'Available' | 'Pending' | 'Approved' | 'Unavailable';
 
 export type Department = 'IT' | 'OPERATIONS' | 'FINANCE' | 'HR' | 'OTHER' | string;
 
@@ -73,7 +74,8 @@ export interface Asset {
   roomRel?: AssetRoom;
   floor: number | null;
   floorRel?: AssetFloor;
-  currentStatus: AssetStatus | string;
+  currentStatus: AssetConditionStatus | string;
+  assignmentStatus: AssetAssignmentStatus | string;
   isAssigned: boolean;
   createdAt: string;
   image?: string[];
