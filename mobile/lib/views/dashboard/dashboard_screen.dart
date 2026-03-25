@@ -4,6 +4,7 @@ import '../../models/asset.dart';
 import '../../models/dashboard_data.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/status_badge.dart';
+import '../assets/all_assets_screen.dart';
 
 /// Premium Dashboard - modern design with glassmorphism, refined cards, premium FAB
 class DashboardScreen extends StatefulWidget {
@@ -63,7 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final dashboard = _dashboardData;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.gray50,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: _isLoading && dashboard == null
             ? const Center(child: CircularProgressIndicator())
@@ -99,11 +100,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         _controller.getGreeting(),
                                         style: TextStyle(
                                           fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: isDark
-                                              ? AppColors.tealLight
-                                              : AppColors.tealPrimary,
-                                          letterSpacing: 0.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Theme.of(context).colorScheme.primary,
+                                          letterSpacing: 0.8,
                                         ),
                                       ),
                                       const SizedBox(height: 8),
@@ -131,23 +130,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     height: 50,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      gradient: AppColors.primaryGradient,
+                                      gradient: dashboard?.avatarUrl == null ? AppColors.primaryGradient : null,
+                                      color: dashboard?.avatarUrl != null ? Colors.white : null,
+                                      image: dashboard?.avatarUrl != null
+                                          ? DecorationImage(
+                                              image: NetworkImage(dashboard!.avatarUrl!),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.tealPrimary
-                                              .withValues(alpha: 0.3),
+                                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                                           blurRadius: 16,
                                           offset: const Offset(0, 4),
                                         ),
                                       ],
                                     ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.person_rounded,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                    ),
+                                    child: dashboard?.avatarUrl == null
+                                        ? const Center(
+                                            child: Icon(
+                                              Icons.person_rounded,
+                                              color: Colors.white,
+                                              size: 24,
+                                            ),
+                                          )
+                                        : null,
                                   ),
                                 ),
                               ],
@@ -182,6 +189,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 value: '${dashboard?.totalAssets ?? 0}',
                                 icon: Icons.inventory_2_rounded,
                                 accentColor: const Color(0xFF0D9488),
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (_) => const AllAssetsScreen()),
+                                  );
+                                },
                               ),
                               const SizedBox(width: 16),
                               _SummaryCard(
@@ -227,25 +239,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surface,
+                                color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Theme.of(context).colorScheme.shadow
-                                        .withValues(alpha: 0.04),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
                               ),
                               child: Text(
                                 '${dashboard?.myAssets.length ?? 0} items',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w700,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                             ),
@@ -340,13 +342,13 @@ class _EmptyAssetsState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.tealMuted.withValues(alpha: 0.5),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.inventory_2_outlined,
               size: 56,
-              color: AppColors.tealPrimary.withValues(alpha: 0.7),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 24),
@@ -377,12 +379,14 @@ class _SummaryCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color accentColor;
+  final VoidCallback? onTap;
 
   const _SummaryCard({
     required this.label,
     required this.value,
     required this.icon,
     required this.accentColor,
+    this.onTap,
   });
 
   @override
@@ -392,28 +396,36 @@ class _SummaryCard extends StatelessWidget {
 
     return Container(
       width: 156,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        color: isDark ? surfaceColor : Colors.white,
+        color: surfaceColor,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withValues(alpha: 0.08),
+            color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: Theme.of(
-              context,
-            ).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.04),
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: isDark ? 0.3 : 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(28),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -461,6 +473,9 @@ class _SummaryCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+          ),
+        ),
       ),
     );
   }
@@ -518,15 +533,13 @@ class _AssetListCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.04)
-                    : AppColors.gray100.withValues(alpha: 0.5),
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : AppColors.gray200.withValues(alpha: 0.5),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.shadow.withValues(alpha: isDark ? 0.1 : 0.03),
+                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.03),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -537,22 +550,20 @@ class _AssetListCard extends StatelessWidget {
                 Container(
                   width: 56,
                   height: 56,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceVariant
-                        : AppColors.gray50,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      _iconForCategory(asset.category),
+                    decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.tealLight
-                          : AppColors.tealPrimary,
-                      size: 26,
+                          ? Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3)
+                          : AppColors.gray50,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        _iconForCategory(asset.category),
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 26,
+                      ),
                     ),
                   ),
-                ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(

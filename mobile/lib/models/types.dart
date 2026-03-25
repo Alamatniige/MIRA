@@ -9,6 +9,7 @@ class AuthUser {
     required this.fullName,
     required this.department,
     required this.roleName,
+    this.avatarUrl,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class AuthUser {
   final String fullName;
   final String department;
   final String roleName;
+  final String? avatarUrl;
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     final role = _asMap(json['role']);
@@ -27,6 +29,7 @@ class AuthUser {
       roleName: _asString(json['roleName']).isNotEmpty
           ? _asString(json['roleName'])
           : _asString(role['name']),
+      avatarUrl: _asNullableString(json['avatarUrl']),
     );
   }
 }
@@ -50,6 +53,7 @@ class UserProfile {
     required this.roleName,
     required this.phoneNumber,
     required this.assetsCount,
+    this.avatarUrl,
   });
 
   final String id;
@@ -59,6 +63,7 @@ class UserProfile {
   final String roleName;
   final String phoneNumber;
   final int assetsCount;
+  final String? avatarUrl;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     final role = _asMap(json['role']);
@@ -70,6 +75,7 @@ class UserProfile {
       roleName: _asString(role['name']),
       phoneNumber: _asString(json['phoneNumber']),
       assetsCount: _asInt(json['assetsCount']),
+      avatarUrl: _asNullableString(json['avatarUrl']),
     );
   }
 }

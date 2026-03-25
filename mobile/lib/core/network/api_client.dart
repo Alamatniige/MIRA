@@ -138,6 +138,57 @@ class ApiClient {
       );
     } catch (e) {
       debugPrint('[ApiClient][POST] unknown uri=$uri error=$e');
+      debugPrint('[ApiClient][POST] unknown uri=$uri error=$e');
+      throw ApiException('Network error', cause: e);
+    }
+  }
+
+  Future<dynamic> multipartPost(
+    String path, {
+    required String fileField,
+    required File file,
+    Map<String, String>? fields,
+    Map<String, String>? headers,
+    bool requiresAuth = true,
+  }) async {
+    final uri = _buildUri(path);
+    final h = await _headers(headers: headers, requiresAuth: requiresAuth);
+
+    try {
+      final request = http.MultipartRequest('POST', uri);
+      request.headers.addAll(h);
+      request.headers.remove('Content-Type');
+
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      final multipartFile = await http.MultipartFile.fromPath(fileField, file.path);
+      request.files.add(multipartFile);
+
+      final streamedResponse = await _http.send(request).timeout(AppConfig.receiveTimeout);
+      final response = await http.Response.fromStream(streamedResponse);
+      return _handleResponse(response);
+    } on TimeoutException catch (e) {
+      debugPrint('[ApiClient][MultipartPOST] timeout uri=$uri error=$e');
+      throw ApiException(
+        'Request timeout. Check your network and API_BASE_URL.',
+        cause: e,
+      );
+    } on HandshakeException catch (e) {
+      debugPrint('[ApiClient][MultipartPOST] handshake uri=$uri error=$e');
+      throw ApiException(
+        'TLS/SSL handshake failed. If using local API, use http:// URL.',
+        cause: e,
+      );
+    } on SocketException catch (e) {
+      debugPrint('[ApiClient][MultipartPOST] socket uri=$uri error=$e');
+      throw ApiException(
+        'Unable to reach API server. Check your connection.',
+        cause: e,
+      );
+    } catch (e) {
+      debugPrint('[ApiClient][MultipartPOST] unknown uri=$uri error=$e');
       throw ApiException('Network error', cause: e);
     }
   }

@@ -4,6 +4,7 @@ import '../../models/asset.dart';
 import '../../widgets/status_badge.dart';
 import '../../dto/asset_response_dto.dart';
 import '../../services/assets_service.dart';
+import 'report_issue_screen.dart';
 
 /// Asset detail - matches web AssetDetailsModal
 class AssetDetailScreen extends StatefulWidget {
@@ -127,130 +128,183 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
   }
 
   Future<void> _handleReportIssue() async {
-    final descController = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Report an Issue'),
-        content: TextField(
-          controller: descController,
-          decoration: const InputDecoration(
-            labelText: 'Description',
-            hintText: 'Describe the issue…',
-          ),
-          maxLines: 4,
-          textCapitalization: TextCapitalization.sentences,
-          autofocus: true,
+    final reported = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => ReportIssueScreen(
+          asset: widget.asset,
+          assetIdToReport: _assetUuid ?? widget.asset.id,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.statusReported,
-            ),
-            onPressed: () {
-              if (descController.text.trim().isEmpty) return;
-              Navigator.pop(ctx, true);
-            },
-            child: const Text('Submit Report'),
-          ),
-        ],
       ),
     );
 
-    if (confirmed != true || !mounted) return;
-    final description = descController.text.trim();
-    if (description.isEmpty) return;
-
-    setState(() => _isReporting = true);
-    try {
-      await _service.reportIssue(_assetUuid ?? widget.asset.id, description);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Issue reported successfully.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to report issue: $e'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.statusReported,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isReporting = false);
+    if (reported == true && mounted) {
+      // Refresh the asset to ensure the UI shows any status updates
+      await _refreshLiveAsset();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final disabledReason = _requestDisabledReason;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.asset.id)),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(
+          'Asset Details',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+          ),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        iconTheme: IconThemeData(
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+        centerTitle: true,
+      ),
       bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border(
+              top: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200.withValues(alpha: 0.5),
+                width: 1,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.05),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (disabledReason != null)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     disabledReason,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppColors.gray500),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                    ),
                   ),
                 ),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _isReporting ? null : _handleReportIssue,
-                      icon: _isReporting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.report_outlined),
-                      label: const Text('Report Issue'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.statusReported,
-                        side: const BorderSide(color: AppColors.statusReported),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.statusReported.withValues(alpha: isDark ? 0.12 : 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.statusReported.withValues(alpha: isDark ? 0.3 : 0.2),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _isReporting ? null : _handleReportIssue,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (_isReporting)
+                                  const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.statusReported),
+                                  )
+                                else
+                                  const Icon(Icons.report_outlined, color: AppColors.statusReported, size: 20),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Report Issue',
+                                  style: TextStyle(
+                                    color: AppColors.statusReported,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: FilledButton.icon(
-                      onPressed: (_canRequest && !_isRequesting)
-                          ? _handleRequestAssignment
-                          : null,
-                      icon: _isRequesting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.assignment_outlined),
-                      label: const Text('Request Asset'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.tealPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: (_canRequest && !_isRequesting) ? AppColors.primaryGradient : null,
+                        color: (_canRequest && !_isRequesting) 
+                            ? null 
+                            : (isDark ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5) : AppColors.gray200),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: (_canRequest && !_isRequesting)
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.tealPrimary.withValues(alpha: isDark ? 0.4 : 0.2),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
+                                )
+                              ]
+                            : [],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: (_canRequest && !_isRequesting) ? _handleRequestAssignment : null,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (_isRequesting)
+                                  const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                else
+                                  Icon(
+                                    Icons.assignment_outlined, 
+                                    color: (_canRequest && !_isRequesting) 
+                                        ? Colors.white 
+                                        : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5), 
+                                    size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Request Asset',
+                                  style: TextStyle(
+                                    color: (_canRequest && !_isRequesting) 
+                                        ? Colors.white 
+                                        : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -261,94 +315,161 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Header card
+            // Elegant Centered Header
             Container(
-              padding: const EdgeInsets.all(16),
+              width: 88,
+              height: 88,
               decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(12),
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.navy.withValues(alpha: 0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
                   ),
                 ],
-                border: Border.all(color: AppColors.gray200),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.tealMuted,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.inventory_2_outlined,
-                      color: AppColors.teal,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.asset.name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.navyLight,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${widget.asset.id} · ${widget.asset.category}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.gray500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  StatusBadge(status: widget.asset.status),
-                ],
+              child: Icon(
+                Icons.inventory_2_rounded,
+                size: 40,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 24),
-            // Details grid - matches web modal
-            _DetailRow(
-              label: 'Serial Number',
-              value: widget.asset.serialNumber,
+            const SizedBox(height: 20),
+            Text(
+              widget.asset.name,
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onSurface,
+                letterSpacing: -0.5,
+              ),
+              textAlign: TextAlign.center,
             ),
-            _DetailRow(label: 'Location', value: widget.asset.location),
-            _DetailRow(
-              label: 'Assigned To',
-              value: widget.asset.assignedTo ?? 'Unassigned',
-            ),
-            _DetailRow(
-              label: 'Purchase Date',
-              value: widget.asset.purchaseDate,
-            ),
-            _DetailRow(
-              label: 'Warranty',
-              value: 'Until ${widget.asset.warrantyExpiry}',
+            const SizedBox(height: 12),
+            StatusBadge(status: widget.asset.status),
+            const SizedBox(height: 36),
+
+            // Images Gallery
+            if (widget.asset.images.isNotEmpty) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Asset Photos',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 220,
+                child: ListView.separated(
+                  physics: const BouncingScrollPhysics(),
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  itemCount: widget.asset.images.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 16),
+                  itemBuilder: (context, index) {
+                    final img = widget.asset.images[index];
+                    final fullUrl = img.startsWith('http') 
+                        ? img 
+                        : '${const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:8080')}$img';
+                    return Container(
+                      width: 280,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          color: Theme.of(context).colorScheme.surfaceVariant,
+                          child: Image.network(
+                            fullUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Center(
+                                child: Icon(
+                                  Icons.broken_image_rounded,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                  size: 48,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 36),
+            ],
+
+            // Details Card
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Information',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  letterSpacing: -0.3,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
-            if (widget.asset.specifications.isNotEmpty)
-              _DetailRow(
-                label: 'Specifications',
-                value: widget.asset.specifications,
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.04),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200,
+                  width: 1,
+                ),
               ),
+              child: Column(
+                children: [
+                  _DetailRow(icon: Icons.tag_rounded, label: 'Asset Tag', value: widget.asset.id),
+                  _Divider(isDark: isDark),
+                  _DetailRow(icon: Icons.category_rounded, label: 'Category', value: widget.asset.category),
+                  _Divider(isDark: isDark),
+                  _DetailRow(icon: Icons.numbers_rounded, label: 'Serial Number', value: widget.asset.serialNumber),
+                  _Divider(isDark: isDark),
+                  _DetailRow(icon: Icons.location_on_rounded, label: 'Location', value: widget.asset.location),
+                  _Divider(isDark: isDark),
+                  _DetailRow(icon: Icons.person_rounded, label: 'Assigned To', value: widget.asset.assignedTo ?? 'Unassigned'),
+                  if (widget.asset.specifications.isNotEmpty) ...[
+                    _Divider(isDark: isDark),
+                    _DetailRow(icon: Icons.info_outline_rounded, label: 'Specifications', value: widget.asset.specifications),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -356,31 +477,75 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
   }
 }
 
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _DetailRow({required this.label, required this.value});
+class _Divider extends StatelessWidget {
+  final bool isDark;
+  const _Divider({required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray100,
+      indent: 56,
+      endIndent: 20,
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _DetailRow({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppColors.gray500,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: isDark ? 0.3 : 1.0),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: isDark ? Theme.of(context).colorScheme.onSurfaceVariant : AppColors.gray500,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 14, color: AppColors.navyLight),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

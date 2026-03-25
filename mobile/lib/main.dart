@@ -205,9 +205,9 @@ class _MainShellState extends State<MainShell> {
           // Loading Overlay
           if (_isLoading)
             Container(
-              color: isDark ? AppColors.darkBackground : AppColors.gray50,
+              color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
               child: const Center(
-                child: CircularProgressIndicator(color: AppColors.tealPrimary),
+                child: CircularProgressIndicator(),
               ),
             ),
 

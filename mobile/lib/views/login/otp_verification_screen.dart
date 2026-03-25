@@ -454,24 +454,35 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     final isFocused = _focusNodes[index].hasFocus;
     final primaryColor = isDark ? AppColors.tealLight : AppColors.tealPrimary;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.gray50;
-    final borderColor = isFocused
-        ? primaryColor
-        : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: 44,
-      height: 56,
+    final baseBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(
+        color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.gray200,
+        width: 1.5,
+      ),
+    );
+
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(
+        color: primaryColor,
+        width: 2.5,
+      ),
+    );
+
+    return Container(
+      width: 48,
+      height: 60,
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: isFocused ? 2 : 1),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: isFocused
             ? [
                 BoxShadow(
-                  color: primaryColor.withValues(alpha: 0.15),
-                  blurRadius: 12,
+                  color: primaryColor.withValues(alpha: 0.25),
+                  blurRadius: 16,
                   offset: const Offset(0, 4),
+                  spreadRadius: -2,
                 ),
               ]
             : [],
@@ -480,20 +491,25 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         controller: _digitControllers[index],
         focusNode: _focusNodes[index],
         textAlign: TextAlign.center,
+        textAlignVertical: TextAlignVertical.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
         style: TextStyle(
-          fontSize: 22,
+          fontSize: 24,
           fontWeight: FontWeight.w800,
           color: isDark ? Colors.white : AppColors.navy,
         ),
         cursorColor: primaryColor,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           counterText: '',
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
+          filled: true,
+          fillColor: isFocused
+              ? (isDark ? AppColors.darkSurface : Colors.white)
+              : bgColor,
+          border: baseBorder,
+          enabledBorder: baseBorder,
+          focusedBorder: focusedBorder,
           contentPadding: EdgeInsets.zero,
         ),
         onChanged: (value) {

@@ -4,6 +4,8 @@
 	<dict>
 		<key>NSCameraUsageDescription</key>
 		<string>MIRA needs camera access to scan asset QR codes</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>MIRA needs access to your photo library to let you upload a profile picture</string>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>

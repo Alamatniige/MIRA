@@ -107,6 +107,9 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultTint = isDark ? Colors.black : Colors.white;
+    
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
@@ -114,15 +117,15 @@ class GlassCard extends StatelessWidget {
         child: Container(
           padding: padding ?? const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: (tintColor ?? Colors.white).withValues(alpha: 0.75),
+            color: (tintColor ?? defaultTint).withValues(alpha: isDark ? 0.4 : 0.75),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.5),
+              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.navy.withValues(alpha: 0.06),
+                color: Theme.of(context).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.06),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -152,23 +155,33 @@ class ElevatedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color ?? AppColors.white,
+        color: color ?? (isDark ? AppColors.darkSurface : AppColors.white),
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.8),
-            blurRadius: 0,
-            offset: const Offset(0, -1),
-          ),
-        ],
+        boxShadow: isDark 
+          ? [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ]
+          : [
+              BoxShadow(
+                color: AppColors.navy.withValues(alpha: 0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+              const BoxShadow(
+                color: Colors.white,
+                blurRadius: 0,
+                offset: Offset(0, -1),
+              ),
+            ],
       ),
       child: child,
     );

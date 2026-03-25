@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../data/mock_data.dart';
+import '../../data/mock_data.dart';
 import '../../models/activity.dart';
+import '../../dto/issue_report_dto.dart';
+import '../../services/assets_service.dart';
 import '../assets/asset_detail_screen.dart';
+import 'reported_issue_detail_screen.dart';
 
 /// Activity History - modern premium timeline with pill filters and glowing cards
 class HistoryScreen extends StatefulWidget {
@@ -15,23 +19,42 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   String _selectedFilter = 'all';
   bool _isLoading = true;
+  bool _isLoadingIssues = false;
+  List<IssueReportDto> _reportedIssues = [];
+  final AssetsService _assetsService = AssetsService();
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    });
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    // Mock general activity load
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (mounted) setState(() => _isLoading = false);
+    
+    // Load real reported issues quietly in parallel
+    _fetchReportedIssues();
+  }
+
+  Future<void> _fetchReportedIssues() async {
+    if (!mounted) return;
+    setState(() => _isLoadingIssues = true);
+    try {
+      final issues = await _assetsService.getReportedIssues();
+      if (mounted) setState(() => _reportedIssues = issues);
+    } catch (_) {
+      // ignore
+    } finally {
+      if (mounted) setState(() => _isLoadingIssues = false);
+    }
   }
 
   static const List<Map<String, String>> _filters = [
     {'id': 'all', 'label': 'All Activity'},
     {'id': 'assigned', 'label': 'Assigned'},
-    {'id': 'reported', 'label': 'Issues'},
+    {'id': 'reported', 'label': 'Reported Issues'},
     {'id': 'maintenance', 'label': 'Maintenance'},
   ];
 
@@ -96,7 +119,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             // Timeline Content
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: _isLoading
+              sliver: _isLoading || (_selectedFilter == 'reported' && _isLoadingIssues)
                   ? const SliverToBoxAdapter(
                       child: Center(
                         child: Padding(
@@ -105,70 +128,124 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                       ),
                     )
-                  : _filteredActivities.isEmpty
-                      ? SliverToBoxAdapter(
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(48),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(24),
-                                    decoration: BoxDecoration(
-                                      color: isDark 
-                                          ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5)
-                                          : AppColors.tealMuted.withValues(alpha: 0.5),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.history_rounded,
-                                      size: 56,
-                                      color: isDark 
-                                          ? AppColors.tealLight.withValues(alpha: 0.7)
-                                          : AppColors.tealPrimary.withValues(alpha: 0.7),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Text(
-                                    'No activity found',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: Theme.of(context).colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Try selecting a different filter',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        )
-                      : SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final item = _filteredActivities[index];
-                              final isLast = index == _filteredActivities.length - 1;
-                              return _TimelineItem(
-                                activity: item,
-                                isLast: isLast,
-                                onTap: () => _openAsset(context, item),
-                              );
-                            },
-                            childCount: _filteredActivities.length,
-                          ),
-                        ),
+                  : (_selectedFilter == 'reported')
+                      ? _buildReportedIssuesList(isDark)
+                      : _buildMockActivitiesList(isDark),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 48)),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMockActivitiesList(bool isDark) {
+    if (_filteredActivities.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(48),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: isDark 
+                        ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5)
+                        : AppColors.tealMuted.withValues(alpha: 0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.history_rounded,
+                    size: 56,
+                    color: isDark 
+                        ? AppColors.tealLight.withValues(alpha: 0.7)
+                        : AppColors.tealPrimary.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'No activity found',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Try selecting a different filter',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final item = _filteredActivities[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _ActivityCard(
+              activity: item,
+              onTap: () => _openAsset(context, item),
+            ),
+          );
+        },
+        childCount: _filteredActivities.length,
+      ),
+    );
+  }
+
+  Widget _buildReportedIssuesList(bool isDark) {
+    if (_reportedIssues.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(48),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle_outline_rounded, size: 64, color: AppColors.tealLight),
+                const SizedBox(height: 16),
+                Text(
+                  'No issues reported',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final issue = _reportedIssues[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _ReportedIssueCard(
+              issue: issue,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ReportedIssueDetailScreen(issue: issue),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+        childCount: _reportedIssues.length,
       ),
     );
   }
@@ -182,6 +259,150 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       );
     }
+  }
+}
+
+class _ReportedIssueCard extends StatelessWidget {
+  final IssueReportDto issue;
+  final VoidCallback onTap;
+  const _ReportedIssueCard({required this.issue, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dt = DateTime.tryParse(issue.reportAt) ?? DateTime.now();
+    final formattedDate = '${dt.day}/${dt.month}/${dt.year}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.statusReported.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.warning_rounded, color: AppColors.statusReported, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            issue.assetName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            'Tag: ${issue.assetTag} · $formattedDate',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurfaceVariant : AppColors.gray100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        issue.status.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Divider(height: 1),
+                ),
+                Text(
+                  'Issue Description',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  issue.description.isNotEmpty ? issue.description : 'No description provided.',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.person_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Reported by ${issue.userName}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const Spacer(),
+                    // Placeholder for Images preview
+                    Icon(Icons.image_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      '0 Photos',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -250,14 +471,12 @@ class _FilterPill extends StatelessWidget {
   }
 }
 
-class _TimelineItem extends StatelessWidget {
+class _ActivityCard extends StatelessWidget {
   final ActivityItem activity;
-  final bool isLast;
   final VoidCallback onTap;
 
-  const _TimelineItem({
+  const _ActivityCard({
     required this.activity,
-    required this.isLast,
     required this.onTap,
   });
 
@@ -291,176 +510,127 @@ class _TimelineItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = _statusColor();
+    final dt = activity.dateTime;
+    final formattedDate = '${dt.day}/${dt.month}/${dt.year}';
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Timeline indicator
-          SizedBox(
-            width: 40,
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 16,
-                      height: 16,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: color,
+                        color: color.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.5),
-                            blurRadius: 10,
-                            spreadRadius: 2,
+                      ),
+                      child: Icon(_statusIcon(), color: color, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            activity.assetName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            'Action · $formattedDate',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            color.withValues(alpha: 0.5),
-                            (isDark ? Colors.white : AppColors.gray400).withValues(alpha: 0.1),
-                          ],
+                        color: color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        activity.type.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: color,
                         ),
-                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Divider(height: 1),
+                ),
+                Text(
+                  'Activity Details',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  activity.action,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.access_time_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatDateFull(activity.dateTime),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          
-          const SizedBox(width: 16),
-          
-          // Activity Card
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onTap,
-                  borderRadius: BorderRadius.circular(24),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurface : Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: isDark 
-                            ? Colors.white.withValues(alpha: 0.04) 
-                            : AppColors.gray100,
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.04),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                activity.assetName,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                  letterSpacing: -0.3,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    _statusIcon(),
-                                    size: 14,
-                                    color: color,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    _formatDateTimeShort(activity.dateTime),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: color,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          activity.action,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _formatDateFull(activity.dateTime),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
-  }
-
-  String _formatDateTimeShort(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    if (diff.inDays < 7) return '${diff.inDays}d';
-    return '${dt.day}/${dt.month}';
   }
 
   String _formatDateFull(DateTime dt) {

@@ -18,43 +18,46 @@ class StatusBadge extends StatelessWidget {
         .join(' ');
   }
 
-  static Color _bgColor(String s) {
+  static Color _bgColor(String s, bool isDark) {
     final lower = _normalize(s);
+    final alpha = isDark ? 0.25 : 0.15;
     if (lower == 'active' || lower == 'available') {
-      return AppColors.statusActive.withValues(alpha: 0.15);
+      return AppColors.statusActive.withValues(alpha: alpha);
     }
     if (lower == 'maintenance' || lower == 'under maintenance') {
-      return AppColors.statusMaintenance.withValues(alpha: 0.15);
+      return AppColors.statusMaintenance.withValues(alpha: alpha);
     }
     if (lower == 'reported' || lower == 'issue') {
-      return AppColors.statusReported.withValues(alpha: 0.15);
+      return AppColors.statusReported.withValues(alpha: alpha);
     }
-    if (lower == 'disposed')
-      return AppColors.statusDisposed.withValues(alpha: 0.2);
-    return AppColors.gray200;
+    if (lower == 'disposed') {
+      return AppColors.statusDisposed.withValues(alpha: isDark ? 0.3 : 0.2);
+    }
+    return isDark ? AppColors.gray700 : AppColors.gray200;
   }
 
-  static Color _textColor(String s) {
+  static Color _textColor(String s, bool isDark) {
     final lower = _normalize(s);
-    if (lower == 'active' || lower == 'available')
-      return const Color(0xFF15803D);
-    if (lower == 'maintenance' || lower == 'under maintenance') {
-      return const Color(0xFFA16207);
+    if (isDark) {
+      if (lower == 'active' || lower == 'available') return const Color(0xFF4ADE80);
+      if (lower == 'maintenance' || lower == 'under maintenance') return const Color(0xFFFACC15);
+      if (lower == 'reported' || lower == 'issue') return const Color(0xFFF87171);
+      if (lower == 'disposed') return AppColors.gray400;
+      return AppColors.gray400;
+    } else {
+      if (lower == 'active' || lower == 'available') return const Color(0xFF15803D);
+      if (lower == 'maintenance' || lower == 'under maintenance') return const Color(0xFFA16207);
+      if (lower == 'reported' || lower == 'issue') return const Color(0xFFB91C1C);
+      if (lower == 'disposed') return AppColors.gray700;
+      return AppColors.gray600;
     }
-    if (lower == 'reported' || lower == 'issue') return const Color(0xFFB91C1C);
-    if (lower == 'disposed') return AppColors.gray700;
-    return AppColors.gray600;
   }
 
   static Color _dotColor(String s) {
     final lower = _normalize(s);
-    if (lower == 'active' || lower == 'available')
-      return AppColors.statusActive;
-    if (lower == 'maintenance' || lower == 'under maintenance') {
-      return AppColors.statusMaintenance;
-    }
-    if (lower == 'reported' || lower == 'issue')
-      return AppColors.statusReported;
+    if (lower == 'active' || lower == 'available') return AppColors.statusActive;
+    if (lower == 'maintenance' || lower == 'under maintenance') return AppColors.statusMaintenance;
+    if (lower == 'reported' || lower == 'issue') return AppColors.statusReported;
     if (lower == 'disposed') return AppColors.statusDisposed;
     return AppColors.gray500;
   }
@@ -70,10 +73,12 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: _bgColor(status),
+        color: _bgColor(status, isDark),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -93,8 +98,9 @@ class StatusBadge extends StatelessWidget {
               _displayText,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _textColor(status),
+                fontWeight: FontWeight.w700,
+                color: _textColor(status, isDark),
+                letterSpacing: 0.2,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

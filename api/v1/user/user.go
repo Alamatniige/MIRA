@@ -13,6 +13,7 @@ type User struct {
 	RoleID      string     `json:"roleId" gorm:"column:roleId;type:uuid;not null"`
 	PhoneNumber string     `json:"phoneNumber" gorm:"column:phoneNumber;not null"`
 	Status      string     `json:"status" gorm:"column:status;default:active;not null"`
+	AvatarUrl   *string    `json:"avatarUrl" gorm:"column:avatarUrl"`
 	LastActive  *time.Time `json:"lastActive" gorm:"column:lastActive"`
 	AssetsCount int        `json:"assetsCount" gorm:"column:assetsCount;->"`
 	Role        Role       `json:"role" gorm:"foreignKey:RoleID"`

@@ -71,7 +71,7 @@ export function BuildingFloorMap() {
 
   if (floorsLoading) {
     return (
-      <div className="flex items-center justify-center rounded-[2.5rem] border border-slate-200/60 bg-white/40 dark:border-white/5 dark:bg-[#09090b]/40 h-[500px]">
+      <div className="flex items-center justify-center border border-slate-200/60 bg-white/40 dark:border-white/5 dark:bg-[#09090b]/40 h-[500px]">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
           <p className="text-xs text-slate-400">Loading floor map…</p>
@@ -82,7 +82,7 @@ export function BuildingFloorMap() {
 
   if (floors.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-[2.5rem] border border-slate-200/60 bg-white/40 dark:border-white/5 dark:bg-[#09090b]/40 h-[500px]">
+      <div className="flex items-center justify-center border border-slate-200/60 bg-white/40 dark:border-white/5 dark:bg-[#09090b]/40 h-[500px]">
         <p className="text-sm text-slate-400">
           No floors configured yet. Add floors and rooms from the Asset page.
         </p>
@@ -92,7 +92,7 @@ export function BuildingFloorMap() {
 
   return (
     <div className="flex flex-col gap-4 overflow-hidden">
-      <div className="flex flex-col gap-6 rounded-[2.5rem] border border-slate-200/60 bg-white/40 p-1 dark:border-white/5 dark:bg-[#09090b]/40 backdrop-blur-3xl overflow-hidden shadow-2xl">
+      <div className="flex flex-col">
         {/* Main Side-by-Side Area */}
         <div className="flex flex-col lg:flex-row gap-0 items-stretch transition-all duration-1000 ease-in-out" ref={containerRef}>
           {/* Left: Tower View Elevator Side */}
@@ -120,7 +120,7 @@ export function BuildingFloorMap() {
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="rounded-full h-8 px-3 text-[10px] font-bold uppercase tracking-wider bg-white/50 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/5 shadow-xl hover:bg-teal-500 hover:text-white transition-all group"
+                    className="rounded-full h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 bg-white/50 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/5 shadow-xl hover:bg-teal-500 hover:text-white transition-all group"
                     onClick={() => setIsFloorSelected(false)}
                   >
                     <Maximize2 className="h-3 w-3 mr-1.5 group-hover:scale-110 transition-transform" />
@@ -235,32 +235,7 @@ export function BuildingFloorMap() {
           )}
         </div>
 
-        {/* Legend / Footer Footer */}
-        <div className="px-10 py-5 bg-slate-100/30 dark:bg-white/1 dark:border-t dark:border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-teal-500" />
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">
-                Selected Room
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full border-2 border-slate-200 dark:border-white/10" />
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">
-                Available Zone
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">
-                Gateway Uplink
-              </span>
-            </div>
-          </div>
-          <p className="text-[9px] font-medium text-slate-400 tracking-wider uppercase">
-            MIRA Intelligence Protocol · Real-time Spatial Telemetry
-          </p>
-        </div>
+
       </div>
     </div>
   );

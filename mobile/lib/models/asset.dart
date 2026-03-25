@@ -11,6 +11,7 @@ class Asset {
   final String? assignedToId;
   final String purchaseDate;
   final String warrantyExpiry;
+  final List<String> images;
 
   const Asset({
     required this.id,
@@ -24,6 +25,7 @@ class Asset {
     this.assignedToId,
     required this.purchaseDate,
     required this.warrantyExpiry,
+    this.images = const [],
   });
 
   Asset copyWith({
@@ -38,6 +40,7 @@ class Asset {
     String? assignedToId,
     String? purchaseDate,
     String? warrantyExpiry,
+    List<String>? images,
   }) {
     return Asset(
       id: id ?? this.id,
@@ -51,6 +54,7 @@ class Asset {
       assignedToId: assignedToId ?? this.assignedToId,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       warrantyExpiry: warrantyExpiry ?? this.warrantyExpiry,
+      images: images ?? this.images,
     );
   }
 }

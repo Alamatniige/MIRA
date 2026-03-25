@@ -5,8 +5,11 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"mira-api/internal/db"
@@ -266,4 +269,82 @@ func generateTempPassword() (string, error) {
 		b[i] = charset[int(b[i])%len(charset)]
 	}
 	return fmt.Sprintf("%s!", string(b)), nil
+}
+
+// Upload profile image
+func UploadProfileImage(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse multipart form (max 10MB)
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Failed to parse form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	file, header, err := r.FormFile("image")
+	if err != nil {
+		http.Error(w, "No image found in request: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, "Error reading file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	supabaseURL := strings.TrimRight(os.Getenv("SUPABASE_URL"), "/")
+	serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	if supabaseURL == "" || serviceRoleKey == "" {
+		http.Error(w, "Storage is not configured", http.StatusInternalServerError)
+		return
+	}
+
+	// Generate filename
+	ext := filepath.Ext(header.Filename)
+	if ext == "" {
+		ext = ".jpg"
+	}
+	filename := uuid.New().String() + ext
+	contentType := http.DetectContentType(fileBytes)
+
+	uploadURL := fmt.Sprintf("%s/storage/v1/object/avatars/%s", supabaseURL, filename)
+	req, err := http.NewRequest(http.MethodPost, uploadURL, bytes.NewReader(fileBytes))
+	if err != nil {
+		http.Error(w, "Error creating upload request: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+serviceRoleKey)
+	req.Header.Set("apikey", serviceRoleKey)
+	req.Header.Set("Content-Type", contentType)
+
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		http.Error(w, "Error uploading file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	respBody, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		http.Error(w, "Failed to upload image: "+string(respBody), http.StatusInternalServerError)
+		return
+	}
+
+	publicURL := fmt.Sprintf("%s/storage/v1/object/public/avatars/%s", supabaseURL, filename)
+
+	// Update User in DB
+	if err := db.DB.Model(&User{}).Where("id = ?", userID).Update("avatarUrl", publicURL).Error; err != nil {
+		http.Error(w, "Error saving avatar URL to database: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"avatarUrl": publicURL})
 }

@@ -1,6 +1,7 @@
 import '../core/network/api_exception.dart';
 import '../core/network/api_client.dart';
 import '../dto/asset_response_dto.dart';
+import '../dto/issue_report_dto.dart';
 import '../dto/assignment_response_dto.dart';
 import '../dto/return_qr_scan_dto.dart';
 
@@ -57,6 +58,16 @@ class AssetsService {
       '/issues/create',
       body: {'assetId': assetId, 'description': description},
     );
+  }
+
+  Future<List<IssueReportDto>> getReportedIssues() async {
+    final response = await _apiClient.get('/reports');
+    if (response is List) {
+      return response
+          .map((e) => IssueReportDto.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    return [];
   }
 
   Future<List<AssetResponseDto>> getAllAssets() async {

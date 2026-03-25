@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../controllers/profile_controller.dart';
 import '../../models/types.dart';
 import '../../theme/app_theme.dart';
@@ -17,10 +19,12 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   bool _isLoggingOut = false;
+  bool _isUploading = false;
   UserProfile? _profile;
   String? _errorMessage;
 
   final _controller = ProfileController();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -44,6 +48,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 85,
+      );
+
+      if (image == null) return;
+
+      setState(() => _isUploading = true);
+
+      final imageUrl = await _controller.uploadAvatar(File(image.path));
+      
+      // Reload profile to get the updated avatarUrl
+      await _loadProfile();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Profile picture updated successfully!'),
+            backgroundColor: AppColors.tealPrimary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload image: $e'),
+            backgroundColor: AppColors.statusReported,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
     }
   }
 
@@ -172,35 +220,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ),
                               // Core Avatar
-                              Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  gradient: AppColors.primaryGradient,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.tealPrimary.withValues(
-                                        alpha: 0.4,
+                              GestureDetector(
+                                onTap: _isUploading ? null : _pickAndUploadImage,
+                                child: Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    gradient: _profile?.avatarUrl == null ? AppColors.primaryGradient : null,
+                                    color: _profile?.avatarUrl != null ? Colors.white : null,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.tealPrimary.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        blurRadius: 24,
+                                        offset: const Offset(0, 8),
                                       ),
-                                      blurRadius: 24,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    (_profile != null &&
-                                                _profile!.fullName.isNotEmpty
-                                            ? _profile!.fullName[0]
-                                            : '?')
-                                        .toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 40,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                      letterSpacing: -1,
-                                    ),
+                                    ],
+                                    image: _profile?.avatarUrl != null 
+                                      ? DecorationImage(
+                                          image: NetworkImage(_profile!.avatarUrl!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      if (_profile?.avatarUrl == null)
+                                        Center(
+                                          child: Text(
+                                            (_profile != null &&
+                                                        _profile!.fullName.isNotEmpty
+                                                    ? _profile!.fullName[0]
+                                                    : '?')
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              fontSize: 40,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                              letterSpacing: -1,
+                                            ),
+                                          ),
+                                        ),
+                                      // Dark overlay and loader if uploading
+                                      if (_isUploading)
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.4),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Center(
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 3,
+                                            ),
+                                          ),
+                                        ),
+                                      // Edit icon
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.tealPrimary,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: Colors.white, width: 2),
+                                          ),
+                                          child: const Icon(
+                                            Icons.camera_alt_rounded,
+                                            size: 16,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),

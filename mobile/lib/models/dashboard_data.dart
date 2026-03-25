@@ -7,6 +7,7 @@ class DashboardData {
     required this.activeAssetsCount,
     required this.maintenanceAssetsCount,
     required this.myAssets,
+    this.avatarUrl,
   });
 
   final String userFirstName;
@@ -14,4 +15,5 @@ class DashboardData {
   final int activeAssetsCount;
   final int maintenanceAssetsCount;
   final List<Asset> myAssets;
+  final String? avatarUrl;
 }

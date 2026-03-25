@@ -13,6 +13,7 @@ class AssetResponseDto {
     this.assetTypeName,
     this.roomName,
     this.floorName,
+    this.imageUrls = const [],
   });
 
   final String id;
@@ -26,6 +27,7 @@ class AssetResponseDto {
   final String? assetTypeName;
   final String? roomName;
   final String? floorName;
+  final List<String> imageUrls;
 
   factory AssetResponseDto.fromJson(Map<String, dynamic> json) {
     final assetType = json['assetTypeRel'] as Map<String, dynamic>?;
@@ -44,6 +46,7 @@ class AssetResponseDto {
       assetTypeName: (assetType?['name'] as String?)?.trim(),
       roomName: (room?['name'] as String?)?.trim(),
       floorName: (floor?['name'] as String?)?.trim(),
+      imageUrls: (json['image'] as List?)?.map((e) => e.toString()).toList() ?? [],
     );
   }
 
@@ -60,6 +63,7 @@ class AssetResponseDto {
       assignedToId: assignedToId,
       purchaseDate: '-',
       warrantyExpiry: '-',
+      images: imageUrls,
     );
   }
 

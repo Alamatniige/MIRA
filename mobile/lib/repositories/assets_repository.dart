@@ -35,6 +35,7 @@ class AssetsRepository {
       activeAssetsCount: detailedAssignedAssets.length,
       maintenanceAssetsCount: maintenanceAssets.length,
       myAssets: detailedAssignedAssets,
+      avatarUrl: user.avatarUrl,
     );
   }
 

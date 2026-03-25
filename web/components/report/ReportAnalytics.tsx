@@ -108,10 +108,10 @@ export function ReportAnalytics() {
     images: [],
     initials: r.userName
       ? r.userName
-          .split(' ')
-          .filter(Boolean)
-          .map((n) => n[0].toUpperCase())
-          .join('')
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0].toUpperCase())
+        .join('')
       : '?',
   }));
 
@@ -157,17 +157,14 @@ export function ReportAnalytics() {
             <Download className="mr-2 h-3.5 w-3.5" />
             Export Data
           </Button>
-          <Button
-            size="sm"
-            className="h-9 rounded-full bg-linear-to-r from-teal-600 to-emerald-600 px-5 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg hover:shadow-teal-500/20 active:scale-95"
-          >
-            Create Ticket
-          </Button>
+
         </div>
       </div>
 
       {/* Building Map Visualization */}
-      <BuildingFloorMap />
+      <div className="-mt-6">
+        <BuildingFloorMap />
+      </div>
 
       {/* KPI Section */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
