@@ -77,7 +77,10 @@ func main() {
 	})
 
 	// 6. Start the server
-	port := "8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 	log.Printf("Server starting on port %s...", port)
 	// Apply CORS middleware
 	handler := middleware.CORSMiddleware(r)

@@ -1,0 +1,27 @@
+# Git files
+.git
+.gitignore
+
+# IDE files  
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment files (don't include in build)
+.env.local
+.env.production
+
+# Build artifacts
+tmp
+build
+
+# Test files  
+*_test.go
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Air configuration (dev only)
+.air.toml
