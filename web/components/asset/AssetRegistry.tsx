@@ -1586,7 +1586,10 @@ export function AssetRegistry() {
                     <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       Asset QR
                     </h4>
-                    <div className="group relative flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 aspect-square w-full overflow-hidden">
+                    <div
+                      className="group relative flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 aspect-square w-full overflow-hidden"
+                      data-asset-qr={`mira-asset:${selectedViewAsset.id}`}
+                    >
                       <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-white mb-0 transition-transform duration-300 group-hover:scale-95">
                         <QRCodeSVG
                           value={`mira-asset:${selectedViewAsset.id}`}
@@ -1601,7 +1604,9 @@ export function AssetRegistry() {
                           type="button"
                           size="sm"
                           className="h-10 rounded-full bg-white px-5 text-[12px] font-bold text-slate-900 shadow-xl hover:bg-slate-50 transition-all active:scale-95 flex items-center gap-2"
-                          onClick={() => window.print()}
+                          onClick={() => {
+                            window.print();
+                          }}
                         >
                           <svg
                             viewBox="0 0 24 24"
@@ -2491,11 +2496,7 @@ export function AssetRegistry() {
       <div className="hidden print:flex fixed inset-0 items-center justify-center bg-white z-99999">
         {selectedViewAsset && (
           <div className="flex flex-col items-center">
-            <QRCodeSVG
-              value={`MIRA Asset\nTag: ${selectedViewAsset.tag || selectedViewAsset.id}\nName: ${selectedViewAsset.assetName}\nCategory: ${selectedViewAsset.assetTypeRel?.name}`}
-              size={320}
-              level="H"
-            />
+            <QRCodeSVG value={`mira-asset:${selectedViewAsset.id}`} size={320} level="H" />
             <div className="mt-8 text-center">
               <p className="text-4xl font-black text-black leading-tight">
                 {selectedViewAsset.assetName}
