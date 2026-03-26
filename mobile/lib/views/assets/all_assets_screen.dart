@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/asset.dart';
 import '../../services/assets_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/asset_thumbnail.dart';
 import '../../widgets/status_badge.dart';
 import 'asset_detail_screen.dart';
 
@@ -69,7 +70,8 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
     final lower = status.toLowerCase();
     if (lower == 'active') return AppColors.statusActive;
     if (lower == 'maintenance') return AppColors.statusMaintenance;
-    if (lower == 'reported' || lower == 'issue') return AppColors.statusReported;
+    if (lower == 'reported' || lower == 'issue')
+      return AppColors.statusReported;
     if (lower == 'disposed') return AppColors.statusDisposed;
     return AppColors.gray500;
   }
@@ -98,146 +100,159 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: Theme.of(context).colorScheme.error,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      Text('Failed to load assets: $_errorMessage'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadAssets,
-                        child: const Text('Retry'),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    color: Theme.of(context).colorScheme.error,
+                    size: 48,
                   ),
-                )
-              : _assets.isEmpty
-                  ? const Center(child: Text('No assets available.'))
-                  : RefreshIndicator(
-                      onRefresh: _loadAssets,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        itemCount: _assets.length,
-                        itemBuilder: (context, index) {
-                          final asset = _assets[index];
-                          final accent = _statusAccentColor(asset.status);
-                          
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => AssetDetailScreen(asset: asset),
-                                    ),
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(24),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.04)
-                                          : AppColors.gray100.withValues(alpha: 0.5),
-                                      width: 1,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Theme.of(context).colorScheme.shadow.withValues(alpha: isDark ? 0.1 : 0.03),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 56,
-                                        height: 56,
-                                        decoration: BoxDecoration(
-                                          color: isDark
-                                              ? AppColors.darkSurfaceVariant
-                                              : AppColors.gray50,
-                                          borderRadius: BorderRadius.circular(18),
-                                        ),
-                                        child: Center(
-                                          child: Icon(
-                                            _iconForCategory(asset.category),
-                                            color: isDark
-                                                ? AppColors.tealLight
-                                                : AppColors.tealPrimary,
-                                            size: 26,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              asset.name,
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w700,
-                                                color: Theme.of(context).colorScheme.onSurface,
-                                                letterSpacing: -0.2,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Row(
-                                              children: [
-                                                Container(
-                                                  width: 6,
-                                                  height: 6,
-                                                  decoration: BoxDecoration(
-                                                    color: accent,
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 6),
-                                                Expanded(
-                                                  child: Text(
-                                                    '${asset.category} · ${asset.id}',
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.w500,
-                                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                                    ),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      StatusBadge(status: asset.status),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                  const SizedBox(height: 16),
+                  Text('Failed to load assets: $_errorMessage'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadAssets,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            )
+          : _assets.isEmpty
+          ? const Center(child: Text('No assets available.'))
+          : RefreshIndicator(
+              onRefresh: _loadAssets,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                itemCount: _assets.length,
+                itemBuilder: (context, index) {
+                  final asset = _assets[index];
+                  final accent = _statusAccentColor(asset.status);
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  AssetDetailScreen(asset: asset),
                             ),
                           );
                         },
+                        borderRadius: BorderRadius.circular(24),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.04)
+                                  : AppColors.gray100.withValues(alpha: 0.5),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(context).colorScheme.shadow
+                                    .withValues(alpha: isDark ? 0.1 : 0.03),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.darkSurfaceVariant
+                                      : AppColors.gray50,
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: AssetThumbnail(
+                                  asset: asset,
+                                  fallbackIcon: _iconForCategory(
+                                    asset.category,
+                                  ),
+                                  backgroundColor: isDark
+                                      ? AppColors.darkSurfaceVariant
+                                      : AppColors.gray50,
+                                  iconColor: isDark
+                                      ? AppColors.tealLight
+                                      : AppColors.tealPrimary,
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      asset.name,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                        letterSpacing: -0.2,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color: accent,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            '${asset.category} · ${asset.id}',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              StatusBadge(status: asset.status),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
+                  );
+                },
+              ),
+            ),
     );
   }
 }

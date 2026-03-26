@@ -335,6 +335,14 @@ INSERT INTO "public"."qrCodes" ("id", "assetId", "qrValue", "generateAt") VALUES
 	('c6d05eb7-8a39-4e83-b083-e0f37b69eb4e', '65ba725c-d900-4482-b0a6-49689e378007', 'iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAABlBMVEX///8AAABVwtN+AAACBUlEQVR42uyZPbKkMAyEm3JA6CP4KL4ZPzfjKD6CQwcueksSbwd2J3oRolAwBTNforLcamnwxhtv/C5mkmxJPveRWyAXRHnjswAAQ0vskTuQ2QDE7fjBDxDItaVN06ygprmRxSGgj9NYc/AMJLKmlRUYufYnAlqTyN0uWR/J/qVo7w6YPmw9Fj3Nltb+TUDuDfyEnJkcFjD0r6J+a2A2ZZbjmRAltylU7ONJq58AgBWTvBrXIZcs70iLK6Aji5h3JFXDscwd2Me/+uACmLUXlQykxW6W5LePXFwBPW6DndKiviDtQQow8VEA1P4kBpZJXVBiBwZycQWEqgaOFXNDFhcUar4IpANg7pGLalratSZF5fJZBn0AcrtKNpNjADe2tDwM0JrcEMusFwyD+oePDLoAxDGwyNywipeTpCvY4AtgzYuIuZRmRdCpTnSPnoCjLW2iD6y5jzKXAid78AhAa9JckH2lYs52kcH7A7DGGmrS5UezxnqxrA4AfS3Si9YmAAZWnIvWBcCaxYqqyYF4OV1NnevxCQCOQkQsQ4uUYzTj7Qr4WR4eQ5CouO5ALs78/oAtD+Vm7dA013/SdAF8locrTRg08W8r0AcA1nll5KNu34pDwB5b1PFbWtJFJx0AtjyEtiTtqJOVpi/g0Acx1NqSNM2h/fdHj2/gjTfeuMafAAAA///KgK4a9g8btwAAAABJRU5ErkJggg==', '2026-03-16 01:24:59.187555');
 
 
+--
+-- Data for Name: buckets; Type: TABLE DATA; Schema: storage; Owner: supabase_storage_admin
+--
+
+INSERT INTO "storage"."buckets" ("id", "name", "owner", "created_at", "updated_at", "public", "avif_autodetection", "file_size_limit", "allowed_mime_types", "owner_id", "type") VALUES
+	('asset', 'asset', NULL, '2026-03-11 04:40:23.664987+00', '2026-03-11 04:40:23.664987+00', true, false, NULL, NULL, NULL, 'STANDARD'),
+	('avatar', 'avatar', NULL, '2026-03-25 23:19:27.610001+00', '2026-03-25 23:19:27.610001+00', true, false, NULL, NULL, NULL, 'STANDARD');
+
 
 --
 -- Data for Name: buckets_analytics; Type: TABLE DATA; Schema: storage; Owner: supabase_storage_admin
@@ -351,6 +359,19 @@ INSERT INTO "public"."qrCodes" ("id", "assetId", "qrValue", "generateAt") VALUES
 --
 -- Data for Name: objects; Type: TABLE DATA; Schema: storage; Owner: supabase_storage_admin
 --
+
+INSERT INTO "storage"."objects" ("id", "bucket_id", "name", "owner", "created_at", "updated_at", "last_accessed_at", "metadata", "version", "owner_id", "user_metadata") VALUES
+	('9bd523f9-c204-4b6d-9c83-4d11e50b57e5', 'asset', 'ae2d71b6-5d8b-428e-9b9a-564f5010efbd.jpg', NULL, '2026-03-11 05:35:57.643821+00', '2026-03-11 05:35:57.643821+00', '2026-03-11 05:35:57.643821+00', '{"eTag": "\"aa24f48c9209c5eb05cbca793472235f\"", "size": 141162, "mimetype": "text/plain;charset=UTF-8", "cacheControl": "3600", "lastModified": "2026-03-11T05:35:58.000Z", "contentLength": 141162, "httpStatusCode": 200}', '786246c0-cfb3-46ab-b5da-f5e4ead74ae9', NULL, '{}'),
+	('1e8b1332-09b3-42eb-8732-72ac39838ea4', 'asset', 'e411635a-597b-4a4e-aaae-d94c58cf7cac.webp', NULL, '2026-03-11 06:01:04.569075+00', '2026-03-11 06:01:04.569075+00', '2026-03-11 06:01:04.569075+00', '{"eTag": "\"30afa29875941ef9cc3e302ffc52a754\"", "size": 3722, "mimetype": "text/plain;charset=UTF-8", "cacheControl": "3600", "lastModified": "2026-03-11T06:01:05.000Z", "contentLength": 3722, "httpStatusCode": 200}', 'b296a073-226d-46df-b137-48815c99e140', NULL, '{}'),
+	('c1bf2583-3c49-47fe-93ad-e977b4390645', 'asset', 'd67c5092-403d-4b7d-8cea-ac7ddb5bd32c.jpg', NULL, '2026-03-11 06:01:05.766328+00', '2026-03-11 06:01:05.766328+00', '2026-03-11 06:01:05.766328+00', '{"eTag": "\"aa24f48c9209c5eb05cbca793472235f\"", "size": 141162, "mimetype": "text/plain;charset=UTF-8", "cacheControl": "3600", "lastModified": "2026-03-11T06:01:06.000Z", "contentLength": 141162, "httpStatusCode": 200}', '317a7889-d8c4-4ac6-823a-2f3a9a79d0db', NULL, '{}'),
+	('4e5575b2-2dd0-4850-bc0d-74698baced66', 'asset', '76db7a5d-5007-41aa-908c-f75e8f4f24f7.webp', NULL, '2026-03-16 00:05:09.735739+00', '2026-03-16 00:05:09.735739+00', '2026-03-16 00:05:09.735739+00', '{"eTag": "\"f42d88fe89a52fb34fe1cb6cc17b85cc\"", "size": 10014, "mimetype": "image/webp", "cacheControl": "no-cache", "lastModified": "2026-03-16T00:05:10.000Z", "contentLength": 10014, "httpStatusCode": 200}', '348057ca-847d-4507-ab95-a3f50e94101f', NULL, '{}'),
+	('604242e8-6a73-44f8-b355-dffca0009519', 'asset', 'ddf74362-0d69-4e40-a242-ad6da870315f.webp', NULL, '2026-03-16 00:05:10.062408+00', '2026-03-16 00:05:10.062408+00', '2026-03-16 00:05:10.062408+00', '{"eTag": "\"c2b905510b0a05253868822567c5550e\"", "size": 31566, "mimetype": "image/webp", "cacheControl": "no-cache", "lastModified": "2026-03-16T00:05:11.000Z", "contentLength": 31566, "httpStatusCode": 200}', '8a1d7a5c-69f9-47b6-a23d-549f23896b9c', NULL, '{}'),
+	('81fdd2bf-b874-4055-8ea9-b6488e7d59d8', 'asset', 'cd557f00-5a66-4230-8695-d00d097c355d.jpg', NULL, '2026-03-16 00:10:38.835497+00', '2026-03-16 00:10:38.835497+00', '2026-03-16 00:10:38.835497+00', '{"eTag": "\"877e79e687d08e551af1e34dcf408a95\"", "size": 142917, "mimetype": "image/jpeg", "cacheControl": "no-cache", "lastModified": "2026-03-16T00:10:39.000Z", "contentLength": 142917, "httpStatusCode": 200}', 'da134654-1f6f-435b-949e-8ce2bd2aa721', NULL, '{}'),
+	('d05bae86-64d1-46fc-b372-85907dcd2503', 'asset', '2610e6d3-6c44-444d-aa89-4c422e4c1460.jpg', NULL, '2026-03-16 00:10:39.185253+00', '2026-03-16 00:10:39.185253+00', '2026-03-16 00:10:39.185253+00', '{"eTag": "\"877e79e687d08e551af1e34dcf408a95\"", "size": 142917, "mimetype": "image/jpeg", "cacheControl": "no-cache", "lastModified": "2026-03-16T00:10:40.000Z", "contentLength": 142917, "httpStatusCode": 200}', '68a94665-a288-42e3-9147-a1ecc7122b4c', NULL, '{}'),
+	('a14d48ce-0bfa-49cb-9201-65d55bf6c538', 'asset', '43e15f33-0fed-4e4e-9e8b-c025481804eb.webp', NULL, '2026-03-16 01:24:59.9176+00', '2026-03-16 01:24:59.9176+00', '2026-03-16 01:24:59.9176+00', '{"eTag": "\"22aaaa3a3e3004d7be26b4b6d2dded1f\"", "size": 14760, "mimetype": "image/webp", "cacheControl": "no-cache", "lastModified": "2026-03-16T01:25:00.000Z", "contentLength": 14760, "httpStatusCode": 200}', '9a60b547-a944-4d83-acbe-ff62a3729020', NULL, '{}'),
+	('64ad2b77-5657-4c25-9e5d-e9f18a089c9f', 'asset', '7f53586e-19aa-4e74-95d7-cfc1cca482d6.webp', NULL, '2026-03-16 01:25:00.240366+00', '2026-03-16 01:25:00.240366+00', '2026-03-16 01:25:00.240366+00', '{"eTag": "\"f29db5474e3e3634ed0ed8c00d7d7e37\"", "size": 39094, "mimetype": "image/webp", "cacheControl": "no-cache", "lastModified": "2026-03-16T01:25:01.000Z", "contentLength": 39094, "httpStatusCode": 200}', 'b3303ab5-e709-4939-9aad-3aae0bac8b6a', NULL, '{}'),
+	('7228db45-dfc8-4a91-a8e3-db4baffca4a7', 'avatar', '37a8f454-8797-4aa9-b530-8c692c5695b4/388f85c8-f98e-4451-b65f-3c84bf0a7f32.jpg', NULL, '2026-03-25 23:27:30.297667+00', '2026-03-25 23:27:30.297667+00', '2026-03-25 23:27:30.297667+00', '{"eTag": "\"20dc12b1b5a547088b74ed36158ed720\"", "size": 81869, "mimetype": "image/jpeg", "cacheControl": "no-cache", "lastModified": "2026-03-25T23:27:31.000Z", "contentLength": 81869, "httpStatusCode": 200}', '1cd108ff-53b5-4cfa-b2fa-2277b1a2b278', NULL, '{}');
+
 
 --
 -- Data for Name: s3_multipart_uploads; Type: TABLE DATA; Schema: storage; Owner: supabase_storage_admin

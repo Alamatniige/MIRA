@@ -430,6 +430,82 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 		WHERE a."userId" = ?
 		  AND a."returnedDate" IS NULL
 		  AND a."rejectedAt" IS NULL
+		  AND a.acknowledged = true
+		ORDER BY a."assignedDate" DESC
+	`, userID).Scan(&rows).Error
+
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	result := make([]AssignmentResponse, 0, len(rows))
+	for _, row := range rows {
+		status := deriveAssignmentStatus(row.Acknowledged, nil, row.RejectedAt)
+
+		result = append(result, AssignmentResponse{
+			ID:               row.ID,
+			AssetID:          row.AssetID,
+			AssetTag:         row.Tag,
+			AssetName:        row.AssetName,
+			Department:       row.Department,
+			Status:           status,
+			Notes:            row.Notes,
+			AssignedAt:       row.AssignedDate,
+			RejectedAt:       row.RejectedAt,
+			RejectedByUserID: row.RejectedByUserID,
+			RejectionReason:  row.RejectionReason,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
+}
+
+// GetMyPendingAssignments returns pending (not yet confirmed) assignment requests for the authenticated user.
+func GetMyPendingAssignments(w http.ResponseWriter, r *http.Request) {
+	userID, ok := authenticatedUserIDFromContext(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	type row struct {
+		ID               string     `gorm:"column:id"`
+		AssetID          string     `gorm:"column:assetId"`
+		Tag              string     `gorm:"column:tag"`
+		AssetName        string     `gorm:"column:assetName"`
+		Department       string     `gorm:"column:department"`
+		Acknowledged     bool       `gorm:"column:acknowledged"`
+		Notes            string     `gorm:"column:notes"`
+		AssignedDate     time.Time  `gorm:"column:assignedDate"`
+		RejectedAt       *time.Time `gorm:"column:rejectedAt"`
+		RejectedByUserID *string    `gorm:"column:rejectedByUserId"`
+		RejectionReason  string     `gorm:"column:rejectionReason"`
+	}
+
+	var rows []row
+	err := db.DB.Raw(`
+		SELECT
+			a.id,
+			a."assetId",
+			ast.tag,
+			ast."assetName",
+			u.department,
+			a.acknowledged,
+			a.notes,
+			a."assignedDate",
+			a."rejectedAt",
+			a."rejectedByUserId",
+			a."rejectionReason"
+		FROM "assetsAssignment" a
+		JOIN assets ast ON ast.id = a."assetId"
+		JOIN users u ON u.id = a."userId"
+		WHERE a."userId" = ?
+		  AND a."returnedDate" IS NULL
+		  AND a."rejectedAt" IS NULL
+		  AND a.acknowledged = false
 		ORDER BY a."assignedDate" DESC
 	`, userID).Scan(&rows).Error
 

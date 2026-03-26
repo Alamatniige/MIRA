@@ -125,12 +125,27 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       final dto = await AssetsService().getAssetDetails(assetId);
       if (!mounted) return;
       Navigator.of(context).pop(); // dismiss loading
-      await Navigator.of(context).push(
+      final result = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (_) =>
               AssetDetailScreen(asset: dto.toAsset(), liveAsset: dto),
         ),
       );
+
+      // If request was successful, navigate back to dashboard
+      if (result == true && mounted) {
+        if (widget.onBack != null) {
+          widget.onBack!();
+        } else {
+          Navigator.of(context).pop();
+        }
+        return;
+      }
+
+      if (mounted) {
+        _controller.start();
+        setState(() => _hasScanned = false);
+      }
     } catch (_) {
       if (!mounted) return;
       Navigator.of(context).pop(); // dismiss loading

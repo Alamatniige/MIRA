@@ -177,7 +177,6 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: Stack(
         children: [
@@ -186,8 +185,8 @@ class _MainShellState extends State<MainShell> {
             index: _currentIndex,
             children: [
               DashboardScreen(
-                onProfileTap: () {
-                  Navigator.of(context).push(
+                onProfileTap: () async {
+                  await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => ProfileScreen(onLogout: widget.onLogout),
                     ),
@@ -205,10 +204,10 @@ class _MainShellState extends State<MainShell> {
           // Loading Overlay
           if (_isLoading)
             Container(
-              color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              color: Theme.of(
+                context,
+              ).scaffoldBackgroundColor.withValues(alpha: 0.8),
+              child: const Center(child: CircularProgressIndicator()),
             ),
 
           // Floating Bottom Navigation Bar

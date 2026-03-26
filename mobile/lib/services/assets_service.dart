@@ -24,6 +24,20 @@ class AssetsService {
         .toList();
   }
 
+  Future<List<AssignmentResponseDto>> getMyPendingAssignments() async {
+    final response = await _apiClient.get('/assign/pending');
+    if (response is! List) {
+      throw const ApiException(
+        'Unexpected pending assignments response from server.',
+      );
+    }
+
+    return response
+        .whereType<Map<String, dynamic>>()
+        .map(AssignmentResponseDto.fromJson)
+        .toList();
+  }
+
   /// Validates the scanned global return QR payload and returns the authenticated
   /// user's active assignments so they can choose which asset to return.
   Future<ReturnQrScanResponseDto> scanReturnQr(String scannedData) async {

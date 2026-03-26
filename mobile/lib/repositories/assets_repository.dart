@@ -15,16 +15,24 @@ class AssetsRepository {
   Future<DashboardData> getDashboardData() async {
     final userFuture = _userService.getMe();
     final assignedFuture = _assetsService.getMyAssignedAssets();
+    final pendingFuture = _assetsService.getMyPendingAssignments();
     final allAssetsFuture = _assetsService.getAllAssets();
     final maintenanceFuture = _assetsService.getMaintenanceAssets();
 
     final user = await userFuture;
     final assignedAssets = await assignedFuture;
+    final pendingAssets = await pendingFuture;
     final allAssets = await allAssetsFuture;
     final maintenanceAssets = await maintenanceFuture;
 
     final detailedAssignedAssets = await _buildAssignedAssets(
       assignedAssets,
+      assignedTo: user.fullName,
+      assignedToId: user.id,
+    );
+
+    final detailedPendingAssets = await _buildAssignedAssets(
+      pendingAssets,
       assignedTo: user.fullName,
       assignedToId: user.id,
     );
@@ -35,6 +43,7 @@ class AssetsRepository {
       activeAssetsCount: detailedAssignedAssets.length,
       maintenanceAssetsCount: maintenanceAssets.length,
       myAssets: detailedAssignedAssets,
+      pendingRequests: detailedPendingAssets,
       avatarUrl: user.avatarUrl,
     );
   }

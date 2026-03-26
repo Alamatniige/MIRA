@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,6 +25,10 @@ import (
 )
 
 const userWithAssetsCountSelect = "users.*, (SELECT COUNT(*) FROM \"assetsAssignment\" WHERE \"assetsAssignment\".\"userId\" = users.id AND \"assetsAssignment\".\"returnedDate\" IS NULL) as assetsCount"
+
+const avatarStorageBucket = "avatar"
+
+const legacyAvatarStorageBucket = "avatars"
 
 func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
@@ -208,6 +214,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -271,6 +278,86 @@ func generateTempPassword() (string, error) {
 	return fmt.Sprintf("%s!", string(b)), nil
 }
 
+func avatarStorageObjectPath(publicURL string) (string, error) {
+	parsedURL, err := url.Parse(publicURL)
+	if err != nil {
+		return "", err
+	}
+
+	publicPrefixes := []string{
+		fmt.Sprintf("/storage/v1/object/public/%s/", avatarStorageBucket),
+		fmt.Sprintf("/storage/v1/object/public/%s/", legacyAvatarStorageBucket),
+	}
+
+	for _, publicPrefix := range publicPrefixes {
+		if !strings.HasPrefix(parsedURL.Path, publicPrefix) {
+			continue
+		}
+
+		objectPath := strings.TrimPrefix(parsedURL.Path, publicPrefix)
+		if objectPath == "" {
+			return "", fmt.Errorf("avatar image URL does not contain an object path")
+		}
+
+		return objectPath, nil
+	}
+
+	return "", fmt.Errorf("unexpected avatar image URL path: %s", parsedURL.Path)
+}
+
+func escapeStorageObjectPath(objectPath string) string {
+	parts := strings.Split(objectPath, "/")
+	for index, part := range parts {
+		parts[index] = url.PathEscape(part)
+	}
+
+	return strings.Join(parts, "/")
+}
+
+func deleteAvatarStorageObject(publicURL string) error {
+	if strings.TrimSpace(publicURL) == "" {
+		return nil
+	}
+
+	objectPath, err := avatarStorageObjectPath(publicURL)
+	if err != nil {
+		return err
+	}
+
+	supabaseURL := strings.TrimRight(os.Getenv("SUPABASE_URL"), "/")
+	serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	if supabaseURL == "" || serviceRoleKey == "" {
+		return fmt.Errorf("supabase storage cleanup is unavailable because SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not configured")
+	}
+
+	deleteURL := fmt.Sprintf("%s/storage/v1/object/%s/%s", supabaseURL, avatarStorageBucket, escapeStorageObjectPath(objectPath))
+	request, err := http.NewRequest(http.MethodDelete, deleteURL, nil)
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Authorization", "Bearer "+serviceRoleKey)
+	request.Header.Set("apikey", serviceRoleKey)
+
+	response, err := (&http.Client{}).Do(request)
+	if err != nil {
+		return err
+	}
+
+	responseBody, _ := io.ReadAll(response.Body)
+	response.Body.Close()
+
+	if response.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("failed to delete avatar image %q from storage: %s", objectPath, strings.TrimSpace(string(responseBody)))
+	}
+
+	return nil
+}
+
 // Upload profile image
 func UploadProfileImage(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
@@ -282,6 +369,12 @@ func UploadProfileImage(w http.ResponseWriter, r *http.Request) {
 	// Parse multipart form (max 10MB)
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		http.Error(w, "Failed to parse form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var existingUser User
+	if err := db.DB.Select("avatarUrl").First(&existingUser, "id = ?", userID).Error; err != nil {
+		http.Error(w, "Error fetching current avatar: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -313,7 +406,8 @@ func UploadProfileImage(w http.ResponseWriter, r *http.Request) {
 	filename := uuid.New().String() + ext
 	contentType := http.DetectContentType(fileBytes)
 
-	uploadURL := fmt.Sprintf("%s/storage/v1/object/avatars/%s", supabaseURL, filename)
+	objectPath := fmt.Sprintf("%s/%s", userID, filename)
+	uploadURL := fmt.Sprintf("%s/storage/v1/object/%s/%s", supabaseURL, avatarStorageBucket, objectPath)
 	req, err := http.NewRequest(http.MethodPost, uploadURL, bytes.NewReader(fileBytes))
 	if err != nil {
 		http.Error(w, "Error creating upload request: "+err.Error(), http.StatusInternalServerError)
@@ -337,12 +431,18 @@ func UploadProfileImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	publicURL := fmt.Sprintf("%s/storage/v1/object/public/avatars/%s", supabaseURL, filename)
+	publicURL := fmt.Sprintf("%s/storage/v1/object/public/%s/%s", supabaseURL, avatarStorageBucket, objectPath)
 
 	// Update User in DB
 	if err := db.DB.Model(&User{}).Where("id = ?", userID).Update("avatarUrl", publicURL).Error; err != nil {
 		http.Error(w, "Error saving avatar URL to database: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	if existingUser.AvatarUrl != nil && strings.TrimSpace(*existingUser.AvatarUrl) != "" {
+		if err := deleteAvatarStorageObject(*existingUser.AvatarUrl); err != nil {
+			log.Printf("failed to delete previous avatar for user %s: %v", userID, err)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

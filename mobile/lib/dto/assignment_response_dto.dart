@@ -9,6 +9,7 @@ class AssignmentResponseDto {
     required this.department,
     required this.status,
     required this.notes,
+    this.assigneeName,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class AssignmentResponseDto {
   final String department;
   final String status;
   final String notes;
+  final String? assigneeName;
 
   factory AssignmentResponseDto.fromJson(Map<String, dynamic> json) {
     return AssignmentResponseDto(
@@ -28,6 +30,7 @@ class AssignmentResponseDto {
       department: (json['department'] as String? ?? '').trim(),
       status: (json['status'] as String? ?? '').trim(),
       notes: (json['notes'] as String? ?? '').trim(),
+      assigneeName: (json['fullName'] as String?)?.trim(),
     );
   }
 
@@ -40,7 +43,7 @@ class AssignmentResponseDto {
       specifications: notes,
       location: department.isNotEmpty ? department : 'Unspecified',
       status: 'Active',
-      assignedTo: assignedTo,
+      assignedTo: assignedTo ?? assigneeName,
       assignedToId: assignedToId,
       purchaseDate: '-',
       warrantyExpiry: '-',

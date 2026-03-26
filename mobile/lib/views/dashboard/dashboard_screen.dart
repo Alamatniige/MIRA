@@ -3,12 +3,13 @@ import '../../controllers/dashboard_controller.dart';
 import '../../models/asset.dart';
 import '../../models/dashboard_data.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/asset_thumbnail.dart';
 import '../../widgets/status_badge.dart';
 import '../assets/all_assets_screen.dart';
 
 /// Premium Dashboard - modern design with glassmorphism, refined cards, premium FAB
 class DashboardScreen extends StatefulWidget {
-  final VoidCallback onProfileTap;
+  final Future<void> Function() onProfileTap;
 
   const DashboardScreen({super.key, required this.onProfileTap});
 
@@ -60,7 +61,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final dashboard = _dashboardData;
 
     return Scaffold(
@@ -101,7 +101,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
-                                          color: Theme.of(context).colorScheme.primary,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
                                           letterSpacing: 0.8,
                                         ),
                                       ),
@@ -123,24 +125,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ],
                                   ),
                                 ),
+
+                                // Avatar with profile navigation
                                 GestureDetector(
-                                  onTap: widget.onProfileTap,
+                                  onTap: () async {
+                                    await widget.onProfileTap();
+                                    if (!mounted) {
+                                      return;
+                                    }
+                                    await _loadDashboard();
+                                  },
                                   child: Container(
                                     width: 50,
                                     height: 50,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      gradient: dashboard?.avatarUrl == null ? AppColors.primaryGradient : null,
-                                      color: dashboard?.avatarUrl != null ? Colors.white : null,
+                                      gradient: dashboard?.avatarUrl == null
+                                          ? AppColors.primaryGradient
+                                          : null,
+                                      color: dashboard?.avatarUrl != null
+                                          ? Colors.white
+                                          : null,
                                       image: dashboard?.avatarUrl != null
                                           ? DecorationImage(
-                                              image: NetworkImage(dashboard!.avatarUrl!),
+                                              image: NetworkImage(
+                                                dashboard!.avatarUrl!,
+                                              ),
                                               fit: BoxFit.cover,
                                             )
                                           : null,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withValues(alpha: 0.2),
                                           blurRadius: 16,
                                           offset: const Offset(0, 4),
                                         ),
@@ -174,6 +193,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     ),
+
+                    // Summary cards
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
@@ -185,13 +206,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             clipBehavior: Clip.none,
                             children: [
                               _SummaryCard(
-                                label: 'Total Assets',
+                                label: 'All Assets',
                                 value: '${dashboard?.totalAssets ?? 0}',
                                 icon: Icons.inventory_2_rounded,
                                 accentColor: const Color(0xFF0D9488),
+                                showArrow: true,
                                 onTap: () {
                                   Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (_) => const AllAssetsScreen()),
+                                    MaterialPageRoute(
+                                      builder: (_) => const AllAssetsScreen(),
+                                    ),
                                   );
                                 },
                               ),
@@ -210,11 +234,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 icon: Icons.build_rounded,
                                 accentColor: const Color(0xFFEAB308),
                               ),
+                              const SizedBox(width: 16),
+                              _SummaryCard(
+                                label: 'Pending Requests',
+                                value:
+                                    '${dashboard?.pendingRequests.length ?? 0}',
+                                icon: Icons.hourglass_bottom_rounded,
+                                accentColor: const Color(0xFFF59E0B),
+                              ),
                             ],
                           ),
                         ),
                       ),
                     ),
+
+                    // Assigned Assets
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
@@ -239,7 +273,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceVariant
+                                    .withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -263,7 +300,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           )
                         : SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 110),
+                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
                             sliver: SliverList(
                               delegate: SliverChildBuilderDelegate((
                                 context,
@@ -278,6 +315,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               }, childCount: dashboard.myAssets.length),
                             ),
                           ),
+
+                    // Pending Requests Section
+                    if (dashboard != null &&
+                        dashboard.pendingRequests.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Pending Requests',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                      letterSpacing: -0.3,
+                                    ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest
+                                      .withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${dashboard.pendingRequests.length} items',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (dashboard != null &&
+                        dashboard.pendingRequests.isNotEmpty)
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 110),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final asset = dashboard.pendingRequests[index];
+                            return _AssetListCard(
+                              asset: asset,
+                              onTap: () =>
+                                  _controller.openDetails(context, asset),
+                            );
+                          }, childCount: dashboard.pendingRequests.length),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -342,13 +446,17 @@ class _EmptyAssetsState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.inventory_2_outlined,
               size: 56,
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 24),
@@ -380,6 +488,7 @@ class _SummaryCard extends StatelessWidget {
   final IconData icon;
   final Color accentColor;
   final VoidCallback? onTap;
+  final bool showArrow;
 
   const _SummaryCard({
     required this.label,
@@ -387,6 +496,7 @@ class _SummaryCard extends StatelessWidget {
     required this.icon,
     required this.accentColor,
     this.onTap,
+    this.showArrow = false,
   });
 
   @override
@@ -400,7 +510,9 @@ class _SummaryCard extends StatelessWidget {
         color: surfaceColor,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.transparent,
           width: 1,
         ),
         boxShadow: [
@@ -410,7 +522,9 @@ class _SummaryCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: Theme.of(context).colorScheme.shadow.withValues(alpha: isDark ? 0.3 : 0.04),
+            color: Theme.of(
+              context,
+            ).colorScheme.shadow.withValues(alpha: isDark ? 0.3 : 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -426,54 +540,60 @@ class _SummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: accentColor, size: 22),
+                    ),
+                    if (showArrow)
+                      Icon(
+                        Icons.arrow_outward_rounded,
+                        color: accentColor.withValues(alpha: 0.6),
+                        size: 18,
+                      ),
+                  ],
                 ),
-                child: Icon(icon, color: accentColor, size: 22),
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    letterSpacing: -0.5,
-                    height: 1.1,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          letterSpacing: -0.5,
+                          height: 1.1,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ],
-      ),
+              ],
+            ),
           ),
         ),
       ),
@@ -539,7 +659,9 @@ class _AssetListCard extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.03),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.03),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -550,20 +672,24 @@ class _AssetListCard extends StatelessWidget {
                 Container(
                   width: 56,
                   height: 56,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3)
-                          : AppColors.gray50,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        _iconForCategory(asset.category),
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 26,
-                      ),
-                    ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Theme.of(context).colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.3)
+                        : AppColors.gray50,
+                    borderRadius: BorderRadius.circular(18),
                   ),
+                  child: AssetThumbnail(
+                    asset: asset,
+                    fallbackIcon: _iconForCategory(asset.category),
+                    backgroundColor: isDark
+                        ? Theme.of(context).colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.3)
+                        : AppColors.gray50,
+                    iconColor: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(

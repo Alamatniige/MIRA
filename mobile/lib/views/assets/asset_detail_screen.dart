@@ -23,15 +23,18 @@ class AssetDetailScreen extends StatefulWidget {
 class _AssetDetailScreenState extends State<AssetDetailScreen> {
   final _service = AssetsService();
   bool _isRequesting = false;
-  bool _isReporting = false;
+  final bool _isReporting = false;
 
   // Mutable copy so it can be refreshed after actions
   AssetResponseDto? _liveAsset;
+  String? _fetchedAssignedTo;
 
   @override
   void initState() {
     super.initState();
     _liveAsset = widget.liveAsset;
+    // Always fetch live data to get the current assignment status
+    _refreshLiveAsset();
   }
 
   String? get _assetUuid => _liveAsset?.id ?? widget.liveAsset?.id;
@@ -42,11 +45,26 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
   String? get _requestDisabledReason {
     final status = _liveAsset?.assignmentStatus?.toLowerCase();
     if (status == null) return null;
-    if (status == 'pending')
+    if (status == 'pending') {
       return 'A request is already pending for this asset.';
-    if (status == 'unavailable' || status == 'approved')
+    }
+    if (status == 'unavailable' || status == 'approved') {
       return 'This asset is currently unavailable.';
+    }
     return null;
+  }
+
+  String _buildAssignedToLabel() {
+    final status = _liveAsset?.assignmentStatus?.toLowerCase();
+    final assignedTo = _fetchedAssignedTo ?? widget.asset.assignedTo;
+
+    // If status is pending, show the user with (Pending Request) label
+    if (status == 'pending') {
+      return '${assignedTo?.isNotEmpty == true ? assignedTo : 'Unknown'} (Pending Request)';
+    }
+
+    // Otherwise show assigned user or "Unassigned"
+    return assignedTo?.isNotEmpty == true ? assignedTo! : 'Unassigned';
   }
 
   Future<void> _refreshLiveAsset() async {
@@ -54,9 +72,50 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     if (id == null || id.isEmpty) return;
     try {
       final updated = await _service.getAssetDetails(id);
-      if (mounted) setState(() => _liveAsset = updated);
+      if (mounted) {
+        setState(() => _liveAsset = updated);
+
+        // If the asset has an assignment status, try to fetch the assigned user name
+        final status = updated.assignmentStatus?.toLowerCase();
+        if ((status == 'pending' || status == 'assigned') &&
+            (widget.asset.assignedTo?.isEmpty ?? true)) {
+          _fetchAssignmentUserName();
+        }
+      }
     } catch (_) {
       // Refresh is best-effort; ignore failures
+    }
+  }
+
+  Future<void> _fetchAssignmentUserName() async {
+    try {
+      final assetId = _assetUuid ?? widget.asset.id;
+      final status = _liveAsset?.assignmentStatus?.toLowerCase();
+
+      // Fetch from appropriate endpoints based on status
+      if (status == 'pending') {
+        final pendingAssignments = await _service.getMyPendingAssignments();
+        final assignment = pendingAssignments.firstWhere(
+          (a) => a.assetId == assetId,
+          orElse: () => null as dynamic,
+        );
+        if (mounted) {
+          _fetchedAssignedTo = assignment.assigneeName ?? 'Unknown';
+          setState(() {});
+        }
+      } else {
+        final assignments = await _service.getMyAssignedAssets();
+        final assignment = assignments.firstWhere(
+          (a) => a.assetId == assetId,
+          orElse: () => null as dynamic,
+        );
+        if (mounted) {
+          _fetchedAssignedTo = assignment.assigneeName ?? 'Unknown';
+          setState(() {});
+        }
+      }
+    } catch (_) {
+      // Best effort; ignore failures
     }
   }
 
@@ -98,15 +157,15 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
         notes: notesController.text.trim(),
       );
       if (!mounted) return;
-      // Refresh so the button reflects the new Pending state immediately
-      await _refreshLiveAsset();
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Assignment request submitted successfully.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
+      // Navigate back to dashboard to show the asset in pending requests
+      if (!mounted) return;
+      Navigator.of(context).pop(true); // Return true to signal success
     } catch (e) {
       if (!mounted) return;
       // Re-sync UI with server state (handles stale-data 409)
@@ -173,13 +232,17 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
             color: Theme.of(context).colorScheme.surface,
             border: Border(
               top: BorderSide(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200.withValues(alpha: 0.5),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : AppColors.gray200.withValues(alpha: 0.5),
                 width: 1,
               ),
             ),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.05),
+                color: Theme.of(
+                  context,
+                ).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.05),
                 blurRadius: 20,
                 offset: const Offset(0, -4),
               ),
@@ -198,7 +261,9 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                     ),
                   ),
                 ),
@@ -207,10 +272,14 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.statusReported.withValues(alpha: isDark ? 0.12 : 0.08),
+                        color: AppColors.statusReported.withValues(
+                          alpha: isDark ? 0.12 : 0.08,
+                        ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.statusReported.withValues(alpha: isDark ? 0.3 : 0.2),
+                          color: AppColors.statusReported.withValues(
+                            alpha: isDark ? 0.3 : 0.2,
+                          ),
                           width: 1.5,
                         ),
                       ),
@@ -228,10 +297,17 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                                   const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.statusReported),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.statusReported,
+                                    ),
                                   )
                                 else
-                                  const Icon(Icons.report_outlined, color: AppColors.statusReported, size: 20),
+                                  const Icon(
+                                    Icons.report_outlined,
+                                    color: AppColors.statusReported,
+                                    size: 20,
+                                  ),
                                 const SizedBox(width: 8),
                                 const Text(
                                   'Report Issue',
@@ -252,25 +328,35 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: (_canRequest && !_isRequesting) ? AppColors.primaryGradient : null,
-                        color: (_canRequest && !_isRequesting) 
-                            ? null 
-                            : (isDark ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5) : AppColors.gray200),
+                        gradient: (_canRequest && !_isRequesting)
+                            ? AppColors.primaryGradient
+                            : null,
+                        color: (_canRequest && !_isRequesting)
+                            ? null
+                            : (isDark
+                                  ? AppColors.darkSurfaceVariant.withValues(
+                                      alpha: 0.5,
+                                    )
+                                  : AppColors.gray200),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: (_canRequest && !_isRequesting)
                             ? [
                                 BoxShadow(
-                                  color: AppColors.tealPrimary.withValues(alpha: isDark ? 0.4 : 0.2),
+                                  color: AppColors.tealPrimary.withValues(
+                                    alpha: isDark ? 0.4 : 0.2,
+                                  ),
                                   blurRadius: 16,
                                   offset: const Offset(0, 4),
-                                )
+                                ),
                               ]
                             : [],
                       ),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: (_canRequest && !_isRequesting) ? _handleRequestAssignment : null,
+                          onTap: (_canRequest && !_isRequesting)
+                              ? _handleRequestAssignment
+                              : null,
                           borderRadius: BorderRadius.circular(16),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -281,22 +367,32 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                                   const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 else
                                   Icon(
-                                    Icons.assignment_outlined, 
-                                    color: (_canRequest && !_isRequesting) 
-                                        ? Colors.white 
-                                        : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5), 
-                                    size: 20),
+                                    Icons.assignment_outlined,
+                                    color: (_canRequest && !_isRequesting)
+                                        ? Colors.white
+                                        : Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant
+                                              .withValues(alpha: 0.5),
+                                    size: 20,
+                                  ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Request Asset',
                                   style: TextStyle(
-                                    color: (_canRequest && !_isRequesting) 
-                                        ? Colors.white 
-                                        : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                    color: (_canRequest && !_isRequesting)
+                                        ? Colors.white
+                                        : Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant
+                                              .withValues(alpha: 0.5),
                                     fontWeight: FontWeight.w700,
                                     fontSize: 15,
                                   ),
@@ -326,10 +422,14 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
               height: 88,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.1),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.05),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -378,11 +478,11 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                   scrollDirection: Axis.horizontal,
                   clipBehavior: Clip.none,
                   itemCount: widget.asset.images.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 16),
+                  separatorBuilder: (_, _) => const SizedBox(width: 16),
                   itemBuilder: (context, index) {
                     final img = widget.asset.images[index];
-                    final fullUrl = img.startsWith('http') 
-                        ? img 
+                    final fullUrl = img.startsWith('http')
+                        ? img
                         : '${const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:8080')}$img';
                     return Container(
                       width: 280,
@@ -390,7 +490,9 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.shadow.withValues(alpha: 0.08),
                             blurRadius: 16,
                             offset: const Offset(0, 8),
                           ),
@@ -399,7 +501,9 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: Container(
-                          color: Theme.of(context).colorScheme.surfaceVariant,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           child: Image.network(
                             fullUrl,
                             fit: BoxFit.cover,
@@ -407,7 +511,10 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                               return Center(
                                 child: Icon(
                                   Icons.broken_image_rounded,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant
+                                      .withValues(alpha: 0.5),
                                   size: 48,
                                 ),
                               );
@@ -442,30 +549,58 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.04),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.shadow.withValues(alpha: 0.04),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
                 ],
                 border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.gray200,
                   width: 1,
                 ),
               ),
               child: Column(
                 children: [
-                  _DetailRow(icon: Icons.tag_rounded, label: 'Asset Tag', value: widget.asset.id),
+                  _DetailRow(
+                    icon: Icons.tag_rounded,
+                    label: 'Asset Tag',
+                    value: widget.asset.id,
+                  ),
                   _Divider(isDark: isDark),
-                  _DetailRow(icon: Icons.category_rounded, label: 'Category', value: widget.asset.category),
+                  _DetailRow(
+                    icon: Icons.category_rounded,
+                    label: 'Category',
+                    value: widget.asset.category,
+                  ),
                   _Divider(isDark: isDark),
-                  _DetailRow(icon: Icons.numbers_rounded, label: 'Serial Number', value: widget.asset.serialNumber),
+                  _DetailRow(
+                    icon: Icons.numbers_rounded,
+                    label: 'Serial Number',
+                    value: widget.asset.serialNumber,
+                  ),
                   _Divider(isDark: isDark),
-                  _DetailRow(icon: Icons.location_on_rounded, label: 'Location', value: widget.asset.location),
+                  _DetailRow(
+                    icon: Icons.location_on_rounded,
+                    label: 'Location',
+                    value: widget.asset.location,
+                  ),
                   _Divider(isDark: isDark),
-                  _DetailRow(icon: Icons.person_rounded, label: 'Assigned To', value: widget.asset.assignedTo ?? 'Unassigned'),
+                  _DetailRow(
+                    icon: Icons.person_rounded,
+                    label: 'Assigned To',
+                    value: _buildAssignedToLabel(),
+                  ),
                   if (widget.asset.specifications.isNotEmpty) ...[
                     _Divider(isDark: isDark),
-                    _DetailRow(icon: Icons.info_outline_rounded, label: 'Specifications', value: widget.asset.specifications),
+                    _DetailRow(
+                      icon: Icons.info_outline_rounded,
+                      label: 'Specifications',
+                      value: widget.asset.specifications,
+                    ),
                   ],
                 ],
               ),
@@ -499,12 +634,16 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DetailRow({required this.icon, required this.label, required this.value});
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Row(
@@ -513,13 +652,16 @@ class _DetailRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: isDark ? 0.3 : 1.0),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest
+                  .withValues(alpha: isDark ? 0.3 : 1.0),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               size: 20,
-              color: isDark ? Theme.of(context).colorScheme.onSurfaceVariant : AppColors.gray500,
+              color: isDark
+                  ? Theme.of(context).colorScheme.onSurfaceVariant
+                  : AppColors.gray500,
             ),
           ),
           const SizedBox(width: 16),
