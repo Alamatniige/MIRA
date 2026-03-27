@@ -145,6 +145,7 @@ export interface User {
   };
   status?: string;
   lastActive?: string;
+  avatarUrl?: string;
   assetsCount?: number;
 }
 

@@ -409,9 +409,13 @@ export function UsersContent() {
                     <TableCell className="p-3 sm:p-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br ${getAvatarGradient(user.id)} text-xs font-bold text-white shadow-sm`}
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br ${getAvatarGradient(user.id)} text-xs font-bold text-white shadow-sm overflow-hidden`}
                         >
-                          {getInitials(user.fullName)}
+                          {user.avatarUrl ? (
+                            <img src={user.avatarUrl} alt={user.fullName} className="h-full w-full object-cover" />
+                          ) : (
+                            getInitials(user.fullName)
+                          )}
                         </div>
                         <div className="flex flex-col">
                           <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -624,9 +628,13 @@ export function UsersContent() {
             {/* Avatar + Name row */}
             <div className="flex items-center gap-4">
               <div
-                className={`flex h-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br ${getAvatarGradient(viewUser.id)} text-lg font-bold text-white shadow-md`}
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br ${getAvatarGradient(viewUser.id)} text-lg font-bold text-white shadow-md overflow-hidden`}
               >
-                {getInitials(viewUser.fullName)}
+                {viewUser.avatarUrl ? (
+                  <img src={viewUser.avatarUrl} alt={viewUser.fullName} className="h-full w-full object-cover" />
+                ) : (
+                  getInitials(viewUser.fullName)
+                )}
               </div>
               <div>
                 <p className="text-base font-bold text-slate-900 dark:text-white">

@@ -6,6 +6,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { Button } from '../ui/button';
 import { NotificationBell } from '../notifications/NotificationBell';
+import { Avatar } from '../ui/avatar';
 
 export function Header() {
   const { theme, setTheme } = useTheme();
@@ -50,9 +51,13 @@ export function Header() {
           href="/profile"
           className="flex items-center gap-3 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-800 bg-transparent px-2 py-1.5 transition-all hover:bg-white dark:hover:bg-slate-900/50 hover:shadow-sm cursor-pointer group"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br from-[#0F766E] to-[#0E7490] text-xs font-bold text-white shadow-[0_0_10px_rgba(15,118,110,0.2)] group-hover:shadow-[0_0_15px_rgba(15,118,110,0.4)] transition-all">
-            {initials}
-          </div>
+          <Avatar 
+            src={currentUser?.avatarUrl} 
+            fullName={currentUser?.fullName} 
+            userId={currentUser?.id}
+            size="sm"
+            className="group-hover:shadow-[0_0_15px_rgba(15,118,110,0.4)]"
+          />
           <div className="hidden flex-col sm:flex">
             <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-[#0F766E] dark:group-hover:text-teal-400 transition-colors">
               {currentUser?.fullName}
