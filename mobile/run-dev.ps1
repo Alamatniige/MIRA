@@ -24,7 +24,7 @@ switch ($choice) {
     }
     "3" {
         Write-Host "Running on Chrome with local API (http://localhost:8080)..." -ForegroundColor Green
-        flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8080
+        flutter run -d chrome --web-port 3000 --dart-define=API_BASE_URL=http://localhost:8080
     }
     "4" {
         $ip = Read-Host "Enter your PC LAN IP"
