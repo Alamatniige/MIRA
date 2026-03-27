@@ -100,9 +100,8 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		payloadBytes, _ := json.Marshal(payload)
 
 		nextjsURL := os.Getenv("NEXT_PUBLIC_APP_URL")
-		if nextjsURL == "" || nextjsURL == "http://localhost:3000" {
-			// Force 127.0.0.1 for local dev to avoid IPv6 "connection refused" issues
-			nextjsURL = "http://127.0.0.1:3000"
+		if nextjsURL == "" {
+			nextjsURL = "http://localhost:3000"
 		}
 
 		req, err := http.NewRequest("POST", nextjsURL+"/api/emails/invite", bytes.NewBuffer(payloadBytes))

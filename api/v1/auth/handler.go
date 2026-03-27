@@ -249,8 +249,8 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		payloadBytes, _ := json.Marshal(payload)
 
 		nextjsURL := os.Getenv("NEXT_PUBLIC_APP_URL")
-		if nextjsURL == "" || nextjsURL == "http://localhost:3000" {
-			nextjsURL = "http://127.0.0.1:3000"
+		if nextjsURL == "" {
+			nextjsURL = "http://localhost:3000"
 		}
 
 		req, err := http.NewRequest("POST", nextjsURL+"/api/emails/reset-password", bytes.NewBuffer(payloadBytes))
