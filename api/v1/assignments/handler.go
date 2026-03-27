@@ -212,11 +212,19 @@ func RequestAssignment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	requestorName := requestorID
+	var requestor userv1.User
+	if err := db.DB.Select("id", `"fullName"`).First(&requestor, "id = ?", requestorID).Error; err == nil {
+		if strings.TrimSpace(requestor.FullName) != "" {
+			requestorName = requestor.FullName
+		}
+	}
+
 	go notifications.Emit(
 		notifications.TypeAssetRequest,
 		"New assignment request",
-		fmt.Sprintf("%s requested asset %s (%s).", requestorID, assetRecord.AssetName, assetRecord.Tag),
-		requestorID,
+		fmt.Sprintf("%s requested asset %s (%s).", requestorName, assetRecord.AssetName, assetRecord.Tag),
+		requestorName,
 	)
 
 	w.WriteHeader(http.StatusCreated)
