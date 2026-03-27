@@ -21,6 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoggingOut = false;
   bool _isUploading = false;
   UserProfile? _profile;
+  int _activeAssetsCount = 0;
   String? _errorMessage;
 
   final _controller = ProfileController();
@@ -34,10 +35,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final profile = await _controller.loadProfile();
+      final results = await Future.wait([
+        _controller.loadProfile(),
+        _controller.getActiveAssetsCount(),
+      ]);
       if (mounted) {
         setState(() {
-          _profile = profile;
+          _profile = results[0] as UserProfile;
+          _activeAssetsCount = results[1] as int;
           _isLoading = false;
         });
       }
@@ -65,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _isUploading = true);
 
       final imageUrl = await _controller.uploadAvatar(File(image.path));
-      
+
       // Reload profile to get the updated avatarUrl
       await _loadProfile();
 
@@ -75,7 +80,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             content: const Text('Profile picture updated successfully!'),
             backgroundColor: AppColors.tealPrimary,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -86,7 +93,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             content: Text('Failed to upload image: $e'),
             backgroundColor: AppColors.statusReported,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -221,13 +230,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               // Core Avatar
                               GestureDetector(
-                                onTap: _isUploading ? null : _pickAndUploadImage,
+                                onTap: _isUploading
+                                    ? null
+                                    : _pickAndUploadImage,
                                 child: Container(
                                   width: 100,
                                   height: 100,
                                   decoration: BoxDecoration(
-                                    gradient: _profile?.avatarUrl == null ? AppColors.primaryGradient : null,
-                                    color: _profile?.avatarUrl != null ? Colors.white : null,
+                                    gradient: _profile?.avatarUrl == null
+                                        ? AppColors.primaryGradient
+                                        : null,
+                                    color: _profile?.avatarUrl != null
+                                        ? Colors.white
+                                        : null,
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
@@ -238,12 +253,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         offset: const Offset(0, 8),
                                       ),
                                     ],
-                                    image: _profile?.avatarUrl != null 
-                                      ? DecorationImage(
-                                          image: NetworkImage(_profile!.avatarUrl!),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : null,
+                                    image: _profile?.avatarUrl != null
+                                        ? DecorationImage(
+                                            image: NetworkImage(
+                                              _profile!.avatarUrl!,
+                                            ),
+                                            fit: BoxFit.cover,
+                                          )
+                                        : null,
                                   ),
                                   child: Stack(
                                     children: [
@@ -251,7 +268,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         Center(
                                           child: Text(
                                             (_profile != null &&
-                                                        _profile!.fullName.isNotEmpty
+                                                        _profile!
+                                                            .fullName
+                                                            .isNotEmpty
                                                     ? _profile!.fullName[0]
                                                     : '?')
                                                 .toUpperCase(),
@@ -267,7 +286,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       if (_isUploading)
                                         Container(
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.4),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.4,
+                                            ),
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Center(
@@ -286,7 +307,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           decoration: BoxDecoration(
                                             color: AppColors.tealPrimary,
                                             shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white, width: 2),
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
                                           ),
                                           child: const Icon(
                                             Icons.camera_alt_rounded,
@@ -370,7 +394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _PremiumInfoRow(
                                 icon: Icons.inventory_2_rounded,
                                 label: 'Assigned Assets',
-                                value: '${_profile?.assetsCount ?? 0} Items',
+                                value: '$_activeAssetsCount Items',
                                 color: AppColors.statusMaintenance,
                                 isLast: true,
                               ),

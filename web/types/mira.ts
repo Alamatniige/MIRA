@@ -98,6 +98,7 @@ export interface Assignment {
   status: 'PENDING' | 'CONFIRMED' | 'RETURNED' | 'REJECTED';
   notes?: string;
   assignedAt: string;
+  confirmedAt?: string;
   returnedAt?: string;
   rejectedAt?: string;
   rejectedByUserId?: string;

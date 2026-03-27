@@ -33,7 +33,7 @@ import { useAssets } from '@/hooks/useAssets';
 import { useUsers } from '@/hooks/useUsers';
 import { Modal } from '../ui/modal';
 import { createMorReference, encodeMorData, type MorData } from '@/lib/mor';
-import type { User } from '@/types/mira';
+import type { Assignment, User } from '@/types/mira';
 import { useAuth } from '@/lib/auth';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -74,6 +74,102 @@ function statusLabel(status: string) {
   if (status === 'RETURNED') return 'Returned';
   if (status === 'REJECTED') return 'Rejected';
   return 'Pending';
+}
+
+interface TimelineEvent {
+  assignmentId: string;
+  assetTag: string;
+  assetName: string;
+  assignee: string;
+  department: string;
+  eventType: 'PENDING' | 'CONFIRMED' | 'RETURNED' | 'REJECTED';
+  eventLabel: string;
+  timestamp: string;
+  notes?: string;
+  rejectionReason?: string;
+  assignment: Assignment;
+  isFirst: boolean;
+  isLast: boolean;
+}
+
+function deriveTimelineEvents(a: Assignment): TimelineEvent[] {
+  const events: TimelineEvent[] = [];
+  const base = {
+    assignmentId: a.id,
+    assetTag: a.assetTag,
+    assetName: a.assetName,
+    assignee: a.assignee,
+    department: a.department as string,
+    assignment: a,
+  };
+
+  events.push({
+    ...base,
+    eventType: 'PENDING',
+    eventLabel: 'Assignment Created',
+    timestamp: a.assignedAt,
+    notes: a.notes,
+    isFirst: false,
+    isLast: false,
+  });
+
+  if (a.confirmedAt) {
+    events.push({
+      ...base,
+      eventType: 'CONFIRMED',
+      eventLabel: 'Assignment Confirmed',
+      timestamp: a.confirmedAt,
+      isFirst: false,
+      isLast: false,
+    });
+  }
+
+  if (a.returnedAt) {
+    events.push({
+      ...base,
+      eventType: 'RETURNED',
+      eventLabel: 'Asset Returned',
+      timestamp: a.returnedAt,
+      isFirst: false,
+      isLast: false,
+    });
+  }
+
+  if (a.rejectedAt) {
+    events.push({
+      ...base,
+      eventType: 'REJECTED',
+      eventLabel: 'Assignment Rejected',
+      timestamp: a.rejectedAt,
+      rejectionReason: a.rejectionReason,
+      isFirst: false,
+      isLast: false,
+    });
+  }
+
+  events.sort((x, y) => new Date(x.timestamp).getTime() - new Date(y.timestamp).getTime());
+
+  if (events.length > 0) {
+    events[0].isFirst = true;
+    events[events.length - 1].isLast = true;
+  }
+
+  return events;
+}
+
+function eventDotStyle(eventType: string) {
+  if (eventType === 'CONFIRMED') return 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]';
+  if (eventType === 'PENDING') return 'bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]';
+  if (eventType === 'REJECTED') return 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]';
+  if (eventType === 'RETURNED') return 'bg-slate-400 shadow-[0_0_6px_rgba(148,163,184,0.4)]';
+  return 'bg-slate-400';
+}
+
+function eventBadgeStyle(eventType: string) {
+  if (eventType === 'CONFIRMED') return badgeStyles.success;
+  if (eventType === 'PENDING') return badgeStyles.warning;
+  if (eventType === 'REJECTED') return badgeStyles.danger;
+  return badgeStyles.muted;
 }
 
 const EMPTY_FORM = {
@@ -125,6 +221,9 @@ export function AssignmentView() {
     statusVariant: 'success' | 'warning' | 'danger' | 'muted';
     notes?: string;
     rejectionReason?: string;
+    confirmedAt?: string;
+    returnedAt?: string;
+    rejectedAt?: string;
   } | null>(null);
 
   const [form, setForm] = useState(EMPTY_FORM);
@@ -446,132 +545,150 @@ export function AssignmentView() {
 
               <CardContent className="p-0">
                 {viewTimeline ? (
-                  /* Timeline View */
-                  <div className="space-y-0 divide-y divide-slate-100 dark:divide-white/5">
-                    {assignments.map((a, index) => {
+                  /* Timeline View — grouped by assignment, each showing lifecycle events */
+                  <div className="divide-y divide-slate-100 dark:divide-white/5">
+                    {assignments.map((a) => {
+                      const events = deriveTimelineEvents(a);
+                      const initials = getInitials(a.assignee);
                       const variant = statusVariant(a.status);
                       const label = statusLabel(a.status);
-                      const initials = getInitials(a.assignee);
                       const dateStr = formatDate(a.assignedAt);
                       return (
-                        <div
-                          key={a.id}
-                          className="group flex gap-4 px-5 py-4 transition-colors hover:bg-slate-50/80 dark:hover:bg-zinc-900/50"
-                        >
-                          {/* Timeline dot + line */}
-                          <div className="flex flex-col items-center">
-                            <span
-                              className={`mt-1 flex h-2.5 w-2.5 shrink-0 rounded-full ${
-                                variant === 'success'
-                                  ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
-                                  : variant === 'warning'
-                                    ? 'bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]'
-                                    : variant === 'danger'
-                                      ? 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]'
-                                      : 'bg-slate-400'
-                              }`}
-                            />
-                            {index < assignments.length - 1 && (
-                              <span className="mt-1.5 flex-1 w-px bg-slate-200 dark:bg-white/5" />
-                            )}
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 pb-1">
-                            <div className="flex items-start justify-between gap-2">
+                        <div key={a.id} className="px-5 py-4">
+                          {/* Assignment header */}
+                          <div className="flex items-start justify-between gap-2 mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-slate-100 to-slate-200 text-[10px] font-bold text-slate-600 dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
+                                {initials}
+                              </div>
                               <div>
-                                <p className="text-[11px] font-mono font-medium text-slate-400 dark:text-slate-500">
-                                  {a.assetTag}
-                                </p>
-                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                  {a.assetName}
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                    {a.assetName}
+                                  </p>
+                                  <Badge
+                                    variant={variant}
+                                    className={`shrink-0 text-[9px] px-1.5 py-0 ${badgeStyles[variant]}`}
+                                  >
+                                    {label}
+                                  </Badge>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  <span className="font-mono text-slate-400 dark:text-slate-500">
+                                    {a.assetTag}
+                                  </span>
+                                  {' · '}
+                                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                                    {a.assignee}
+                                  </span>
+                                  {' · '}
+                                  {a.department}
                                 </p>
                               </div>
-                              <div className="flex flex-col items-end gap-1.5">
-                                <Badge
-                                  variant={variant}
-                                  className={`shrink-0 text-[10px] ${badgeStyles[variant]}`}
-                                >
-                                  {label}
-                                </Badge>
-                                <div className="flex gap-2">
-                                  {a.status === 'PENDING' && (
-                                    <>
-                                      <button
-                                        onClick={() => {
-                                          setAssignmentToConfirm({
-                                            id: a.id,
-                                            asset: a.assetTag,
-                                            name: a.assetName,
-                                            assignee: a.assignee,
-                                            initials,
-                                            department: a.department,
-                                          });
-                                          setIsConfirmModalOpen(true);
-                                        }}
-                                        className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600/10 text-teal-600 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
-                                        title="Confirm Assignment"
-                                      >
-                                        <Check className="h-4 w-4" />
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setAssignmentToReject({
-                                            id: a.id,
-                                            asset: a.assetTag,
-                                            name: a.assetName,
-                                            assignee: a.assignee,
-                                          });
-                                          setRejectReason('');
-                                          setIsRejectModalOpen(true);
-                                        }}
-                                        className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/10 text-red-600 transition-all hover:bg-red-600 hover:text-white dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white"
-                                        title="Reject Assignment"
-                                      >
-                                        <X className="h-4 w-4" />
-                                      </button>
-                                    </>
-                                  )}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {a.status === 'PENDING' && (
+                                <>
                                   <button
                                     onClick={() => {
-                                      setViewingAssignment({
+                                      setAssignmentToConfirm({
+                                        id: a.id,
                                         asset: a.assetTag,
                                         name: a.assetName,
                                         assignee: a.assignee,
-                                        issuerName: a.issuerName,
                                         initials,
                                         department: a.department,
-                                        date: dateStr,
-                                        documentDate: a.assignedAt,
-                                        status: label,
-                                        statusVariant: variant,
-                                        notes: a.notes,
-                                        rejectionReason: a.rejectionReason,
                                       });
-                                      setIsViewModalOpen(true);
+                                      setIsConfirmModalOpen(true);
                                     }}
-                                    className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-                                    title="View Details"
+                                    className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600/10 text-teal-600 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
+                                    title="Confirm Assignment"
                                   >
-                                    <Eye className="h-4 w-4" />
+                                    <Check className="h-4 w-4" />
                                   </button>
+                                  <button
+                                    onClick={() => {
+                                      setAssignmentToReject({
+                                        id: a.id,
+                                        asset: a.assetTag,
+                                        name: a.assetName,
+                                        assignee: a.assignee,
+                                      });
+                                      setRejectReason('');
+                                      setIsRejectModalOpen(true);
+                                    }}
+                                    className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/10 text-red-600 transition-all hover:bg-red-600 hover:text-white dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white"
+                                    title="Reject Assignment"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                onClick={() => {
+                                  setViewingAssignment({
+                                    asset: a.assetTag,
+                                    name: a.assetName,
+                                    assignee: a.assignee,
+                                    issuerName: a.issuerName,
+                                    initials,
+                                    department: a.department,
+                                    date: dateStr,
+                                    documentDate: a.assignedAt,
+                                    status: label,
+                                    statusVariant: variant,
+                                    notes: a.notes,
+                                    rejectionReason: a.rejectionReason,
+                                    confirmedAt: a.confirmedAt,
+                                    returnedAt: a.returnedAt,
+                                    rejectedAt: a.rejectedAt,
+                                  });
+                                  setIsViewModalOpen(true);
+                                }}
+                                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Lifecycle events */}
+                          <div className="ml-4 border-l-2 border-slate-100 pl-4 dark:border-white/5">
+                            {events.map((ev, evIdx) => (
+                              <div
+                                key={`${ev.assignmentId}-${ev.eventType}`}
+                                className={`relative flex items-start gap-3 ${evIdx < events.length - 1 ? 'pb-3' : ''}`}
+                              >
+                                {/* Dot on the border */}
+                                <span
+                                  className={`absolute -left-21px top-5px flex h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white dark:ring-[#09090b] ${eventDotStyle(ev.eventType)}`}
+                                />
+                                {/* Event content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${eventBadgeStyle(ev.eventType)}`}
+                                    >
+                                      {ev.eventLabel}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                      {formatDate(ev.timestamp)}
+                                    </span>
+                                  </div>
+                                  {ev.eventType === 'PENDING' && ev.notes && (
+                                    <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 italic truncate">
+                                      {ev.notes}
+                                    </p>
+                                  )}
+                                  {ev.eventType === 'REJECTED' && ev.rejectionReason && (
+                                    <p className="mt-0.5 text-[11px] text-red-600 dark:text-red-400 italic truncate">
+                                      Reason: {ev.rejectionReason}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
-                            </div>
-                            <div className="mt-1.5 flex items-center gap-3">
-                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-linear-to-br from-slate-100 to-slate-200 text-[9px] font-bold text-slate-600 dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
-                                {initials}
-                              </div>
-                              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                                <span className="font-medium text-slate-800 dark:text-slate-200">
-                                  {a.assignee}
-                                </span>{' '}
-                                · {a.department}
-                              </p>
-                            </div>
-                            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
-                              {dateStr}
-                            </p>
+                            ))}
                           </div>
                         </div>
                       );
@@ -593,7 +710,7 @@ export function AssignmentView() {
                             Department
                           </TableHead>
                           <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
-                            Date Assigned
+                            Lifecycle
                           </TableHead>
                           <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
                             Status
@@ -608,7 +725,6 @@ export function AssignmentView() {
                           const variant = statusVariant(a.status);
                           const label = statusLabel(a.status);
                           const initials = getInitials(a.assignee);
-                          const dateStr = formatDate(a.assignedAt);
                           return (
                             <TableRow
                               key={a.id}
@@ -635,8 +751,39 @@ export function AssignmentView() {
                               <TableCell className="p-3 text-xs text-slate-500 dark:text-slate-400 sm:p-4">
                                 {a.department}
                               </TableCell>
-                              <TableCell className="p-3 text-xs text-slate-500 dark:text-slate-400 sm:p-4">
-                                {dateStr}
+                              <TableCell className="p-3 sm:p-4">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                      {formatDate(a.assignedAt)}
+                                    </span>
+                                  </div>
+                                  {a.confirmedAt && (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                        {formatDate(a.confirmedAt)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {a.returnedAt && (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
+                                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                        {formatDate(a.returnedAt)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {a.rejectedAt && (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                        {formatDate(a.rejectedAt)}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
                               </TableCell>
                               <TableCell className="p-3 sm:p-4">
                                 <Badge
@@ -695,12 +842,15 @@ export function AssignmentView() {
                                         issuerName: a.issuerName,
                                         initials,
                                         department: a.department,
-                                        date: dateStr,
+                                        date: formatDate(a.assignedAt),
                                         documentDate: a.assignedAt,
                                         status: label,
                                         statusVariant: variant,
                                         notes: a.notes,
                                         rejectionReason: a.rejectionReason,
+                                        confirmedAt: a.confirmedAt,
+                                        returnedAt: a.returnedAt,
+                                        rejectedAt: a.rejectedAt,
                                       });
                                       setIsViewModalOpen(true);
                                     }}
@@ -1039,6 +1189,64 @@ export function AssignmentView() {
                     </p>
                   </div>
                 )}
+
+                {/* Lifecycle Timeline */}
+                <div className="rounded-2xl border border-slate-100 bg-slate-50/30 p-4 dark:border-white/5 dark:bg-zinc-900/30">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+                    Assignment Timeline
+                  </h4>
+                  <div className="space-y-0">
+                    {(() => {
+                      const events: { label: string; type: string; date: string }[] = [];
+                      if (viewingAssignment.date)
+                        events.push({
+                          label: 'Pending',
+                          type: 'pending',
+                          date: viewingAssignment.date,
+                        });
+                      if (viewingAssignment.confirmedAt)
+                        events.push({
+                          label: 'Confirmed',
+                          type: 'confirmed',
+                          date: formatDate(viewingAssignment.confirmedAt),
+                        });
+                      if (viewingAssignment.returnedAt)
+                        events.push({
+                          label: 'Returned',
+                          type: 'returned',
+                          date: formatDate(viewingAssignment.returnedAt),
+                        });
+                      if (viewingAssignment.rejectedAt)
+                        events.push({
+                          label: 'Rejected',
+                          type: 'rejected',
+                          date: formatDate(viewingAssignment.rejectedAt),
+                        });
+                      return events.map((evt, i) => (
+                        <div key={evt.type} className="flex items-start gap-3">
+                          <div className="flex flex-col items-center">
+                            <div
+                              className={`h-2.5 w-2.5 rounded-full mt-1 ${eventDotStyle(evt.type)}`}
+                            />
+                            {i < events.length - 1 && (
+                              <div className="w-px flex-1 min-h-20px bg-slate-200 dark:bg-zinc-700" />
+                            )}
+                          </div>
+                          <div className="pb-3">
+                            <span
+                              className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${eventBadgeStyle(evt.type)}`}
+                            >
+                              {evt.label}
+                            </span>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              {evt.date}
+                            </p>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
               </div>
 
               <div className="pt-2 flex flex-col gap-3">

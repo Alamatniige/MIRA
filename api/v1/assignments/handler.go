@@ -413,6 +413,7 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 		Acknowledged     bool       `gorm:"column:acknowledged"`
 		Notes            string     `gorm:"column:notes"`
 		AssignedDate     time.Time  `gorm:"column:assignedDate"`
+		ConfirmedAt      *time.Time `gorm:"column:confirmedAt"`
 		RejectedAt       *time.Time `gorm:"column:rejectedAt"`
 		RejectedByUserID *string    `gorm:"column:rejectedByUserId"`
 		RejectionReason  string     `gorm:"column:rejectionReason"`
@@ -429,6 +430,7 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 			a.acknowledged,
 			a.notes,
 			a."assignedDate",
+			a."confirmedAt",
 			a."rejectedAt",
 			a."rejectedByUserId",
 			a."rejectionReason"
@@ -460,6 +462,7 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 			Status:           status,
 			Notes:            row.Notes,
 			AssignedAt:       row.AssignedDate,
+			ConfirmedAt:      row.ConfirmedAt,
 			RejectedAt:       row.RejectedAt,
 			RejectedByUserID: row.RejectedByUserID,
 			RejectionReason:  row.RejectionReason,
@@ -488,6 +491,7 @@ func GetMyPendingAssignments(w http.ResponseWriter, r *http.Request) {
 		Acknowledged     bool       `gorm:"column:acknowledged"`
 		Notes            string     `gorm:"column:notes"`
 		AssignedDate     time.Time  `gorm:"column:assignedDate"`
+		ConfirmedAt      *time.Time `gorm:"column:confirmedAt"`
 		RejectedAt       *time.Time `gorm:"column:rejectedAt"`
 		RejectedByUserID *string    `gorm:"column:rejectedByUserId"`
 		RejectionReason  string     `gorm:"column:rejectionReason"`
@@ -504,6 +508,7 @@ func GetMyPendingAssignments(w http.ResponseWriter, r *http.Request) {
 			a.acknowledged,
 			a.notes,
 			a."assignedDate",
+			a."confirmedAt",
 			a."rejectedAt",
 			a."rejectedByUserId",
 			a."rejectionReason"
@@ -535,6 +540,7 @@ func GetMyPendingAssignments(w http.ResponseWriter, r *http.Request) {
 			Status:           status,
 			Notes:            row.Notes,
 			AssignedAt:       row.AssignedDate,
+			ConfirmedAt:      row.ConfirmedAt,
 			RejectedAt:       row.RejectedAt,
 			RejectedByUserID: row.RejectedByUserID,
 			RejectionReason:  row.RejectionReason,
@@ -558,6 +564,7 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 		Acknowledged         bool       `gorm:"column:acknowledged"`
 		Notes                string     `gorm:"column:notes"`
 		AssignedDate         time.Time  `gorm:"column:assignedDate"`
+		ConfirmedAt          *time.Time `gorm:"column:confirmedAt"`
 		ReturnedDate         *time.Time `gorm:"column:returnedDate"`
 		RejectedAt           *time.Time `gorm:"column:rejectedAt"`
 		RejectedByUserID     *string    `gorm:"column:rejectedByUserId"`
@@ -579,6 +586,7 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 			a.acknowledged,
 			a.notes,
 			a."assignedDate",
+			a."confirmedAt",
 			a."returnedDate",
 			a."rejectedAt",
 			a."rejectedByUserId",
@@ -621,6 +629,7 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 			Status:           status,
 			Notes:            r.Notes,
 			AssignedAt:       r.AssignedDate,
+			ConfirmedAt:      r.ConfirmedAt,
 			ReturnedAt:       r.ReturnedDate,
 			RejectedAt:       r.RejectedAt,
 			RejectedByUserID: r.RejectedByUserID,
@@ -662,7 +671,10 @@ func ConfirmAssignment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := db.DB.Model(&assignment).Update("acknowledged", true).Error; err != nil {
+	if err := db.DB.Model(&assignment).Updates(map[string]interface{}{
+		"acknowledged": true,
+		"confirmedAt":  time.Now(),
+	}).Error; err != nil {
 		http.Error(w, "Failed to confirm assignment", http.StatusInternalServerError)
 		return
 	}

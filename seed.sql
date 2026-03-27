@@ -4,7 +4,7 @@ SET session_replication_role = replica;
 -- PostgreSQL database dump
 --
 
--- \restrict Y7jbubrsED6ZRBFkO1AARKmGZtyGoA0eErr6awv5Pi64l5UVU54UBLY2ZzxXhVz
+-- \restrict jBxQgsKGt2sDBol2nryrfQNZKCsVfVHvNUIUF6cn8p6Qea0yAcfNUlwCHYcf2H5
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -240,14 +240,14 @@ INSERT INTO "public"."assetType" ("id", "name", "created_at") VALUES
 --
 
 INSERT INTO "public"."assets" ("id", "assetName", "assetType", "serialNumber", "specification", "currentStatus", "createdAt", "isAssigned", "room", "floor", "tag", "image", "assignmentStatus") VALUES
-	('290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', 'Mac Book M4 Pro', 1, '0123-2345-5678-12GE', 'Metallic Gray', 'Good', '2026-02-27 03:39:50.251162', false, 2, 2, 'AS-01', '["https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/e411635a-597b-4a4e-aaae-d94c58cf7cac.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/d67c5092-403d-4b7d-8cea-ac7ddb5bd32c.jpg"]', 'Available'),
+	('ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', 'Attack Shark X11', 4, '1233-1233-1233-1233', 'White', 'Good', '2026-03-16 00:05:08.36615', false, 1, 4, 'AS-06', '["https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/76db7a5d-5007-41aa-908c-f75e8f4f24f7.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/ddf74362-0d69-4e40-a242-ad6da870315f.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/2610e6d3-6c44-444d-aa89-4c422e4c1460.jpg"]', 'Available'),
+	('9b206d15-f4be-43e7-b680-f869d2ce4ded', 'Mac Book M3 Pro', 1, '0123-2345-5678-12GE', 'Metallic Gray', 'Good', '2026-02-27 05:34:21.339847', false, 4, 2, 'AS-02', '[]', 'Available'),
+	('290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', 'Mac Book M4 Pro', 1, '0123-2345-5678-12GE', 'Metallic Gray', 'Good', '2026-02-27 03:39:50.251162', true, 2, 2, 'AS-01', '["https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/e411635a-597b-4a4e-aaae-d94c58cf7cac.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/d67c5092-403d-4b7d-8cea-ac7ddb5bd32c.jpg"]', 'Pending'),
 	('e9da18f8-e008-479d-9f5c-6afe5545fb86', 'Lenovo Ideapad', 1, '0TY3-2345-5H48-12GE', 'Glossy Black', 'Good', '2026-02-27 03:31:05.80168', false, 1, 2, 'AS-03', '[]', 'Available'),
 	('65ba725c-d900-4482-b0a6-49689e378007', 'MSI Thin A15', 1, '1234-1234-1234-1234', 'Metalic Gray', 'Under Review', '2026-03-16 01:24:58.514213', false, 1, 4, 'AS-07', '["https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/43e15f33-0fed-4e4e-9e8b-c025481804eb.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/7f53586e-19aa-4e74-95d7-cfc1cca482d6.webp"]', 'Unavailable'),
 	('9c625694-4085-4d20-80aa-ec8459353077', 'AOC Monitor', 2, 'J389-234H-ASD1-1349
 ', 'White', 'Under Maintenance', '2026-03-10 04:39:36.880957', false, 2, 4, 'AS-05', '[]', 'Available'),
-	('5f236ee4-d94b-4d90-bb3e-efc5294a9a7e', 'Lenovo ThinkPad', 1, '1092-3423-234J-2390', 'Black', 'Good', '2026-03-10 04:34:46.732863', false, 1, 2, 'AS-04', '[]', 'Available'),
-	('ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', 'Attack Shark X11', 4, '1233-1233-1233-1233', 'White', 'Good', '2026-03-16 00:05:08.36615', true, 1, 4, 'AS-06', '["https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/76db7a5d-5007-41aa-908c-f75e8f4f24f7.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/ddf74362-0d69-4e40-a242-ad6da870315f.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/2610e6d3-6c44-444d-aa89-4c422e4c1460.jpg"]', 'Pending'),
-	('9b206d15-f4be-43e7-b680-f869d2ce4ded', 'Mac Book M3 Pro', 1, '0123-2345-5678-12GE', 'Metallic Gray', 'Good', '2026-02-27 05:34:21.339847', true, 4, 2, 'AS-02', '[]', 'Approved');
+	('5f236ee4-d94b-4d90-bb3e-efc5294a9a7e', 'Lenovo ThinkPad', 1, '1092-3423-234J-2390', 'Black', 'Good', '2026-03-10 04:34:46.732863', false, 1, 2, 'AS-04', '[]', 'Available');
 
 
 --
@@ -264,10 +264,10 @@ INSERT INTO "public"."roles" ("id", "roleName") VALUES
 --
 
 INSERT INTO "public"."users" ("id", "email", "fullName", "password", "department", "createdAt", "roleId", "phoneNumber", "status", "lastActive", "assetsCount", "avatarUrl") VALUES
-	('37a8f454-8797-4aa9-b530-8c692c5695b4', 'sapioruiz23@gmail.com', 'John Doe', '$2a$10$PL.Bv3aFPv6Qkwf2IATF7u5dpmmyh62excrVjEGHsm0F5NnHBC9du', 'Project Management', '2026-03-09 06:09:53.265658', 2, '+639927240717', 'active', '2026-03-25 23:27:29.191443+00', 3, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/37a8f454-8797-4aa9-b530-8c692c5695b4/388f85c8-f98e-4451-b65f-3c84bf0a7f32.jpg'),
 	('515d239f-b702-478c-9a96-8504d1feedf0', 'dimaandalrim@gmail.com', 'Rim Vernon Dimaandal', '$2a$10$0jOQj.bn5p.JVeTromng3.MKRL22zzX5umqxiF88uTGbut0gGWare', 'IT', '2026-03-16 01:30:26.918941', 1, '123123123', 'active', '2026-03-16 06:39:06.292193+00', 0, NULL),
 	('dffb7e87-412c-42f8-a505-85ad81c6b07e', 'rimvernondimaandal011@gmail.com', 'Jojo', '$2a$10$Dzl3.DirLggT3./e5oXqrujqCFYhHE81JwQ9q0onqe85gGikjjSRa', 'Head Office', '2026-03-24 15:13:12.175907', 2, '123123123123', 'active', NULL, NULL, NULL),
-	('4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'admin@mira.com', 'Ruiz Miguel Sapio', '$2a$12$/a6xn3N1t9tUvCz4LS.kqOe56QPhDkE8AwBOl.c.MpFsiEVpemDAG', 'IT', '2026-03-09 05:46:11.392635', 1, '09000000000', 'active', '2026-03-25 23:07:45.443936+00', 0, NULL);
+	('4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'admin@mira.com', 'Ruiz Miguel Sapio', '$2a$12$/a6xn3N1t9tUvCz4LS.kqOe56QPhDkE8AwBOl.c.MpFsiEVpemDAG', 'IT', '2026-03-09 05:46:11.392635', 1, '09000000000', 'active', '2026-03-27 00:35:56.655912+00', 0, NULL),
+	('37a8f454-8797-4aa9-b530-8c692c5695b4', 'sapioruiz23@gmail.com', 'John Doe', '$2a$10$PL.Bv3aFPv6Qkwf2IATF7u5dpmmyh62excrVjEGHsm0F5NnHBC9du', 'Project Management', '2026-03-09 06:09:53.265658', 2, '+639927240717', 'active', '2026-03-27 00:35:16.255941+00', 3, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/37a8f454-8797-4aa9-b530-8c692c5695b4/388f85c8-f98e-4451-b65f-3c84bf0a7f32.jpg');
 
 
 --
@@ -275,12 +275,16 @@ INSERT INTO "public"."users" ("id", "email", "fullName", "password", "department
 --
 
 INSERT INTO "public"."assetsAssignment" ("id", "userId", "assignedDate", "returnedDate", "acknowledged", "assetId", "notes", "issuedByUserId", "issuedByNameSnapshot", "rejectedAt", "rejectedByUserId", "rejectionReason") VALUES
-	('dd3fa1b6-39b1-4986-8ea7-0527eb8c8bb6', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-15 15:59:09.915662', NULL, true, '9b206d15-f4be-43e7-b680-f869d2ce4ded', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, NULL),
 	('8ee21dcc-6364-4017-87bc-37997091679c', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-15 15:42:22.962192', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', '2026-03-16 05:57:45.929425', '515d239f-b702-478c-9a96-8504d1feedf0', 'Not Valid'),
 	('1acfedce-ed11-4df6-8a20-fec51d7ffc98', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-24 01:54:20.606845', '2026-03-24 05:27:13.283281', true, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, ''),
 	('0d6c7ddd-9ff1-49b2-a0f0-862c642d1bc4', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-15 16:11:26.355268', '2026-03-24 05:27:53.635675', true, 'e9da18f8-e008-479d-9f5c-6afe5545fb86', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, NULL),
 	('18786d28-dd46-4d9a-9ba9-2e53ce0c92af', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-24 07:03:36.242738', NULL, false, 'ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', '', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-24 07:07:24.006779', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'No'),
-	('0956d911-5248-4649-8907-e9e8d6f5a319', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-24 07:09:13.093786', NULL, false, 'ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', 'Test', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', NULL, NULL, '');
+	('dd3fa1b6-39b1-4986-8ea7-0527eb8c8bb6', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-15 15:59:09.915662', '2026-03-26 01:23:08.823913', true, '9b206d15-f4be-43e7-b680-f869d2ce4ded', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, NULL),
+	('4a169ff8-d073-4cdb-96fc-2c47d7ee35c9', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-26 00:42:13.382099', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', '', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 01:24:22.609454', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'no'),
+	('0956d911-5248-4649-8907-e9e8d6f5a319', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-24 07:09:13.093786', NULL, false, 'ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', 'Test', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 01:24:28.707862', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'No'),
+	('8874fb9c-b2ff-48e4-8b8c-a39895c70341', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-26 13:21:27.909779', NULL, false, '9b206d15-f4be-43e7-b680-f869d2ce4ded', '', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 23:55:29.450169', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'NO'),
+	('86a7c109-051c-4fb2-ba89-d1c4069e425a', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-26 01:35:01.80253', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', 'pahiram', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 23:55:38.796863', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'NOOOOOOOOOO'),
+	('b53ba0db-bfa9-4640-8ccb-6342bd1ab313', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-27 00:35:16.819408', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', 'Pahiram po plzzz', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', NULL, NULL, '');
 
 
 --
@@ -306,7 +310,11 @@ INSERT INTO "public"."notifications" ("id", "type", "title", "description", "rea
 	('715d548e-e6b1-498e-8bfc-94af5af4f33b', 'asset_assigned', 'Asset assigned', 'Ruiz Miguel Sapio assigned Mac Book M4 Pro (AS-01).', false, '2026-03-24 01:54:21.186765+00', 'Ruiz Miguel Sapio'),
 	('a9a36e47-9519-4b00-b38b-4084402fd6a1', 'report_created', 'New issue reported', 'John Doe reported an issue for asset 65ba725c-d900-4482-b0a6-49689e378007.', false, '2026-03-24 06:15:16.746942+00', 'John Doe'),
 	('76d93522-57ea-4c66-b97f-7f684d9032ca', 'asset_request', 'New assignment request', '37a8f454-8797-4aa9-b530-8c692c5695b4 requested asset Attack Shark X11 (AS-06).', false, '2026-03-24 07:03:36.821274+00', '37a8f454-8797-4aa9-b530-8c692c5695b4'),
-	('399185c6-e3fa-4c91-91ab-e24d14538f3a', 'asset_request', 'New assignment request', '37a8f454-8797-4aa9-b530-8c692c5695b4 requested asset Attack Shark X11 (AS-06).', false, '2026-03-24 07:09:13.67133+00', '37a8f454-8797-4aa9-b530-8c692c5695b4');
+	('399185c6-e3fa-4c91-91ab-e24d14538f3a', 'asset_request', 'New assignment request', '37a8f454-8797-4aa9-b530-8c692c5695b4 requested asset Attack Shark X11 (AS-06).', false, '2026-03-24 07:09:13.67133+00', '37a8f454-8797-4aa9-b530-8c692c5695b4'),
+	('87ad72f9-289e-4649-9af2-b831957d63e1', 'asset_request', 'New assignment request', '37a8f454-8797-4aa9-b530-8c692c5695b4 requested asset Mac Book M4 Pro (AS-01).', false, '2026-03-26 00:42:14.000113+00', '37a8f454-8797-4aa9-b530-8c692c5695b4'),
+	('30c9f2b2-c120-4cf4-821a-66b525a58b61', 'asset_request', 'New assignment request', '37a8f454-8797-4aa9-b530-8c692c5695b4 requested asset Mac Book M4 Pro (AS-01).', false, '2026-03-26 01:35:02.387388+00', '37a8f454-8797-4aa9-b530-8c692c5695b4'),
+	('6d083b47-ed51-4523-8fbf-fa5f44c55ebd', 'asset_request', 'New assignment request', '37a8f454-8797-4aa9-b530-8c692c5695b4 requested asset Mac Book M3 Pro (AS-02).', false, '2026-03-26 13:21:28.295477+00', '37a8f454-8797-4aa9-b530-8c692c5695b4'),
+	('078262ab-1ded-469e-9f22-268a3eb0f611', 'asset_request', 'New assignment request', 'John Doe requested asset Mac Book M4 Pro (AS-01).', false, '2026-03-27 00:35:17.294207+00', 'John Doe');
 
 
 --
@@ -437,6 +445,6 @@ SELECT pg_catalog.setval('"public"."roles_id_seq"', 2, true);
 -- PostgreSQL database dump complete
 --
 
--- \unrestrict Y7jbubrsED6ZRBFkO1AARKmGZtyGoA0eErr6awv5Pi64l5UVU54UBLY2ZzxXhVz
+-- \unrestrict jBxQgsKGt2sDBol2nryrfQNZKCsVfVHvNUIUF6cn8p6Qea0yAcfNUlwCHYcf2H5
 
 RESET ALL;
