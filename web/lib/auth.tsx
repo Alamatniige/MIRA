@@ -8,6 +8,7 @@ interface User {
   id: string;
   email: string;
   fullName?: string;
+  avatarUrl?: string;
   role?: {
     name: string;
   };
@@ -18,6 +19,7 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
   isLoading: boolean;
 }
 
@@ -48,6 +50,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setToken(savedToken);
         setUser(parsedUser);
+
+        // Silently refresh user data in background to pick up latest avatarUrl etc.
+        fetch('/api/users/me', {
+          headers: { Authorization: `Bearer ${savedToken}` },
+        })
+          .then((res) => res.ok ? res.json() : null)
+          .then((freshData) => {
+            if (freshData?.id) {
+              const freshUser = { ...parsedUser, ...freshData };
+              setUser(freshUser);
+              localStorage.setItem('mira_user', JSON.stringify(freshUser));
+            }
+          })
+          .catch(() => {}); // silent fail — stale data is fine
       } catch (e) {
         console.error('Failed to parse saved user', e);
         logout();
@@ -119,6 +135,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('mira_user', JSON.stringify(updatedUser));
+    }
+  };
+
   // Public routes that don't require authentication
   const publicRoutes = ['/login', '/forgot-password', '/setup-password'];
   const isPublicRoute = publicRoutes.includes(pathname);
@@ -130,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isLoading, token, pathname, isPublicRoute, router]);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

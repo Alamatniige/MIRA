@@ -102,6 +102,29 @@ export function useUsers() {
     [getHeaders, fetchUsers],
   );
 
+  const uploadAvatar = useCallback(
+    async (formData: FormData) => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('mira_token') : null;
+        const response = await fetch('/api/users/me/avatar', {
+          method: 'POST',
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            // Don't set Content-Type header manually for FormData.
+          },
+          body: formData,
+        });
+        if (!response.ok) throw new Error('Failed to upload avatar');
+        await fetchUsers(); // Refresh user data after upload
+        return await response.json();
+      } catch (err) {
+        console.error('Failed to upload avatar:', err);
+        throw err;
+      }
+    },
+    [fetchUsers],
+  );
+
   const getRoles = useCallback(async () => {
     try {
       const response = await fetch('/api/roles', {
@@ -129,6 +152,7 @@ export function useUsers() {
     deleteUser,
     getCurrentUser,
     updateUser,
+    uploadAvatar,
     getRoles,
   };
 }

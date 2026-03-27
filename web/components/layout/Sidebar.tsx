@@ -12,13 +12,14 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
   LogOut,
   User,
   Loader2,
 } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '../ui/button';
 import { useAuth } from '@/lib/auth';
+import { Avatar } from '../ui/avatar';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -37,7 +38,7 @@ export interface SidebarProps {
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   return (
@@ -55,8 +56,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       {/* Header */}
       <div className="flex items-center justify-between h-20 px-4 mt-2">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-[#0F766E] to-[#0E7490] shadow-[0_0_15px_rgba(15,118,110,0.3)] border border-white/10">
-            <ShieldCheck className="w-5 h-5 text-white" />
+          <div className="shrink-0 flex items-center justify-center w-10 h-10">
+            <Image 
+              src="/mira-web-favicon/icon0.svg" 
+              alt="MIRA Logo" 
+              width={32} 
+              height={32} 
+              className="w-8 h-8 object-contain"
+            />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col animate-in fade-in duration-300 whitespace-nowrap">
