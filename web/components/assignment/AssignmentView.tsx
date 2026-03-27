@@ -329,6 +329,15 @@ export function AssignmentView() {
   const issuerNameFallback =
     currentUser?.fullName?.trim() || currentUserName || 'Asset Management Officer';
 
+  const resolveMorIssuerName = (assignment: Assignment) => {
+    // Pending requests should resolve issuer at MOR viewing time from the current admin.
+    if (assignment.status === 'PENDING') {
+      return undefined;
+    }
+
+    return assignment.issuerName;
+  };
+
   const buildMorData = ({
     assetLabel,
     assigneeName,
@@ -434,7 +443,7 @@ export function AssignmentView() {
     const data = buildMorData({
       assetLabel: `${viewingAssignment.asset} · ${viewingAssignment.name}`,
       assigneeName: viewingAssignment.assignee,
-      issuerName: viewingAssignment.issuerName,
+      issuerName: viewingAssignment.status === 'Pending' ? undefined : viewingAssignment.issuerName,
       department: viewingAssignment.department,
       date: viewingAssignment.documentDate,
       notes: viewingAssignment.notes || '',
@@ -630,7 +639,7 @@ export function AssignmentView() {
                                     asset: a.assetTag,
                                     name: a.assetName,
                                     assignee: a.assignee,
-                                    issuerName: a.issuerName,
+                                    issuerName: resolveMorIssuerName(a),
                                     initials,
                                     department: a.department,
                                     date: dateStr,
@@ -839,7 +848,7 @@ export function AssignmentView() {
                                         asset: a.assetTag,
                                         name: a.assetName,
                                         assignee: a.assignee,
-                                        issuerName: a.issuerName,
+                                        issuerName: resolveMorIssuerName(a),
                                         initials,
                                         department: a.department,
                                         date: formatDate(a.assignedAt),
