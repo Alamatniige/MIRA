@@ -44,6 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android Release Signing - Keep these secure!
+android/*.jks
+android/key.properties
+
 # Ignore accidental nested flutter project
 mira/
 

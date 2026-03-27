@@ -188,10 +188,9 @@ func RequestAssignment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	assignment := AssetAssignment{
-		AssetID:        req.AssetID,
-		UserID:         requestorID,
-		IssuedByUserID: &requestorID,
-		Notes:          req.Notes,
+		AssetID: req.AssetID,
+		UserID:  requestorID,
+		Notes:   req.Notes,
 	}
 
 	if err := tx.Create(&assignment).Error; err != nil {
@@ -671,10 +670,31 @@ func ConfirmAssignment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := db.DB.Model(&assignment).Updates(map[string]interface{}{
+	confirmedByUserID, ok := authenticatedUserIDFromContext(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	updates := map[string]interface{}{
 		"acknowledged": true,
 		"confirmedAt":  time.Now(),
-	}).Error; err != nil {
+	}
+
+	if assignment.IssuedByUserID == nil || strings.TrimSpace(assignment.IssuedByNameSnapshot) == "" {
+		issuerName := confirmedByUserID
+		var confirmer userv1.User
+		if err := db.DB.Select("id", `"fullName"`).First(&confirmer, "id = ?", confirmedByUserID).Error; err == nil {
+			if strings.TrimSpace(confirmer.FullName) != "" {
+				issuerName = confirmer.FullName
+			}
+		}
+
+		updates["issuedByUserId"] = confirmedByUserID
+		updates["issuedByNameSnapshot"] = issuerName
+	}
+
+	if err := db.DB.Model(&assignment).Updates(updates).Error; err != nil {
 		http.Error(w, "Failed to confirm assignment", http.StatusInternalServerError)
 		return
 	}
