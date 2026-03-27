@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../core/network/api_exception.dart';
 import '../core/network/api_client.dart';
 import '../dto/asset_response_dto.dart';
@@ -66,12 +67,34 @@ class AssetsService {
     );
   }
 
-  /// Reports an issue for [assetId] with the given [description].
-  Future<void> reportIssue(String assetId, String description) async {
+  /// Reports an issue for [assetId] with the given [description] and optional [image].
+  Future<void> reportIssue(String assetId, String description, {String? imageUrl}) async {
     await _apiClient.post(
       '/issues/create',
-      body: {'assetId': assetId, 'description': description},
+      body: {
+        'assetId': assetId,
+        'description': description,
+        if (imageUrl != null) 'image': imageUrl,
+      },
     );
+  }
+
+  /// Uploads an issue image and returns the public URL.
+  Future<String> uploadIssueImage(File imageFile) async {
+    final response = await _apiClient.multipartPost(
+      '/issues/upload-image',
+      fileField: 'images',
+      file: imageFile,
+    );
+
+    if (response is Map<String, dynamic> && response.containsKey('imageUrls')) {
+      final urls = response['imageUrls'] as List;
+      if (urls.isNotEmpty) {
+        return urls.first.toString();
+      }
+    }
+    
+    throw const ApiException('Failed to upload image: No URL returned from server.');
   }
 
   Future<List<IssueReportDto>> getReportedIssues() async {

@@ -191,7 +191,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
       MaterialPageRoute(
         builder: (_) => ReportIssueScreen(
           asset: widget.asset,
-          assetIdToReport: _assetUuid ?? widget.asset.id,
+          assetIdToReport: _assetUuid ?? widget.asset.uuid,
         ),
       ),
     );

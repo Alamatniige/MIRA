@@ -139,3 +139,48 @@ export function useIssueReports() {
 
   return { reports, isLoading, error, refetch: fetchReports };
 }
+
+// ---------------------------------------------------------------------------
+// useUpdateReportStatus
+// Updates a report's status via PUT /api/reports/[id].
+// ---------------------------------------------------------------------------
+export function useUpdateReportStatus() {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const getHeaders = useCallback(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('mira_token') : null;
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }, []);
+
+  const updateStatus = async (reportId: string, status: string) => {
+    setIsUpdating(true);
+    setUpdateError(null);
+    try {
+      const res = await fetch(`/api/reports/${reportId}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ status }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || `Failed to update status (${res.status})`);
+      }
+
+      return await res.json();
+    } catch (err) {
+      console.error('useUpdateReportStatus:', err);
+      const msg = err instanceof Error ? err.message : 'Failed to update status';
+      setUpdateError(msg);
+      throw err;
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return { updateStatus, isUpdating, updateError };
+}

@@ -53,6 +53,7 @@ class AssetResponseDto {
   Asset toAsset({String? assignedTo, String? assignedToId}) {
     return Asset(
       id: tag.isNotEmpty ? tag : id,
+      uuid: id,
       name: assetName,
       category: assetTypeName?.isNotEmpty == true ? assetTypeName! : 'Asset',
       serialNumber: serialNumber,

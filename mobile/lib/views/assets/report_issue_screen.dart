@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../models/asset.dart';
 import '../../services/assets_service.dart';
 import '../../theme/app_theme.dart';
@@ -22,6 +24,29 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   final AssetsService _service = AssetsService();
   
   bool _isSubmitting = false;
+  XFile? _pickedFile;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? file = await _picker.pickImage(
+        source: source,
+        imageQuality: 70, // Compress for faster upload
+      );
+      if (file != null) {
+        setState(() => _pickedFile = file);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: $e')),
+      );
+    }
+  }
+
+  void _removeImage() {
+    setState(() => _pickedFile = null);
+  }
 
   @override
   void dispose() {
@@ -35,7 +60,16 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      await _service.reportIssue(widget.assetIdToReport, description);
+      String? imageUrl;
+      if (_pickedFile != null) {
+        imageUrl = await _service.uploadIssueImage(File(_pickedFile!.path));
+      }
+
+      await _service.reportIssue(
+        widget.assetIdToReport, 
+        description, 
+        imageUrl: imageUrl,
+      );
       
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -245,37 +279,100 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               ),
               const SizedBox(height: 24),
               
-              // Placeholder for future Photo Upload feature
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.gray200,
-                    style: BorderStyle.none, // Hide border if dashed isn't used easily
-                  ),
-                ),
-                child: Column(
+              // Photo Upload Section
+              if (_pickedFile != null)
+                Stack(
                   children: [
-                    Icon(
-                      Icons.add_a_photo_outlined,
-                      size: 32,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    Container(
+                      width: double.infinity,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        image: DecorationImage(
+                          image: FileImage(File(_pickedFile!.path)),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Attach Photo (Optional)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: GestureDetector(
+                        onTap: _removeImage,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, color: Colors.white, size: 20),
+                        ),
                       ),
                     ),
                   ],
+                )
+              else
+                InkWell(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      builder: (context) => SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.camera_alt),
+                              title: const Text('Take a Picture'),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _pickImage(ImageSource.camera);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.photo_library),
+                              title: const Text('Choose from Gallery'),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _pickImage(ImageSource.gallery);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.gray200,
+                        style: BorderStyle.solid,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.add_a_photo_outlined,
+                          size: 32,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Attach Photo (Optional)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         ),

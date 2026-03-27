@@ -28,6 +28,7 @@ type ReportDetail struct {
 	Description string    `json:"description"`
 	Status      string    `json:"status"`
 	ReportAt    time.Time `json:"reportAt"`
+	Image       string    `json:"image"`
 }
 
 // Asset maps to the assets table.

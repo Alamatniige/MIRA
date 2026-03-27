@@ -1,6 +1,7 @@
 /// Asset model - matches web Asset structure
 class Asset {
   final String id;
+  final String uuid;
   final String name;
   final String category;
   final String serialNumber;
@@ -15,6 +16,7 @@ class Asset {
 
   const Asset({
     required this.id,
+    required this.uuid,
     required this.name,
     required this.category,
     required this.serialNumber,
@@ -30,6 +32,7 @@ class Asset {
 
   Asset copyWith({
     String? id,
+    String? uuid,
     String? name,
     String? category,
     String? serialNumber,
@@ -44,6 +47,7 @@ class Asset {
   }) {
     return Asset(
       id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
       name: name ?? this.name,
       category: category ?? this.category,
       serialNumber: serialNumber ?? this.serialNumber,

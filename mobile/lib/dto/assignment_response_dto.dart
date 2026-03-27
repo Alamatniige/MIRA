@@ -37,6 +37,7 @@ class AssignmentResponseDto {
   Asset toFallbackAsset({String? assignedTo, String? assignedToId}) {
     return Asset(
       id: assetTag.isNotEmpty ? assetTag : assetId,
+      uuid: assetId,
       name: assetName,
       category: 'Asset',
       serialNumber: '-',

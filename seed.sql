@@ -4,7 +4,7 @@ SET session_replication_role = replica;
 -- PostgreSQL database dump
 --
 
--- \restrict jBxQgsKGt2sDBol2nryrfQNZKCsVfVHvNUIUF6cn8p6Qea0yAcfNUlwCHYcf2H5
+-- \restrict XhnHyVigQWOgXU4dq6o68Expx0uAQIfBnmJOfiuhhIyZeejEGApr5OzXhOPdKNO
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -240,14 +240,14 @@ INSERT INTO "public"."assetType" ("id", "name", "created_at") VALUES
 --
 
 INSERT INTO "public"."assets" ("id", "assetName", "assetType", "serialNumber", "specification", "currentStatus", "createdAt", "isAssigned", "room", "floor", "tag", "image", "assignmentStatus") VALUES
-	('ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', 'Attack Shark X11', 4, '1233-1233-1233-1233', 'White', 'Good', '2026-03-16 00:05:08.36615', false, 1, 4, 'AS-06', '["https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/76db7a5d-5007-41aa-908c-f75e8f4f24f7.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/ddf74362-0d69-4e40-a242-ad6da870315f.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/2610e6d3-6c44-444d-aa89-4c422e4c1460.jpg"]', 'Available'),
 	('9b206d15-f4be-43e7-b680-f869d2ce4ded', 'Mac Book M3 Pro', 1, '0123-2345-5678-12GE', 'Metallic Gray', 'Good', '2026-02-27 05:34:21.339847', false, 4, 2, 'AS-02', '[]', 'Available'),
 	('290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', 'Mac Book M4 Pro', 1, '0123-2345-5678-12GE', 'Metallic Gray', 'Good', '2026-02-27 03:39:50.251162', true, 2, 2, 'AS-01', '["https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/e411635a-597b-4a4e-aaae-d94c58cf7cac.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/d67c5092-403d-4b7d-8cea-ac7ddb5bd32c.jpg"]', 'Pending'),
-	('e9da18f8-e008-479d-9f5c-6afe5545fb86', 'Lenovo Ideapad', 1, '0TY3-2345-5H48-12GE', 'Glossy Black', 'Good', '2026-02-27 03:31:05.80168', false, 1, 2, 'AS-03', '[]', 'Available'),
 	('65ba725c-d900-4482-b0a6-49689e378007', 'MSI Thin A15', 1, '1234-1234-1234-1234', 'Metalic Gray', 'Under Review', '2026-03-16 01:24:58.514213', false, 1, 4, 'AS-07', '["https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/43e15f33-0fed-4e4e-9e8b-c025481804eb.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/7f53586e-19aa-4e74-95d7-cfc1cca482d6.webp"]', 'Unavailable'),
+	('ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', 'Attack Shark X11', 4, '1233-1233-1233-1233', 'White', 'Good', '2026-03-16 00:05:08.36615', true, 1, 4, 'AS-06', '["https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/76db7a5d-5007-41aa-908c-f75e8f4f24f7.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/ddf74362-0d69-4e40-a242-ad6da870315f.webp", "https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/asset/2610e6d3-6c44-444d-aa89-4c422e4c1460.jpg"]', 'Unavailable'),
+	('e9da18f8-e008-479d-9f5c-6afe5545fb86', 'Lenovo Ideapad', 1, '0TY3-2345-5H48-12GE', 'Glossy Black', 'Good', '2026-02-27 03:31:05.80168', true, 1, 2, 'AS-03', '[]', 'Unavailable'),
 	('9c625694-4085-4d20-80aa-ec8459353077', 'AOC Monitor', 2, 'J389-234H-ASD1-1349
 ', 'White', 'Under Maintenance', '2026-03-10 04:39:36.880957', false, 2, 4, 'AS-05', '[]', 'Available'),
-	('5f236ee4-d94b-4d90-bb3e-efc5294a9a7e', 'Lenovo ThinkPad', 1, '1092-3423-234J-2390', 'Black', 'Good', '2026-03-10 04:34:46.732863', false, 1, 2, 'AS-04', '[]', 'Available');
+	('5f236ee4-d94b-4d90-bb3e-efc5294a9a7e', 'Lenovo ThinkPad', 1, '1092-3423-234J-2390', 'Black', 'Good', '2026-03-10 04:34:46.732863', true, 1, 2, 'AS-04', '[]', 'Pending');
 
 
 --
@@ -264,27 +264,30 @@ INSERT INTO "public"."roles" ("id", "roleName") VALUES
 --
 
 INSERT INTO "public"."users" ("id", "email", "fullName", "password", "department", "createdAt", "roleId", "phoneNumber", "status", "lastActive", "assetsCount", "avatarUrl") VALUES
-	('515d239f-b702-478c-9a96-8504d1feedf0', 'dimaandalrim@gmail.com', 'Rim Vernon Dimaandal', '$2a$10$0jOQj.bn5p.JVeTromng3.MKRL22zzX5umqxiF88uTGbut0gGWare', 'IT', '2026-03-16 01:30:26.918941', 1, '123123123', 'active', '2026-03-16 06:39:06.292193+00', 0, NULL),
-	('dffb7e87-412c-42f8-a505-85ad81c6b07e', 'rimvernondimaandal011@gmail.com', 'Jojo', '$2a$10$Dzl3.DirLggT3./e5oXqrujqCFYhHE81JwQ9q0onqe85gGikjjSRa', 'Head Office', '2026-03-24 15:13:12.175907', 2, '123123123123', 'active', NULL, NULL, NULL),
-	('4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'admin@mira.com', 'Ruiz Miguel Sapio', '$2a$12$/a6xn3N1t9tUvCz4LS.kqOe56QPhDkE8AwBOl.c.MpFsiEVpemDAG', 'IT', '2026-03-09 05:46:11.392635', 1, '09000000000', 'active', '2026-03-27 00:35:56.655912+00', 0, NULL),
-	('37a8f454-8797-4aa9-b530-8c692c5695b4', 'sapioruiz23@gmail.com', 'John Doe', '$2a$10$PL.Bv3aFPv6Qkwf2IATF7u5dpmmyh62excrVjEGHsm0F5NnHBC9du', 'Project Management', '2026-03-09 06:09:53.265658', 2, '+639927240717', 'active', '2026-03-27 00:35:16.255941+00', 3, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/37a8f454-8797-4aa9-b530-8c692c5695b4/388f85c8-f98e-4451-b65f-3c84bf0a7f32.jpg');
+	('dffb7e87-412c-42f8-a505-85ad81c6b07e', 'rimvernondimaandal011@gmail.com', 'Jojo', '$2a$10$/ZNnIr0k0UNjcYZWOv7uquj/tdoDcF5t0GM4BCiz5m7gOK00oo91a', 'Head Office', '2026-03-24 15:13:12.175907', 2, '123123123123', 'active', '2026-03-27 05:31:44.93448+00', NULL, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/dffb7e87-412c-42f8-a505-85ad81c6b07e/0645394a-a1ac-4248-b334-d6647bd8f722.jpg'),
+	('515d239f-b702-478c-9a96-8504d1feedf0', 'dimaandalrim@gmail.com', 'Rim Vernon Dimaandal', '$2a$10$0jOQj.bn5p.JVeTromng3.MKRL22zzX5umqxiF88uTGbut0gGWare', 'IT', '2026-03-16 01:30:26.918941', 1, '123123123', 'active', '2026-03-27 05:41:46.621318+00', 0, NULL),
+	('4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'admin@mira.com', 'Ruiz Miguel Sapio', '$2a$12$/a6xn3N1t9tUvCz4LS.kqOe56QPhDkE8AwBOl.c.MpFsiEVpemDAG', 'IT', '2026-03-09 05:46:11.392635', 1, '09000000000', 'active', '2026-03-27 05:33:08.485922+00', 0, NULL),
+	('37a8f454-8797-4aa9-b530-8c692c5695b4', 'sapioruiz23@gmail.com', 'John Doe', '$2a$10$PL.Bv3aFPv6Qkwf2IATF7u5dpmmyh62excrVjEGHsm0F5NnHBC9du', 'Project Management', '2026-03-09 06:09:53.265658', 2, '+639927240717', 'active', '2026-03-27 05:43:20.996305+00', 3, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/37a8f454-8797-4aa9-b530-8c692c5695b4/388f85c8-f98e-4451-b65f-3c84bf0a7f32.jpg');
 
 
 --
 -- Data for Name: assetsAssignment; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO "public"."assetsAssignment" ("id", "userId", "assignedDate", "returnedDate", "acknowledged", "assetId", "notes", "issuedByUserId", "issuedByNameSnapshot", "rejectedAt", "rejectedByUserId", "rejectionReason") VALUES
-	('8ee21dcc-6364-4017-87bc-37997091679c', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-15 15:42:22.962192', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', '2026-03-16 05:57:45.929425', '515d239f-b702-478c-9a96-8504d1feedf0', 'Not Valid'),
-	('1acfedce-ed11-4df6-8a20-fec51d7ffc98', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-24 01:54:20.606845', '2026-03-24 05:27:13.283281', true, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, ''),
-	('0d6c7ddd-9ff1-49b2-a0f0-862c642d1bc4', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-15 16:11:26.355268', '2026-03-24 05:27:53.635675', true, 'e9da18f8-e008-479d-9f5c-6afe5545fb86', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, NULL),
-	('18786d28-dd46-4d9a-9ba9-2e53ce0c92af', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-24 07:03:36.242738', NULL, false, 'ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', '', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-24 07:07:24.006779', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'No'),
-	('dd3fa1b6-39b1-4986-8ea7-0527eb8c8bb6', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-15 15:59:09.915662', '2026-03-26 01:23:08.823913', true, '9b206d15-f4be-43e7-b680-f869d2ce4ded', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, NULL),
-	('4a169ff8-d073-4cdb-96fc-2c47d7ee35c9', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-26 00:42:13.382099', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', '', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 01:24:22.609454', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'no'),
-	('0956d911-5248-4649-8907-e9e8d6f5a319', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-24 07:09:13.093786', NULL, false, 'ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', 'Test', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 01:24:28.707862', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'No'),
-	('8874fb9c-b2ff-48e4-8b8c-a39895c70341', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-26 13:21:27.909779', NULL, false, '9b206d15-f4be-43e7-b680-f869d2ce4ded', '', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 23:55:29.450169', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'NO'),
-	('86a7c109-051c-4fb2-ba89-d1c4069e425a', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-26 01:35:01.80253', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', 'pahiram', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 23:55:38.796863', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'NOOOOOOOOOO'),
-	('b53ba0db-bfa9-4640-8ccb-6342bd1ab313', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-27 00:35:16.819408', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', 'Pahiram po plzzz', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', NULL, NULL, '');
+INSERT INTO "public"."assetsAssignment" ("id", "userId", "assignedDate", "returnedDate", "acknowledged", "assetId", "notes", "issuedByUserId", "issuedByNameSnapshot", "rejectedAt", "rejectedByUserId", "rejectionReason", "confirmedAt") VALUES
+	('8ee21dcc-6364-4017-87bc-37997091679c', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-15 15:42:22.962192', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', '2026-03-16 05:57:45.929425', '515d239f-b702-478c-9a96-8504d1feedf0', 'Not Valid', NULL),
+	('1acfedce-ed11-4df6-8a20-fec51d7ffc98', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-24 01:54:20.606845', '2026-03-24 05:27:13.283281', true, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, '', NULL),
+	('0d6c7ddd-9ff1-49b2-a0f0-862c642d1bc4', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-15 16:11:26.355268', '2026-03-24 05:27:53.635675', true, 'e9da18f8-e008-479d-9f5c-6afe5545fb86', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, NULL, NULL),
+	('18786d28-dd46-4d9a-9ba9-2e53ce0c92af', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-24 07:03:36.242738', NULL, false, 'ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', '', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-24 07:07:24.006779', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'No', NULL),
+	('dd3fa1b6-39b1-4986-8ea7-0527eb8c8bb6', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-15 15:59:09.915662', '2026-03-26 01:23:08.823913', true, '9b206d15-f4be-43e7-b680-f869d2ce4ded', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, NULL, NULL),
+	('4a169ff8-d073-4cdb-96fc-2c47d7ee35c9', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-26 00:42:13.382099', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', '', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 01:24:22.609454', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'no', NULL),
+	('0956d911-5248-4649-8907-e9e8d6f5a319', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-24 07:09:13.093786', NULL, false, 'ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', 'Test', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 01:24:28.707862', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'No', NULL),
+	('8874fb9c-b2ff-48e4-8b8c-a39895c70341', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-26 13:21:27.909779', NULL, false, '9b206d15-f4be-43e7-b680-f869d2ce4ded', '', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 23:55:29.450169', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'NO', NULL),
+	('86a7c109-051c-4fb2-ba89-d1c4069e425a', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-26 01:35:01.80253', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', 'pahiram', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', '2026-03-26 23:55:38.796863', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'NOOOOOOOOOO', NULL),
+	('b53ba0db-bfa9-4640-8ccb-6342bd1ab313', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-27 00:35:16.819408', NULL, false, '290a3fe6-6b3a-4e2c-8cbf-f02d7b20963a', 'Pahiram po plzzz', '37a8f454-8797-4aa9-b530-8c692c5695b4', '', NULL, NULL, '', NULL),
+	('c66b0761-cd91-4d8e-a473-b42f64b69415', 'dffb7e87-412c-42f8-a505-85ad81c6b07e', '2026-03-27 03:00:06.443843', NULL, true, 'ea61acb2-26c9-4ee4-90a9-c6c8a92589ba', '', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'Ruiz Miguel Sapio', NULL, NULL, '', '2026-03-27 03:02:07.539228'),
+	('8e1216f5-1f1e-4889-b813-d42ded39461b', 'dffb7e87-412c-42f8-a505-85ad81c6b07e', '2026-03-27 03:41:09.889253', NULL, true, 'e9da18f8-e008-479d-9f5c-6afe5545fb86', 'Wow ganda pahiram', '515d239f-b702-478c-9a96-8504d1feedf0', 'Rim Vernon Dimaandal', NULL, NULL, '', '2026-03-27 03:46:45.104683'),
+	('3d8d4164-c4b8-415b-bf0c-4845d33be00c', '37a8f454-8797-4aa9-b530-8c692c5695b4', '2026-03-27 05:36:55.957317', NULL, false, '5f236ee4-d94b-4d90-bb3e-efc5294a9a7e', 'peram', NULL, '', NULL, NULL, '', NULL);
 
 
 --
@@ -297,8 +300,8 @@ INSERT INTO "public"."assetsAssignment" ("id", "userId", "assignedDate", "return
 -- Data for Name: issueReports; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO "public"."issueReports" ("id", "assetId", "reportedBy", "description", "status", "reportAt") VALUES
-	('cf46817e-b288-482f-9875-ade8d45c19aa', '65ba725c-d900-4482-b0a6-49689e378007', '37a8f454-8797-4aa9-b530-8c692c5695b4', 'Test', 'Open', '2026-03-24 06:15:15.730121');
+INSERT INTO "public"."issueReports" ("id", "assetId", "reportedBy", "description", "status", "reportAt", "image") VALUES
+	('cf46817e-b288-482f-9875-ade8d45c19aa', '65ba725c-d900-4482-b0a6-49689e378007', '37a8f454-8797-4aa9-b530-8c692c5695b4', 'Test', 'Open', '2026-03-24 06:15:15.730121', NULL);
 
 
 --
@@ -314,7 +317,10 @@ INSERT INTO "public"."notifications" ("id", "type", "title", "description", "rea
 	('87ad72f9-289e-4649-9af2-b831957d63e1', 'asset_request', 'New assignment request', '37a8f454-8797-4aa9-b530-8c692c5695b4 requested asset Mac Book M4 Pro (AS-01).', false, '2026-03-26 00:42:14.000113+00', '37a8f454-8797-4aa9-b530-8c692c5695b4'),
 	('30c9f2b2-c120-4cf4-821a-66b525a58b61', 'asset_request', 'New assignment request', '37a8f454-8797-4aa9-b530-8c692c5695b4 requested asset Mac Book M4 Pro (AS-01).', false, '2026-03-26 01:35:02.387388+00', '37a8f454-8797-4aa9-b530-8c692c5695b4'),
 	('6d083b47-ed51-4523-8fbf-fa5f44c55ebd', 'asset_request', 'New assignment request', '37a8f454-8797-4aa9-b530-8c692c5695b4 requested asset Mac Book M3 Pro (AS-02).', false, '2026-03-26 13:21:28.295477+00', '37a8f454-8797-4aa9-b530-8c692c5695b4'),
-	('078262ab-1ded-469e-9f22-268a3eb0f611', 'asset_request', 'New assignment request', 'John Doe requested asset Mac Book M4 Pro (AS-01).', false, '2026-03-27 00:35:17.294207+00', 'John Doe');
+	('078262ab-1ded-469e-9f22-268a3eb0f611', 'asset_request', 'New assignment request', 'John Doe requested asset Mac Book M4 Pro (AS-01).', false, '2026-03-27 00:35:17.294207+00', 'John Doe'),
+	('8648133d-904d-4c60-9919-a1a6519121ac', 'asset_assigned', 'Asset assigned', 'Ruiz Miguel Sapio assigned Attack Shark X11 (AS-06).', false, '2026-03-27 03:00:06.83068+00', 'Ruiz Miguel Sapio'),
+	('7a8d1b82-68b5-4892-b668-6765ff5e6345', 'asset_request', 'New assignment request', 'Jojo requested asset Lenovo Ideapad (AS-03).', false, '2026-03-27 03:41:10.365617+00', 'Jojo'),
+	('7b26f7b0-786c-4905-8164-3a92cabcbf8b', 'asset_request', 'New assignment request', 'John Doe requested asset Lenovo ThinkPad (AS-04).', false, '2026-03-27 05:36:56.43574+00', 'John Doe');
 
 
 --
@@ -326,7 +332,12 @@ INSERT INTO "public"."password_reset_otps" ("id", "user_id", "otp_hash", "reset_
 	('7bea3a33-2895-46b9-8e14-50954ee34c03', '37a8f454-8797-4aa9-b530-8c692c5695b4', '$2a$10$1xdqwgM1Yfde43iFPwLenuMG2N0vpN4WjuGt9yeox2zcOIiS0JoVy', '3606b5bb-cb1d-4767-a8c5-9cbb69fd7c9f', '2026-03-23 07:08:55.727294+00', true, '2026-03-23 06:53:37.139909+00'),
 	('1e4cfdfd-2821-4267-906e-c229acc17815', '37a8f454-8797-4aa9-b530-8c692c5695b4', '$2a$10$4nRCMQdpsTYLApkw802aQuLmE0n08cM4DCodpXbRz8R8JTOaYr8ri', NULL, '2026-03-24 15:09:31.691028+00', true, '2026-03-24 14:59:31.828566+00'),
 	('8ad25e04-3fc6-4838-a838-68c95b9fa905', '37a8f454-8797-4aa9-b530-8c692c5695b4', '$2a$10$2tNlgFAmI5OAg8laVvgJZ.yMT0c.AuN/QRnwkh/sCVQn3/lOH1hzm', NULL, '2026-03-24 16:09:53.882008+00', true, '2026-03-24 15:59:54.019921+00'),
-	('78218bd8-25eb-4d09-9e31-6aa59866c9df', '37a8f454-8797-4aa9-b530-8c692c5695b4', '$2a$10$S8qUc/aqPig2kTBmDx9DnufIY/PqJO5hvwK.6pNKQuT6YAXawyj4e', NULL, '2026-03-24 16:11:55.689939+00', false, '2026-03-24 16:01:55.836253+00');
+	('78218bd8-25eb-4d09-9e31-6aa59866c9df', '37a8f454-8797-4aa9-b530-8c692c5695b4', '$2a$10$S8qUc/aqPig2kTBmDx9DnufIY/PqJO5hvwK.6pNKQuT6YAXawyj4e', NULL, '2026-03-24 16:11:55.689939+00', false, '2026-03-24 16:01:55.836253+00'),
+	('3210a51c-50a3-4798-b50b-6e026f99f4fa', 'dffb7e87-412c-42f8-a505-85ad81c6b07e', '$2a$10$zwXpJPXZPmE.Wbs2sFvEeOzTxZ1YUOJF3IK4wd9mkQV2JUjBT/Yu.', NULL, '2026-03-27 02:44:22.190881+00', true, '2026-03-27 02:34:22.284247+00'),
+	('62b42aa0-f83c-42ee-8720-2e144c8236ae', 'dffb7e87-412c-42f8-a505-85ad81c6b07e', '$2a$10$0b6Cjh4XbrfHAOh52qc9v.mPlGyG/cF1X.M0DZKsKLsk5nY6QeTce', NULL, '2026-03-27 02:55:38.057349+00', true, '2026-03-27 02:45:38.15128+00'),
+	('a31b28e8-717a-4278-92b1-28aeff84585a', 'dffb7e87-412c-42f8-a505-85ad81c6b07e', '$2a$10$ZkdGFM90JBDxQfErWqTtp.oNZN8JmnrutvcSvH8AiC9ct6qevPpoC', 'fc706a16-5cfd-4f4c-b1e6-1d44b850a5d6', '2026-03-27 03:05:02.758447+00', true, '2026-03-27 02:49:37.357071+00'),
+	('70aa2393-a478-42d4-98de-b366d36c3102', 'dffb7e87-412c-42f8-a505-85ad81c6b07e', '$2a$10$/oKmzf93AMgefzGmAKWBKu0bMjqfqISXX0M5ATBBvqrF.rgI7jTSG', NULL, '2026-03-27 05:41:59.590528+00', true, '2026-03-27 05:31:59.696242+00'),
+	('f2d16c7b-3487-4bb6-a636-38a0b0a020c9', 'dffb7e87-412c-42f8-a505-85ad81c6b07e', '$2a$10$.f7AWZ.v7pLA/0yn4Mtade4QZ1ldkhFMqaunTqogJWyZX8lm9hkhm', NULL, '2026-03-27 05:43:53.486643+00', false, '2026-03-27 05:33:53.580526+00');
 
 
 --
@@ -349,7 +360,8 @@ INSERT INTO "public"."qrCodes" ("id", "assetId", "qrValue", "generateAt") VALUES
 
 INSERT INTO "storage"."buckets" ("id", "name", "owner", "created_at", "updated_at", "public", "avif_autodetection", "file_size_limit", "allowed_mime_types", "owner_id", "type") VALUES
 	('asset', 'asset', NULL, '2026-03-11 04:40:23.664987+00', '2026-03-11 04:40:23.664987+00', true, false, NULL, NULL, NULL, 'STANDARD'),
-	('avatar', 'avatar', NULL, '2026-03-25 23:19:27.610001+00', '2026-03-25 23:19:27.610001+00', true, false, NULL, NULL, NULL, 'STANDARD');
+	('avatar', 'avatar', NULL, '2026-03-25 23:19:27.610001+00', '2026-03-25 23:19:27.610001+00', true, false, NULL, NULL, NULL, 'STANDARD'),
+	('reports', 'reports', NULL, '2026-03-27 05:08:07.485705+00', '2026-03-27 05:08:07.485705+00', true, false, NULL, NULL, NULL, 'STANDARD');
 
 
 --
@@ -378,7 +390,8 @@ INSERT INTO "storage"."objects" ("id", "bucket_id", "name", "owner", "created_at
 	('d05bae86-64d1-46fc-b372-85907dcd2503', 'asset', '2610e6d3-6c44-444d-aa89-4c422e4c1460.jpg', NULL, '2026-03-16 00:10:39.185253+00', '2026-03-16 00:10:39.185253+00', '2026-03-16 00:10:39.185253+00', '{"eTag": "\"877e79e687d08e551af1e34dcf408a95\"", "size": 142917, "mimetype": "image/jpeg", "cacheControl": "no-cache", "lastModified": "2026-03-16T00:10:40.000Z", "contentLength": 142917, "httpStatusCode": 200}', '68a94665-a288-42e3-9147-a1ecc7122b4c', NULL, '{}'),
 	('a14d48ce-0bfa-49cb-9201-65d55bf6c538', 'asset', '43e15f33-0fed-4e4e-9e8b-c025481804eb.webp', NULL, '2026-03-16 01:24:59.9176+00', '2026-03-16 01:24:59.9176+00', '2026-03-16 01:24:59.9176+00', '{"eTag": "\"22aaaa3a3e3004d7be26b4b6d2dded1f\"", "size": 14760, "mimetype": "image/webp", "cacheControl": "no-cache", "lastModified": "2026-03-16T01:25:00.000Z", "contentLength": 14760, "httpStatusCode": 200}', '9a60b547-a944-4d83-acbe-ff62a3729020', NULL, '{}'),
 	('64ad2b77-5657-4c25-9e5d-e9f18a089c9f', 'asset', '7f53586e-19aa-4e74-95d7-cfc1cca482d6.webp', NULL, '2026-03-16 01:25:00.240366+00', '2026-03-16 01:25:00.240366+00', '2026-03-16 01:25:00.240366+00', '{"eTag": "\"f29db5474e3e3634ed0ed8c00d7d7e37\"", "size": 39094, "mimetype": "image/webp", "cacheControl": "no-cache", "lastModified": "2026-03-16T01:25:01.000Z", "contentLength": 39094, "httpStatusCode": 200}', 'b3303ab5-e709-4939-9aad-3aae0bac8b6a', NULL, '{}'),
-	('7228db45-dfc8-4a91-a8e3-db4baffca4a7', 'avatar', '37a8f454-8797-4aa9-b530-8c692c5695b4/388f85c8-f98e-4451-b65f-3c84bf0a7f32.jpg', NULL, '2026-03-25 23:27:30.297667+00', '2026-03-25 23:27:30.297667+00', '2026-03-25 23:27:30.297667+00', '{"eTag": "\"20dc12b1b5a547088b74ed36158ed720\"", "size": 81869, "mimetype": "image/jpeg", "cacheControl": "no-cache", "lastModified": "2026-03-25T23:27:31.000Z", "contentLength": 81869, "httpStatusCode": 200}', '1cd108ff-53b5-4cfa-b2fa-2277b1a2b278', NULL, '{}');
+	('7228db45-dfc8-4a91-a8e3-db4baffca4a7', 'avatar', '37a8f454-8797-4aa9-b530-8c692c5695b4/388f85c8-f98e-4451-b65f-3c84bf0a7f32.jpg', NULL, '2026-03-25 23:27:30.297667+00', '2026-03-25 23:27:30.297667+00', '2026-03-25 23:27:30.297667+00', '{"eTag": "\"20dc12b1b5a547088b74ed36158ed720\"", "size": 81869, "mimetype": "image/jpeg", "cacheControl": "no-cache", "lastModified": "2026-03-25T23:27:31.000Z", "contentLength": 81869, "httpStatusCode": 200}', '1cd108ff-53b5-4cfa-b2fa-2277b1a2b278', NULL, '{}'),
+	('f39d0e00-fc58-423f-8276-7c6d983475f7', 'avatar', 'dffb7e87-412c-42f8-a505-85ad81c6b07e/0645394a-a1ac-4248-b334-d6647bd8f722.jpg', NULL, '2026-03-27 01:22:22.446187+00', '2026-03-27 01:22:22.446187+00', '2026-03-27 01:22:22.446187+00', '{"eTag": "\"1c17a1944768a62bee6a022543791d85\"", "size": 111587, "mimetype": "image/jpeg", "cacheControl": "no-cache", "lastModified": "2026-03-27T01:22:23.000Z", "contentLength": 111587, "httpStatusCode": 200}', 'ffd05433-5fdb-4cc0-8456-c18724b8c479', NULL, '{}');
 
 
 --
@@ -445,6 +458,6 @@ SELECT pg_catalog.setval('"public"."roles_id_seq"', 2, true);
 -- PostgreSQL database dump complete
 --
 
--- \unrestrict jBxQgsKGt2sDBol2nryrfQNZKCsVfVHvNUIUF6cn8p6Qea0yAcfNUlwCHYcf2H5
+-- \unrestrict XhnHyVigQWOgXU4dq6o68Expx0uAQIfBnmJOfiuhhIyZeejEGApr5OzXhOPdKNO
 
 RESET ALL;

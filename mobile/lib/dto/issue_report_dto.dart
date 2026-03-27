@@ -9,6 +9,8 @@ class IssueReportDto {
   final String status;
   final String reportAt;
 
+  final String? image;
+
   IssueReportDto({
     required this.id,
     required this.assetId,
@@ -19,6 +21,7 @@ class IssueReportDto {
     required this.description,
     required this.status,
     required this.reportAt,
+    this.image,
   });
 
   factory IssueReportDto.fromJson(Map<String, dynamic> json) {
@@ -32,6 +35,7 @@ class IssueReportDto {
       description: json['description']?.toString() ?? '',
       status: json['status']?.toString() ?? 'open',
       reportAt: json['reportAt']?.toString() ?? DateTime.now().toIso8601String(),
+      image: json['image']?.toString(),
     );
   }
 }

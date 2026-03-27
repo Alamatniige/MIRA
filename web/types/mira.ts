@@ -60,6 +60,7 @@ export interface IssueReport {
   description: string;
   status: 'open' | 'in_progress' | 'resolved' | string;
   reportAt: string;
+  image?: string;
 }
 
 export interface Asset {

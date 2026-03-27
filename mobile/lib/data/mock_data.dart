@@ -10,6 +10,7 @@ const String mockUserId = 'USR-001';
 final List<Asset> mockMyAssets = [
   const Asset(
     id: 'AST-001',
+    uuid: 'AST-001',
     name: 'Dell Latitude 5540',
     category: 'Laptop',
     serialNumber: 'DL5540-2024-001',
@@ -23,6 +24,7 @@ final List<Asset> mockMyAssets = [
   ),
   const Asset(
     id: 'AST-004',
+    uuid: 'AST-004',
     name: 'Dell UltraSharp U2723QE',
     category: 'Monitor',
     serialNumber: 'DU27-2023-044',
@@ -36,6 +38,7 @@ final List<Asset> mockMyAssets = [
   ),
   const Asset(
     id: 'AST-012',
+    uuid: 'AST-012',
     name: 'Logitech MX Keys',
     category: 'Peripheral',
     serialNumber: 'LMX-2023-012',
@@ -54,6 +57,7 @@ final List<Asset> mockAllAssets = [
   ...mockMyAssets,
   const Asset(
     id: 'AST-002',
+    uuid: 'AST-002',
     name: 'HP LaserJet Pro M404',
     category: 'Printer',
     serialNumber: 'HP404-2023-012',
@@ -67,6 +71,7 @@ final List<Asset> mockAllAssets = [
   ),
   const Asset(
     id: 'AST-003',
+    uuid: 'AST-003',
     name: 'MacBook Pro 16"',
     category: 'Laptop',
     serialNumber: 'MBP16-2024-003',
@@ -80,6 +85,7 @@ final List<Asset> mockAllAssets = [
   ),
   const Asset(
     id: 'AST-005',
+    uuid: 'AST-005',
     name: 'Lenovo ThinkPad X1 Carbon',
     category: 'Laptop',
     serialNumber: 'LTP-X1-2022-005',

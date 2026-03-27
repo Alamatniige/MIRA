@@ -12,4 +12,5 @@ func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/issues/update/{id}", middleware.AuthMiddleware(UpdateIssue)).Methods("PUT")
 	r.HandleFunc("/issues/delete/{id}", middleware.AuthMiddleware(DeleteIssue)).Methods("DELETE")
 	r.HandleFunc("/issues/asset/{assetId}", middleware.AuthMiddleware(GetIssueByAssetID)).Methods("GET")
+	r.HandleFunc("/issues/upload-image", middleware.AuthMiddleware(uploadReportImage)).Methods("POST")
 }

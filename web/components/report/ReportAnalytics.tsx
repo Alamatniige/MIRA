@@ -37,7 +37,8 @@ import {
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { BuildingFloorMap } from './BuildingFloorMap';
-import { useIssueReports } from '@/hooks/useReports';
+import { useIssueReports, useUpdateReportStatus } from '@/hooks/useReports';
+import { toast } from 'sonner';
 
 type Report = {
   id: string;
@@ -91,7 +92,8 @@ const kpis = (reports: Report[]) => [
 ];
 
 export function ReportAnalytics() {
-  const { reports: rawReports, isLoading: reportsLoading } = useIssueReports();
+  const { reports: rawReports, isLoading: reportsLoading, refetch } = useIssueReports();
+  const { updateStatus, isUpdating: statusUpdating } = useUpdateReportStatus();
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,8 +106,8 @@ export function ReportAnalytics() {
     user: r.userName || 'Unknown User',
     date: r.reportAt ? new Date(r.reportAt).toLocaleDateString('en-CA') : '',
     description: r.description,
-    status: r.status as Report['status'],
-    images: [],
+    status: r.status.toLowerCase() as Report['status'],
+    images: r.image ? [r.image] : [],
     initials: r.userName
       ? r.userName
         .split(' ')
@@ -114,6 +116,25 @@ export function ReportAnalytics() {
         .join('')
       : '?',
   }));
+
+  const handleUpdateStatus = async () => {
+    if (!selectedReport) return;
+
+    let nextStatus: Report['status'] = 'open';
+    if (selectedReport.status === 'open') nextStatus = 'in_progress';
+    else if (selectedReport.status === 'in_progress') nextStatus = 'resolved';
+    else return; // already resolved
+
+    try {
+      await updateStatus(selectedReport.id, nextStatus);
+      const successMsg = nextStatus === 'in_progress' ? 'Acknowledge: Under Maintenance' : 'Resolved: Good';
+      toast.success(`Case #${selectedReport.id}: ${successMsg}`);
+      refetch();
+      setSelectedReport((prev) => prev ? { ...prev, status: nextStatus } : null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update status');
+    }
+  };
 
   useEffect(() => {
     if (!reportsLoading) setIsLoading(false);
@@ -450,11 +471,25 @@ export function ReportAnalytics() {
                   </div>
 
                   <div className="pt-6 border-t border-slate-200 dark:border-teal-800/15">
-                    <Button className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-teal-600 dark:hover:bg-teal-500">
-                      Update Case Status
+                    <Button
+                      className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-teal-600 dark:hover:bg-teal-500"
+                      onClick={handleUpdateStatus}
+                      disabled={statusUpdating || selectedReport.status === 'resolved'}
+                    >
+                      {statusUpdating
+                        ? 'Updating...'
+                        : selectedReport.status === 'open'
+                          ? 'Acknowledge Case'
+                          : selectedReport.status === 'in_progress'
+                            ? 'Resolve Case'
+                            : 'Case Resolved'}
                     </Button>
                     <p className="mt-3 text-[10px] text-center text-slate-400 px-4 leading-tight">
-                      Changes will be logged in the system audit history.
+                      {selectedReport.status === 'resolved'
+                        ? 'The asset has been returned to Good condition.'
+                        : selectedReport.status === 'in_progress'
+                          ? 'Asset is currently Under Maintenance.'
+                          : 'Asset is currently Under Review.'}
                     </p>
                   </div>
                 </div>
