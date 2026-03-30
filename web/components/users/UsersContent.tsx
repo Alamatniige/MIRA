@@ -27,8 +27,15 @@ import {
   Phone,
   Building2,
   ArrowUpRight,
+  ChevronDown,
+  X,
+  Filter,
+  Tag,
+  Box,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRef } from 'react';
 import { User as UserType } from '@/types/mira';
 import { useUsers } from '@/hooks/useUsers';
 import { getInitials, getAvatarGradient } from '@/utils/user';
@@ -56,6 +63,100 @@ const STATUS_STYLES: Record<StatusVariant, string> = {
   active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
   inactive: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
 };
+
+/* ────────────────────────── Filter Dropdown Component ────────────────────────── */
+
+function FilterDropdown({
+  label,
+  icon: Icon,
+  options,
+  value,
+  onChange,
+  className = '',
+}: {
+  label: string;
+  icon: any;
+  options: string[];
+  value: string;
+  onChange: (val: string) => void;
+  className?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className={`relative ${className}`} ref={containerRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex h-8 items-center gap-2 rounded-lg border px-3 text-[11px] font-medium transition-all hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 ${
+          value && value !== 'all'
+            ? 'border-primary bg-primary/5 text-primary dark:border-teal-400 dark:bg-teal-400/10 dark:text-teal-400 shadow-sm shadow-primary/20'
+            : 'border-slate-200 bg-white text-slate-600 dark:border-white/10 dark:bg-[#09090b] dark:text-slate-400'
+        }`}
+      >
+        <Icon className={`h-3.5 w-3.5 ${value && value !== 'all' ? 'animate-in zoom-in duration-300' : ''}`} />
+        <span>
+          {value && value !== 'all' ? (
+            <span className="flex items-center gap-1.5">
+              <span className="opacity-60">{label}:</span> {value}
+            </span>
+          ) : (
+            `All ${label}s`
+          )}
+        </span>
+        <ChevronDown
+          className={`ml-1 h-3 w-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 z-50 mt-1.5 w-48 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-white/10 dark:bg-[#09090b]">
+          <div className="scrollbar-hide max-h-60 overflow-y-auto py-1">
+            <button
+              onClick={() => {
+                onChange('all');
+                setIsOpen(false);
+              }}
+              className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
+                value === 'all' || !value
+                  ? 'bg-primary/5 font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-400'
+                  : 'text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              All {label}s
+            </button>
+            {options.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => {
+                  onChange(opt);
+                  setIsOpen(false);
+                }}
+                className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
+                  value === opt
+                    ? 'bg-primary/5 font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-400'
+                    : 'text-slate-600 dark:text-slate-300'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -314,61 +415,74 @@ export function UsersContent() {
       <Card className="overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b]">
         <CardHeader className="border-b border-slate-100 bg-white/50 pb-4 backdrop-blur-sm dark:border-white/10 dark:bg-black/50">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
-                Registered Users
-              </CardTitle>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
-                {filtered.length} matching administrative accounts
-              </p>
+            <div className="flex items-center gap-3">
+              <div>
+                <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
+                  Registered Users
+                </CardTitle>
+                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-zinc-400">
+                  {filtered.length} matching administrative accounts
+                </p>
+              </div>
+              {(search || roleFilter !== 'all' || statusFilter !== 'all' || deptFilter !== 'all') && (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => {
+                    setSearch('');
+                    setRoleFilter('all');
+                    setStatusFilter('all');
+                    setDeptFilter('all');
+                  }}
+                  className="h-7 rounded-full bg-primary/5 px-3 text-[10px] font-bold text-primary hover:bg-primary/10 dark:bg-teal-400/10 dark:text-teal-400 dark:hover:bg-teal-400/20 transition-all active:scale-95"
+                >
+                  <X className="mr-1 h-2.5 w-2.5" />
+                  Clear Filters
+                </Button>
+              )}
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative group">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 transition-colors group-hover:text-slate-600" />
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Search */}
+              <div className="relative group/search">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none transition-colors group-focus-within/search:text-primary dark:group-focus-within/search:text-teal-500" />
                 <Input
+                  placeholder="Search users…"
+                  className="h-8 w-48 pl-8 pr-7 text-[11px] bg-slate-50/50 border-slate-200 focus:bg-white dark:bg-white/5 dark:border-white/10 dark:focus:bg-[#09090b] transition-all duration-200 rounded-lg"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Filter by name, email..."
-                  className="h-9 w-64 rounded-xl border-slate-200 bg-slate-50/50 pl-9 text-xs shadow-sm transition-all focus:bg-white focus:ring-slate-200 dark:border-white/10 dark:bg-zinc-900/50 dark:focus:bg-zinc-900"
                 />
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
-                >
-                  <option value="all">All Roles</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.name}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-                <select
-                  value={deptFilter}
-                  onChange={(e) => setDeptFilter(e.target.value)}
-                  className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300"
-                >
-                  <option value="all">All Depts</option>
-                  {Array.from(new Set(displayUsers.map((u) => u.department)))
-                    .filter(Boolean)
-                    .map((dept) => (
-                      <option key={dept} value={dept}>
-                        {dept}
-                      </option>
-                    ))}
-                </select>
-              </div>
+
+              {/* Filters */}
+              <FilterDropdown
+                label="Role"
+                icon={ShieldCheck}
+                options={roles.map((r) => r.name)}
+                value={roleFilter}
+                onChange={setRoleFilter}
+              />
+              <FilterDropdown
+                label="Status"
+                icon={UserCheck}
+                options={['Active', 'Inactive']}
+                value={statusFilter}
+                onChange={setStatusFilter}
+              />
+              <FilterDropdown
+                label="Department"
+                icon={Building2}
+                options={Array.from(new Set(displayUsers.map((u) => u.department))).filter(Boolean)}
+                value={deptFilter}
+                onChange={setDeptFilter}
+              />
             </div>
           </div>
         </CardHeader>

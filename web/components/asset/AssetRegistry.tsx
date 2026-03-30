@@ -23,7 +23,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import { AddLocationModal } from './modals/AddLocationModal';
 import { LocationSelect } from '@/components/ui/location-select';
-import { MapPin } from 'lucide-react';
+import { MapPin, Search, Filter, X, ChevronDown, Tag, Box, Layers } from 'lucide-react';
 
 /* ──────────────────────────────── helpers ──────────────────────────────── */
 
@@ -295,6 +295,104 @@ const avatarColors = [
 function getAvatarColor(initials: string) {
   const idx = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % avatarColors.length;
   return avatarColors[idx];
+}
+
+/* ────────────────────────── Filter Dropdown Component ────────────────────────── */
+
+function FilterDropdown({
+  label,
+  icon: Icon,
+  options,
+  value,
+  onChange,
+  className = '',
+}: {
+  label: string;
+  icon: any;
+  options: string[];
+  value: string;
+  onChange: (val: string) => void;
+  className?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className={`relative ${className}`} ref={containerRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex h-8 items-center gap-2 rounded-lg border px-3 text-[11px] font-medium transition-all hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 ${
+          value
+            ? 'border-primary bg-primary/5 text-primary dark:border-teal-400 dark:bg-teal-400/10 dark:text-teal-400 shadow-sm shadow-primary/20'
+            : 'border-slate-200 bg-white text-slate-600 dark:border-teal-800/30 dark:bg-[#09090b] dark:text-slate-400'
+        }`}
+      >
+        <Icon className={`h-3.5 w-3.5 ${value ? 'animate-in zoom-in duration-300' : ''}`} />
+        <span>
+          {value ? (
+            <span className="flex items-center gap-1.5">
+              <span className="opacity-60">{label}:</span> {value}
+            </span>
+          ) : (
+            `All ${label}s`
+          )}
+        </span>
+        <ChevronDown
+          className={`ml-1 h-3 w-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 z-50 mt-1.5 w-48 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-teal-800/40 dark:bg-[#09090b]">
+          <div className="scrollbar-hide max-h-60 overflow-y-auto py-1">
+            <button
+              onClick={() => {
+                onChange('');
+                setIsOpen(false);
+              }}
+              className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
+                !value
+                  ? 'bg-primary/5 font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-400'
+                  : 'text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              All {label}s
+            </button>
+            {options.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => {
+                  if (opt !== 'All') {
+                    onChange(opt);
+                  } else {
+                    onChange('');
+                  }
+                  setIsOpen(false);
+                }}
+                className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
+                  value === opt
+                    ? 'bg-primary/5 font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-400'
+                    : 'text-slate-600 dark:text-slate-300'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ─────────────────────────────── component ─────────────────────────────── */
@@ -772,93 +870,104 @@ export function AssetRegistry() {
         <Card className="overflow-hidden shadow-sm">
           {/* Filter bar */}
           <CardHeader className="border-b border-slate-100 dark:border-teal-800/25 bg-white dark:bg-[#09090b] pb-3 pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <CardTitle className="text-sm font-semibold">Asset Inventory</CardTitle>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-100">
+                  Asset Inventory
+                </CardTitle>
+                {(search ||
+                  assignmentStatusFilter ||
+                  conditionStatusFilter ||
+                  categoryFilter ||
+                  roomFilter ||
+                  floorFilter) && (
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => {
+                      setSearch('');
+                      setAssignmentStatusFilter('');
+                      setConditionStatusFilter('');
+                      setCategoryFilter('');
+                      setRoomFilter('');
+                      setFloorFilter('');
+                    }}
+                    className="h-7 rounded-full bg-primary/5 px-3 text-[10px] font-bold text-primary hover:bg-primary/10 dark:bg-teal-400/10 dark:text-teal-400 dark:hover:bg-teal-400/20 transition-all active:scale-95"
+                  >
+                    <X className="mr-1 h-2.5 w-2.5" />
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 {/* Search */}
-                <div className="relative">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
+                <div className="relative group/search">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none transition-colors group-focus-within/search:text-primary dark:group-focus-within/search:text-teal-500" />
                   <Input
                     placeholder="Search assets…"
-                    className="h-8 w-52 pl-8 text-[11px]"
+                    className="h-8 w-48 pl-8 pr-7 text-[11px] bg-slate-50/50 border-slate-200/60 focus:bg-white dark:bg-white/5 dark:border-teal-800/20 dark:focus:bg-[#09090b] transition-all duration-200 rounded-lg placeholder:text-slate-400 dark:placeholder:text-slate-600"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
+                  {search && (
+                    <button
+                      onClick={() => setSearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Filters */}
-                {[
-                  {
-                    label: 'Assignment Status',
-                    options: ['All', ...filterOptions.assignmentStatuses],
-                    value: assignmentStatusFilter,
-                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setAssignmentStatusFilter(e.target.value),
-                  },
-                  {
-                    label: 'Condition Status',
-                    options: ['All', ...filterOptions.conditionStatuses],
-                    value: conditionStatusFilter,
-                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setConditionStatusFilter(e.target.value),
-                  },
-                  {
-                    label: 'Category',
-                    options: ['All', ...filterOptions.categories],
-                    value: categoryFilter,
-                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setCategoryFilter(e.target.value),
-                  },
-                  {
-                    label: 'Room',
-                    options: ['All', ...filterOptions.rooms],
-                    value: roomFilter,
-                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setRoomFilter(e.target.value),
-                  },
-                  {
-                    label: 'Floor',
-                    options: ['All', ...filterOptions.floors],
-                    value: floorFilter,
-                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setFloorFilter(e.target.value),
-                  },
-                ].map((f) => (
-                  <select
-                    key={f.label}
-                    value={f.value}
-                    onChange={f.onChange}
-                    className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2.5 text-[11px] text-slate-700 dark:text-slate-300 focus:border-primary dark:focus:border-teal-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-teal-500/20 outline-none transition-colors"
-                  >
-                    <option value="">{f.label}: All</option>
-                    {f.options.slice(1).map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
-                ))}
+                <FilterDropdown
+                  label="Assignment"
+                  icon={Tag}
+                  options={filterOptions.assignmentStatuses}
+                  value={assignmentStatusFilter}
+                  onChange={setAssignmentStatusFilter}
+                />
+                <FilterDropdown
+                  label="Condition"
+                  icon={Filter}
+                  options={filterOptions.conditionStatuses}
+                  value={conditionStatusFilter}
+                  onChange={setConditionStatusFilter}
+                />
+                <FilterDropdown
+                  label="Category"
+                  icon={Box}
+                  options={filterOptions.categories}
+                  value={categoryFilter}
+                  onChange={setCategoryFilter}
+                />
+                <FilterDropdown
+                  label="Room"
+                  icon={MapPin}
+                  options={filterOptions.rooms}
+                  value={roomFilter}
+                  onChange={setRoomFilter}
+                />
+                <FilterDropdown
+                  label="Floor"
+                  icon={Layers}
+                  options={filterOptions.floors}
+                  value={floorFilter}
+                  onChange={setFloorFilter}
+                />
 
                 {/* Export button */}
+                <div className="h-4 w-px bg-slate-200 dark:bg-teal-800/30 mx-1 hidden sm:block" />
                 <Button
                   variant="outline"
                   size="sm"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-teal-900/20 transition-colors"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-teal-900/20 transition-all active:scale-95 shadow-sm"
                 >
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth={2}
+                    strokeWidth={2.4}
                     className="h-3.5 w-3.5"
                   >
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -1122,8 +1231,9 @@ export function AssetRegistry() {
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        {/* ── Generate QR Modal ── */}
+      {/* ── Generate QR Modal ── */}
         <Modal
           open={qrOpen}
           onClose={() => setQrOpen(false)}
@@ -2339,7 +2449,6 @@ export function AssetRegistry() {
             </div>
           </div>
         </Modal>
-      </div>
 
       {/* ── Image Lightbox Modal ── */}
       {galleryOpen && allImages.length > 0 && (
