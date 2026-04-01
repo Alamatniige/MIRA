@@ -30,7 +30,9 @@ class AssignmentResponseDto {
       department: (json['department'] as String? ?? '').trim(),
       status: (json['status'] as String? ?? '').trim(),
       notes: (json['notes'] as String? ?? '').trim(),
-      assigneeName: (json['fullName'] as String?)?.trim(),
+      assigneeName:
+          (json['assignee'] as String?)?.trim() ??
+          (json['fullName'] as String?)?.trim(),
     );
   }
 

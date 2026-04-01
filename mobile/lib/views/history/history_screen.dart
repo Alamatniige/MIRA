@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
-import '../../data/mock_data.dart';
-import '../../data/mock_data.dart';
 import '../../models/activity.dart';
-import '../../dto/issue_report_dto.dart';
+import '../../controllers/history_controller.dart';
 import '../../services/assets_service.dart';
 import '../assets/asset_detail_screen.dart';
 import 'reported_issue_detail_screen.dart';
 
-/// Activity History - modern premium timeline with pill filters and glowing cards
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
@@ -17,11 +14,10 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
+  final HistoryController _controller = HistoryController();
   String _selectedFilter = 'all';
   bool _isLoading = true;
-  bool _isLoadingIssues = false;
-  List<IssueReportDto> _reportedIssues = [];
-  final AssetsService _assetsService = AssetsService();
+  List<ActivityItem> _items = [];
 
   @override
   void initState() {
@@ -30,37 +26,32 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    // Mock general activity load
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (mounted) setState(() => _isLoading = false);
-    
-    // Load real reported issues quietly in parallel
-    _fetchReportedIssues();
-  }
-
-  Future<void> _fetchReportedIssues() async {
-    if (!mounted) return;
-    setState(() => _isLoadingIssues = true);
+    setState(() => _isLoading = true);
     try {
-      final issues = await _assetsService.getReportedIssues();
-      if (mounted) setState(() => _reportedIssues = issues);
+      final data = await _controller.loadHistory(_selectedFilter);
+      if (mounted) setState(() => _items = data);
     } catch (_) {
-      // ignore
+      // Handle error
     } finally {
-      if (mounted) setState(() => _isLoadingIssues = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   static const List<Map<String, String>> _filters = [
     {'id': 'all', 'label': 'All Activity'},
     {'id': 'assigned', 'label': 'Assigned'},
-    {'id': 'reported', 'label': 'Reported Issues'},
-    {'id': 'maintenance', 'label': 'Maintenance'},
+    {'id': 'reported', 'label': 'Reported'},
   ];
 
-  List<ActivityItem> get _filteredActivities {
-    if (_selectedFilter == 'all') return mockActivityHistory;
-    return mockActivityHistory.where((a) => a.type == _selectedFilter).toList();
+  void _onSearchChanged(String query) {
+    _controller.setSearchQuery(query);
+    setState(() => _items = _controller.getFilteredAndSortedItems());
+  }
+
+  void _onSortChanged(String field) {
+    final newAscending = _controller.sortBy == field ? !_controller.sortAscending : false;
+    _controller.setSort(field, newAscending);
+    setState(() => _items = _controller.getFilteredAndSortedItems());
   }
 
   @override
@@ -75,23 +66,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            // Modern floating header
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
-                child: Text(
-                  'Activity History',
-                  style: TextStyle(
-                    fontSize: 34,
-                    fontWeight: FontWeight.w800,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    letterSpacing: -0.5,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Activity History',
+                      style: TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSearchBar(isDark),
+                  ],
                 ),
               ),
             ),
             
-            // Premium Filter pills
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 48,
@@ -107,19 +103,53 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     return _FilterPill(
                       label: filter['label']!,
                       isSelected: isSelected,
-                      onTap: () => setState(() => _selectedFilter = filter['id']!),
+                      onTap: () {
+                        setState(() => _selectedFilter = filter['id']!);
+                        _loadInitialData();
+                      },
                     );
                   },
                 ),
               ),
             ),
             
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                child: Row(
+                  children: [
+                    Text(
+                      'Sorting by:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _SortOption(
+                      label: 'Date',
+                      isActive: _controller.sortBy == 'date',
+                      isAscending: _controller.sortAscending,
+                      onTap: () => _onSortChanged('date'),
+                    ),
+                    const SizedBox(width: 8),
+                    _SortOption(
+                      label: 'Name',
+                      isActive: _controller.sortBy == 'name',
+                      isAscending: _controller.sortAscending,
+                      onTap: () => _onSortChanged('name'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             
-            // Timeline Content
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: _isLoading || (_selectedFilter == 'reported' && _isLoadingIssues)
+              sliver: _isLoading
                   ? const SliverToBoxAdapter(
                       child: Center(
                         child: Padding(
@@ -128,9 +158,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                       ),
                     )
-                  : (_selectedFilter == 'reported')
-                      ? _buildReportedIssuesList(isDark)
-                      : _buildMockActivitiesList(isDark),
+                  : _buildActivitiesList(isDark),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 48)),
           ],
@@ -139,8 +167,55 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildMockActivitiesList(bool isDark) {
-    if (_filteredActivities.isEmpty) {
+  Widget _buildSearchBar(bool isDark) {
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200,
+        ),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: AppColors.navy.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+        ],
+      ),
+      child: TextField(
+        onChanged: _onSearchChanged,
+        textAlignVertical: TextAlignVertical.center,
+        style: TextStyle(
+          fontSize: 16,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+        decoration: InputDecoration(
+          filled: false, // Ensure no double-layer background
+          hintText: 'Search activities...',
+          hintStyle: TextStyle(
+            fontSize: 15,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: 22,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+          isDense: false,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivitiesList(bool isDark) {
+    if (_items.isEmpty) {
       return SliverToBoxAdapter(
         child: Center(
           child: Padding(
@@ -175,7 +250,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Try selecting a different filter',
+                  'Try adjusting your filters or search',
                   style: TextStyle(
                     fontSize: 14,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -191,7 +266,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          final item = _filteredActivities[index];
+          final item = _items[index];
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: _ActivityCard(
@@ -200,206 +275,100 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           );
         },
-        childCount: _filteredActivities.length,
+        childCount: _items.length,
       ),
     );
   }
 
-  Widget _buildReportedIssuesList(bool isDark) {
-    if (_reportedIssues.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(48),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle_outline_rounded, size: 64, color: AppColors.tealLight),
-                const SizedBox(height: 16),
-                Text(
-                  'No issues reported',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+  void _openAsset(BuildContext context, ActivityItem activity) async {
+    try {
+      final assetsService = AssetsService();
 
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final issue = _reportedIssues[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _ReportedIssueCard(
-              issue: issue,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ReportedIssueDetailScreen(issue: issue),
-                  ),
-                );
-              },
+      if (activity.type == 'reported') {
+        final reports = await assetsService.getReportedIssues();
+        final issue = reports.firstWhere(
+          (r) => r.id == activity.id,
+          orElse: () => throw Exception('Issue report not found'),
+        );
+
+        if (context.mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ReportedIssueDetailScreen(issue: issue),
             ),
           );
-        },
-        childCount: _reportedIssues.length,
-      ),
-    );
-  }
+        }
+        return;
+      }
 
-  void _openAsset(BuildContext context, ActivityItem activity) {
-    final asset = findAssetById(activity.assetId);
-    if (asset != null) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => AssetDetailScreen(asset: asset),
-        ),
-      );
+      final assetDto = await assetsService.getAssetDetails(activity.assetId);
+      if (context.mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => AssetDetailScreen(asset: assetDto.toAsset()),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not load details: ${e.toString()}')),
+        );
+      }
     }
   }
 }
 
-class _ReportedIssueCard extends StatelessWidget {
-  final IssueReportDto issue;
+class _SortOption extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final bool isAscending;
   final VoidCallback onTap;
-  const _ReportedIssueCard({required this.issue, required this.onTap});
+
+  const _SortOption({
+    required this.label,
+    required this.isActive,
+    required this.isAscending,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final dt = DateTime.tryParse(issue.reportAt) ?? DateTime.now();
-    final formattedDate = '${dt.day}/${dt.month}/${dt.year}';
+    final primaryColor = isDark ? AppColors.tealLight : AppColors.tealPrimary;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? primaryColor.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isActive ? primaryColor : (isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.gray200),
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.statusReported.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.warning_rounded, color: AppColors.statusReported, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            issue.assetName,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          Text(
-                            'Tag: ${issue.assetTag} · $formattedDate',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurfaceVariant : AppColors.gray100,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        issue.status.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Divider(height: 1),
-                ),
-                Text(
-                  'Issue Description',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  issue.description.isNotEmpty ? issue.description : 'No description provided.',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Icon(Icons.person_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Reported by ${issue.userName}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const Spacer(),
-                    // Placeholder for Images preview
-                    Icon(Icons.image_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
-                    const SizedBox(width: 4),
-                    Text(
-                      '0 Photos',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: isActive ? primaryColor : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
+            if (isActive) ...[
+              const SizedBox(width: 4),
+              Icon(
+                isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                size: 14,
+                color: primaryColor,
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -420,15 +389,11 @@ class _FilterPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     final primaryColor = isDark ? AppColors.tealLight : AppColors.tealPrimary;
     final backgroundColor = isSelected 
         ? primaryColor 
         : (isDark ? AppColors.darkSurface : Colors.white);
-        
-    final textColor = isSelected 
-        ? Colors.white 
-        : Theme.of(context).colorScheme.onSurfaceVariant;
+    final textColor = isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Material(
       color: Colors.transparent,
@@ -437,16 +402,13 @@ class _FilterPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isSelected 
-                  ? Colors.transparent 
-                  : (isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200),
-              width: 1,
+              color: isSelected ? Colors.transparent : (isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200),
             ),
             boxShadow: isSelected ? [
               BoxShadow(
@@ -462,7 +424,6 @@ class _FilterPill extends StatelessWidget {
               color: textColor,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
               fontSize: 14,
-              letterSpacing: 0.2,
             ),
           ),
         ),
@@ -481,28 +442,26 @@ class _ActivityCard extends StatelessWidget {
   });
 
   Color _statusColor() {
-    switch (activity.type) {
-      case 'assigned':
-        return AppColors.statusActive;
-      case 'reported':
-        return AppColors.statusReported;
-      case 'maintenance':
-        return AppColors.statusMaintenance;
-      default:
-        return AppColors.statusDisposed;
+    if (activity.type == 'reported') return AppColors.statusReported;
+
+    switch (activity.action) {
+      case 'Assigned': return AppColors.statusActive;
+      case 'Pending': return AppColors.statusMaintenance;
+      case 'Rejected': return AppColors.statusReported;
+      case 'Returned': return AppColors.statusDisposed;
+      default: return AppColors.statusDisposed;
     }
   }
 
   IconData _statusIcon() {
-    switch (activity.type) {
-      case 'assigned':
-        return Icons.person_add_alt_rounded;
-      case 'reported':
-        return Icons.warning_rounded;
-      case 'maintenance':
-        return Icons.build_rounded;
-      default:
-        return Icons.history_rounded;
+    if (activity.type == 'reported') return Icons.warning_rounded;
+
+    switch (activity.action) {
+      case 'Assigned': return Icons.check_circle_rounded;
+      case 'Pending': return Icons.hourglass_empty_rounded;
+      case 'Rejected': return Icons.cancel_rounded;
+      case 'Returned': return Icons.history_rounded;
+      default: return Icons.history_rounded;
     }
   }
 
@@ -562,7 +521,7 @@ class _ActivityCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Action · $formattedDate',
+                            'Status · $formattedDate',
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -578,7 +537,7 @@ class _ActivityCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        activity.type.toUpperCase(),
+                        activity.action.toUpperCase(),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
@@ -610,13 +569,23 @@ class _ActivityCard extends StatelessWidget {
                     height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                if (activity.description != null && activity.description!.isNotEmpty) ...[
+                   Text(
+                    activity.description!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 Row(
                   children: [
                     Icon(Icons.access_time_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 6),
                     Text(
-                      _formatDateFull(activity.dateTime),
+                      '${dt.day}/${dt.month}/${dt.year} at ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -631,9 +600,5 @@ class _ActivityCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDateFull(DateTime dt) {
-    return '${dt.day}/${dt.month}/${dt.year} at ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
   }
 }

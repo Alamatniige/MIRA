@@ -7,6 +7,8 @@ class ActivityItem {
   final DateTime dateTime;
   final String type; // assigned, reported, maintenance, all
 
+  final String? description;
+
   const ActivityItem({
     required this.id,
     required this.assetName,
@@ -14,5 +16,6 @@ class ActivityItem {
     required this.action,
     required this.dateTime,
     required this.type,
+    this.description,
   });
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../dto/issue_report_dto.dart';
-import '../../widgets/status_badge.dart';
 
 /// Reported Issue Detail - Displaying full details of a reported asset issue
 class ReportedIssueDetailScreen extends StatelessWidget {
@@ -13,7 +12,8 @@ class ReportedIssueDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dt = DateTime.tryParse(issue.reportAt) ?? DateTime.now();
-    final formattedDate = '${dt.day}/${dt.month}/${dt.year} at ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+    final formattedDate =
+        '${dt.day}/${dt.month}/${dt.year} at ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -77,7 +77,9 @@ class ReportedIssueDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.statusReported.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.statusReported.withValues(alpha: 0.2)),
+                border: Border.all(
+                  color: AppColors.statusReported.withValues(alpha: 0.2),
+                ),
               ),
               child: Text(
                 issue.status.toUpperCase(),
@@ -113,18 +115,24 @@ class ReportedIssueDetailScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.04),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.shadow.withValues(alpha: 0.04),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
                 ],
                 border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.gray200,
                   width: 1,
                 ),
               ),
               child: Text(
-                issue.description.isNotEmpty ? issue.description : 'No description provided for this reported issue.',
+                issue.description.isNotEmpty
+                    ? issue.description
+                    : 'No description provided for this reported issue.',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
@@ -155,31 +163,51 @@ class ReportedIssueDetailScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.04),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.shadow.withValues(alpha: 0.04),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
                 ],
                 border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.gray200,
                   width: 1,
                 ),
               ),
               child: Column(
                 children: [
-                  _DetailRow(icon: Icons.tag_rounded, label: 'Asset Tag', value: issue.assetTag),
+                  _DetailRow(
+                    icon: Icons.tag_rounded,
+                    label: 'Asset Tag',
+                    value: issue.assetTag,
+                  ),
                   _Divider(isDark: isDark),
-                  _DetailRow(icon: Icons.person_rounded, label: 'Reported By', value: issue.userName),
+                  _DetailRow(
+                    icon: Icons.person_rounded,
+                    label: 'Reported By',
+                    value: issue.userName,
+                  ),
                   _Divider(isDark: isDark),
-                  _DetailRow(icon: Icons.calendar_today_rounded, label: 'Report Date', value: formattedDate),
+                  _DetailRow(
+                    icon: Icons.calendar_today_rounded,
+                    label: 'Report Date',
+                    value: formattedDate,
+                  ),
                   _Divider(isDark: isDark),
-                  _DetailRow(icon: Icons.vpn_key_rounded, label: 'Report ID', value: '#${issue.id}'),
+                  _DetailRow(
+                    icon: Icons.vpn_key_rounded,
+                    label: 'Report ID',
+                    value: '#${issue.id}',
+                  ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 36),
-            
+
             // Photos Placeholder
             Align(
               alignment: Alignment.centerLeft,
@@ -196,9 +224,14 @@ class ReportedIssueDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -218,10 +251,14 @@ class ReportedIssueDetailScreen extends StatelessWidget {
               height: 160,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurfaceVariant.withValues(alpha: 0.3) : AppColors.gray100,
+                color: isDark
+                    ? AppColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                    : AppColors.gray100,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : AppColors.gray200,
                   style: BorderStyle.solid,
                 ),
               ),
@@ -231,7 +268,9 @@ class ReportedIssueDetailScreen extends StatelessWidget {
                   Icon(
                     Icons.image_not_supported_outlined,
                     size: 40,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -273,12 +312,16 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DetailRow({required this.icon, required this.label, required this.value});
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Row(
@@ -287,13 +330,16 @@ class _DetailRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: isDark ? 0.3 : 1.0),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest
+                  .withValues(alpha: isDark ? 0.3 : 1.0),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               size: 20,
-              color: isDark ? Theme.of(context).colorScheme.onSurfaceVariant : AppColors.gray500,
+              color: isDark
+                  ? Theme.of(context).colorScheme.onSurfaceVariant
+                  : AppColors.gray500,
             ),
           ),
           const SizedBox(width: 16),

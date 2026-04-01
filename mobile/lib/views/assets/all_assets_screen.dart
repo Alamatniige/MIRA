@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/asset.dart';
+import '../../dto/asset_response_dto.dart';
 import '../../services/assets_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/asset_thumbnail.dart';
@@ -17,7 +17,7 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
   final AssetsService _assetsService = AssetsService();
   bool _isLoading = true;
   String? _errorMessage;
-  List<Asset> _assets = [];
+  List<AssetResponseDto> _assetDtos = [];
 
   @override
   void initState() {
@@ -38,7 +38,7 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
       if (!mounted) return;
 
       setState(() {
-        _assets = assetDtos.map((dto) => dto.toAsset()).toList();
+        _assetDtos = assetDtos;
         _isLoading = false;
       });
     } catch (e) {
@@ -119,7 +119,7 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
                 ],
               ),
             )
-          : _assets.isEmpty
+          : _assetDtos.isEmpty
           ? const Center(child: Text('No assets available.'))
           : RefreshIndicator(
               onRefresh: _loadAssets,
@@ -128,9 +128,10 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
                   horizontal: 24,
                   vertical: 16,
                 ),
-                itemCount: _assets.length,
+                itemCount: _assetDtos.length,
                 itemBuilder: (context, index) {
-                  final asset = _assets[index];
+                  final dto = _assetDtos[index];
+                  final asset = dto.toAsset();
                   final accent = _statusAccentColor(asset.status);
 
                   return Padding(
@@ -141,8 +142,10 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  AssetDetailScreen(asset: asset),
+                              builder: (context) => AssetDetailScreen(
+                                asset: asset,
+                                liveAsset: dto,
+                              ),
                             ),
                           );
                         },

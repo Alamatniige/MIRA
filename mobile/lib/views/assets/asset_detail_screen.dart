@@ -33,11 +33,16 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
   void initState() {
     super.initState();
     _liveAsset = widget.liveAsset;
+    final initialAssignedTo = widget.asset.assignedTo?.trim();
+    if (initialAssignedTo?.isNotEmpty == true) {
+      _fetchedAssignedTo = initialAssignedTo;
+    }
     // Always fetch live data to get the current assignment status
     _refreshLiveAsset();
   }
 
-  String? get _assetUuid => _liveAsset?.id ?? widget.liveAsset?.id;
+  String? get _assetUuid =>
+      _liveAsset?.id ?? widget.liveAsset?.id ?? widget.asset.uuid;
 
   bool get _canRequest =>
       _liveAsset?.assignmentStatus?.toLowerCase() == 'available';
@@ -55,16 +60,17 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
   }
 
   String _buildAssignedToLabel() {
-    final status = _liveAsset?.assignmentStatus?.toLowerCase();
-    final assignedTo = _fetchedAssignedTo ?? widget.asset.assignedTo;
-
-    // If status is pending, show the user with (Pending Request) label
-    if (status == 'pending') {
-      return '${assignedTo?.isNotEmpty == true ? assignedTo : 'Unknown'} (Pending Request)';
+    final assignedTo = (_fetchedAssignedTo ?? widget.asset.assignedTo)?.trim();
+    if (assignedTo == null || assignedTo.isEmpty) {
+      return 'Unassigned';
     }
 
-    // Otherwise show assigned user or "Unassigned"
-    return assignedTo?.isNotEmpty == true ? assignedTo! : 'Unassigned';
+    final status = _liveAsset?.assignmentStatus?.toLowerCase();
+    if (status == 'pending') {
+      return '$assignedTo (Pending Request)';
+    }
+
+    return assignedTo;
   }
 
   Future<void> _refreshLiveAsset() async {
@@ -75,11 +81,12 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
       if (mounted) {
         setState(() => _liveAsset = updated);
 
-        // If the asset has an assignment status, try to fetch the assigned user name
         final status = updated.assignmentStatus?.toLowerCase();
-        if ((status == 'pending' || status == 'assigned') &&
-            (widget.asset.assignedTo?.isEmpty ?? true)) {
-          _fetchAssignmentUserName();
+        if (status == 'pending' ||
+            status == 'assigned' ||
+            status == 'approved' ||
+            status == 'unavailable') {
+          _resolveAssignmentUserName();
         }
       }
     } catch (_) {
@@ -87,31 +94,45 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     }
   }
 
-  Future<void> _fetchAssignmentUserName() async {
+  Future<void> _resolveAssignmentUserName() async {
     try {
       final assetId = _assetUuid ?? widget.asset.id;
-      final status = _liveAsset?.assignmentStatus?.toLowerCase();
+      if (assetId.isEmpty) return;
 
-      // Fetch from appropriate endpoints based on status
+      final allAssignments = await _service.getAllAssignments();
+      final assignment = allAssignments
+          .where(
+            (a) =>
+                a.assetId == assetId &&
+                a.status.toUpperCase() != 'RETURNED' &&
+                a.status.toUpperCase() != 'REJECTED',
+          )
+          .firstOrNull;
+
+      final assigneeFromAll = assignment?.assigneeName?.trim();
+      if (mounted && assigneeFromAll?.isNotEmpty == true) {
+        setState(() => _fetchedAssignedTo = assigneeFromAll);
+        return;
+      }
+
+      final status = _liveAsset?.assignmentStatus?.toLowerCase();
       if (status == 'pending') {
         final pendingAssignments = await _service.getMyPendingAssignments();
-        final assignment = pendingAssignments.firstWhere(
-          (a) => a.assetId == assetId,
-          orElse: () => null as dynamic,
-        );
-        if (mounted) {
-          _fetchedAssignedTo = assignment.assigneeName ?? 'Unknown';
-          setState(() {});
+        final pending = pendingAssignments
+            .where((a) => a.assetId == assetId)
+            .firstOrNull;
+        final name = pending?.assigneeName?.trim();
+        if (mounted && name?.isNotEmpty == true) {
+          setState(() => _fetchedAssignedTo = name);
         }
-      } else {
+      } else if (status == 'assigned') {
         final assignments = await _service.getMyAssignedAssets();
-        final assignment = assignments.firstWhere(
-          (a) => a.assetId == assetId,
-          orElse: () => null as dynamic,
-        );
-        if (mounted) {
-          _fetchedAssignedTo = assignment.assigneeName ?? 'Unknown';
-          setState(() {});
+        final current = assignments
+            .where((a) => a.assetId == assetId)
+            .firstOrNull;
+        final name = current?.assigneeName?.trim();
+        if (mounted && name?.isNotEmpty == true) {
+          setState(() => _fetchedAssignedTo = name);
         }
       }
     } catch (_) {
@@ -593,6 +614,37 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                     icon: Icons.person_rounded,
                     label: 'Assigned To',
                     value: _buildAssignedToLabel(),
+                    trailing:
+                        _liveAsset?.assignmentStatus?.toLowerCase() == 'pending'
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.statusMaintenance.withValues(
+                                alpha: 0.15,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.statusMaintenance.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              'PENDING',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: isDark
+                                    ? const Color(0xFFFACC15)
+                                    : const Color(0xFFA16207),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          )
+                        : null,
                   ),
                   if (widget.asset.specifications.isNotEmpty) ...[
                     _Divider(isDark: isDark),
@@ -633,11 +685,13 @@ class _DetailRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final Widget? trailing;
 
   const _DetailRow({
     required this.icon,
     required this.label,
     required this.value,
+    this.trailing,
   });
 
   @override
@@ -678,13 +732,20 @@ class _DetailRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    if (trailing != null) trailing!,
+                  ],
                 ),
               ],
             ),

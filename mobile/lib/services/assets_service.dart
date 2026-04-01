@@ -39,6 +39,18 @@ class AssetsService {
         .toList();
   }
 
+  Future<List<AssignmentResponseDto>> getAllAssignments() async {
+    final response = await _apiClient.get('/assign');
+    if (response is! List) {
+      throw const ApiException('Unexpected assignments response from server.');
+    }
+
+    return response
+        .whereType<Map<String, dynamic>>()
+        .map(AssignmentResponseDto.fromJson)
+        .toList();
+  }
+
   /// Validates the scanned global return QR payload and returns the authenticated
   /// user's active assignments so they can choose which asset to return.
   Future<ReturnQrScanResponseDto> scanReturnQr(String scannedData) async {
@@ -68,7 +80,11 @@ class AssetsService {
   }
 
   /// Reports an issue for [assetId] with the given [description] and optional [image].
-  Future<void> reportIssue(String assetId, String description, {String? imageUrl}) async {
+  Future<void> reportIssue(
+    String assetId,
+    String description, {
+    String? imageUrl,
+  }) async {
     await _apiClient.post(
       '/issues/create',
       body: {
@@ -93,8 +109,10 @@ class AssetsService {
         return urls.first.toString();
       }
     }
-    
-    throw const ApiException('Failed to upload image: No URL returned from server.');
+
+    throw const ApiException(
+      'Failed to upload image: No URL returned from server.',
+    );
   }
 
   Future<List<IssueReportDto>> getReportedIssues() async {

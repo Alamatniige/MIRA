@@ -14,6 +14,7 @@ import (
 	"mira-api/v1/assignments"
 	"mira-api/v1/auth"
 	"mira-api/v1/dashboard"
+	"mira-api/v1/history"
 	"mira-api/v1/issues"
 	"mira-api/v1/notifications"
 	"mira-api/v1/qr"
@@ -73,6 +74,7 @@ func main() {
 	report.RegisterRoutes(r)
 	notifications.RegisterRoutes(r)
 	dashboard.RegisterRoutes(r)
+	history.RegisterRoutes(r)
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Welcome to MIRA API!")

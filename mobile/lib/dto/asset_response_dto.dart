@@ -10,6 +10,8 @@ class AssetResponseDto {
     required this.currentStatus,
     required this.isAssigned,
     this.assignmentStatus,
+    this.assigneeName,
+    this.assigneeId,
     this.assetTypeName,
     this.roomName,
     this.floorName,
@@ -24,6 +26,8 @@ class AssetResponseDto {
   final String currentStatus;
   final bool isAssigned;
   final String? assignmentStatus;
+  final String? assigneeName;
+  final String? assigneeId;
   final String? assetTypeName;
   final String? roomName;
   final String? floorName;
@@ -33,6 +37,7 @@ class AssetResponseDto {
     final assetType = json['assetTypeRel'] as Map<String, dynamic>?;
     final room = json['roomRel'] as Map<String, dynamic>?;
     final floor = json['floorRel'] as Map<String, dynamic>?;
+    final assignedUser = json['assignedUserRel'] as Map<String, dynamic>?;
 
     return AssetResponseDto(
       id: (json['id'] as String? ?? '').trim(),
@@ -43,14 +48,28 @@ class AssetResponseDto {
       currentStatus: (json['currentStatus'] as String? ?? '').trim(),
       isAssigned: json['isAssigned'] as bool? ?? false,
       assignmentStatus: (json['assignmentStatus'] as String?)?.trim(),
+      assigneeName:
+          (json['assignedTo'] as String?)?.trim() ??
+          (json['assignedToName'] as String?)?.trim() ??
+          (json['assignee'] as String?)?.trim() ??
+          (json['assigneeName'] as String?)?.trim() ??
+          (assignedUser?['fullName'] as String?)?.trim(),
+      assigneeId:
+          (json['assignedToId'] as String?)?.trim() ??
+          (json['assigneeId'] as String?)?.trim() ??
+          (assignedUser?['id'] as String?)?.trim(),
       assetTypeName: (assetType?['name'] as String?)?.trim(),
       roomName: (room?['name'] as String?)?.trim(),
       floorName: (floor?['name'] as String?)?.trim(),
-      imageUrls: (json['image'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      imageUrls:
+          (json['image'] as List?)?.map((e) => e.toString()).toList() ?? [],
     );
   }
 
   Asset toAsset({String? assignedTo, String? assignedToId}) {
+    final effectiveAssignedTo = assignedTo ?? assigneeName;
+    final effectiveAssignedToId = assignedToId ?? assigneeId;
+
     return Asset(
       id: tag.isNotEmpty ? tag : id,
       uuid: id,
@@ -60,8 +79,8 @@ class AssetResponseDto {
       specifications: specification,
       location: _locationLabel(),
       status: _displayStatus(currentStatus),
-      assignedTo: assignedTo,
-      assignedToId: assignedToId,
+      assignedTo: effectiveAssignedTo,
+      assignedToId: effectiveAssignedToId,
       purchaseDate: '-',
       warrantyExpiry: '-',
       images: imageUrls,
