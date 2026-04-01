@@ -266,7 +266,7 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer resp.Body.Close()
-		fmt.Printf("ForgotPassword: email dispatch status %d for %s\n", resp.StatusCode, email)
+		fmt.Printf("ForgotPassword: email dispatch status %d for %s. (DEBUG: OTP code is %s)\n", resp.StatusCode, email, code)
 	}(targetUser.Email, targetUser.FullName, otp)
 
 	w.WriteHeader(http.StatusOK)
