@@ -219,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildTopSection(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
         children: [
           // Glowing Logo Centerpiece
@@ -228,8 +228,8 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               // Outer Soft Glow
               Container(
-                width: 120,
-                height: 120,
+                width: 90,
+                height: 90,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFFEAB308).withValues(alpha: 0.15),
@@ -244,8 +244,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               // Inner Bright Ring
               Container(
-                width: 90,
-                height: 90,
+                width: 70,
+                height: 70,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFFEAB308).withValues(alpha: 0.3),
@@ -253,8 +253,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               // Core Icon Circle
               Container(
-                height: 70,
-                width: 70,
+                height: 56,
+                width: 56,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
@@ -273,31 +273,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Center(
                   child: Icon(
                     Icons.email_rounded,
-                    size: 36,
+                    size: 28,
                     color: Colors.white,
                   ),
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
 
           const Text(
             'Welcome Back',
             style: TextStyle(
-              fontSize: 32,
+              fontSize: 26,
               fontWeight: FontWeight.w800,
               color: Colors.white,
               letterSpacing: -0.5,
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             'Sign in to your MIRA account',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Colors.white.withValues(alpha: 0.8),
             ),
@@ -335,7 +334,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(32, 48, 32, 32),
+            padding: const EdgeInsets.fromLTRB(32, 28, 32, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -348,8 +347,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   hintText: 'hello@company.com',
                 ),
-
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 _buildModernTextField(
                   context: context,
@@ -482,8 +480,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ],
-
-                const SizedBox(height: 48),
+                const SizedBox(height: 32),
 
                 MiraGradientButton(
                   label: _isLoading ? 'SIGNING IN...' : 'SIGN IN',
@@ -531,7 +528,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: isDark ? AppColors.gray300 : AppColors.gray600,
-            fontSize: 14,
+            fontSize: 13,
           ),
         ),
         const SizedBox(height: 8),
@@ -597,7 +594,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ),

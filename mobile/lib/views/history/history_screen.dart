@@ -68,14 +68,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Activity History',
                       style: TextStyle(
-                        fontSize: 34,
+                        fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: Theme.of(context).colorScheme.onSurface,
                         letterSpacing: -0.5,
@@ -90,7 +90,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 48,
+                height: 40,
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   scrollDirection: Axis.horizontal,
@@ -169,7 +169,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildSearchBar(bool isDark) {
     return Container(
-      height: 52,
+      height: 44,
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -204,7 +204,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           focusedBorder: InputBorder.none,
           prefixIcon: Icon(
             Icons.search_rounded,
-            size: 22,
+            size: 20,
             color: Theme.of(context).colorScheme.primary,
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
@@ -402,7 +402,7 @@ class _FilterPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: backgroundColor,
@@ -493,19 +493,19 @@ class _ActivityCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(24),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(_statusIcon(), color: color, size: 20),
+                      child: Icon(_statusIcon(), color: color, size: 18),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -515,7 +515,7 @@ class _ActivityCard extends StatelessWidget {
                           Text(
                             activity.assetName,
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
@@ -548,7 +548,7 @@ class _ActivityCard extends StatelessWidget {
                   ],
                 ),
                 const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(vertical: 10),
                   child: Divider(height: 1),
                 ),
                 Text(
@@ -569,7 +569,7 @@ class _ActivityCard extends StatelessWidget {
                     height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 if (activity.description != null && activity.description!.isNotEmpty) ...[
                    Text(
                     activity.description!,
@@ -578,7 +578,7 @@ class _ActivityCard extends StatelessWidget {
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                 ],
                 Row(
                   children: [

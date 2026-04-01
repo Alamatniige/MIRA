@@ -164,7 +164,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // Modern floating header text
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 24, 8),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 24, 8),
                       child: Row(
                         children: [
                           IconButton(
@@ -179,7 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             'Profile',
                             style: TextStyle(
-                              fontSize: 34,
+                              fontSize: 24,
                               fontWeight: FontWeight.w800,
                               color: Theme.of(context).colorScheme.onSurface,
                               letterSpacing: -0.5,
@@ -193,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // Avatar Centerpiece
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Column(
                         children: [
                           Stack(
@@ -201,8 +201,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               // Outer glow ring
                               Container(
-                                width: 140,
-                                height: 140,
+                                width: 110,
+                                height: 110,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color:
@@ -214,8 +214,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               // Middle glowing ring
                               Container(
-                                width: 120,
-                                height: 120,
+                                width: 95,
+                                height: 95,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color:
@@ -231,8 +231,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ? null
                                     : _pickAndUploadImage,
                                 child: Container(
-                                  width: 100,
-                                  height: 100,
+                                  width: 80,
+                                  height: 80,
                                   decoration: BoxDecoration(
                                     gradient: _profile?.avatarUrl == null
                                         ? AppColors.primaryGradient
@@ -272,7 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                     : '?')
                                                 .toUpperCase(),
                                             style: const TextStyle(
-                                              fontSize: 40,
+                                              fontSize: 34,
                                               fontWeight: FontWeight.w800,
                                               color: Colors.white,
                                               letterSpacing: -1,
@@ -300,7 +300,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         bottom: 0,
                                         right: 0,
                                         child: Container(
-                                          padding: const EdgeInsets.all(8),
+                                          padding: const EdgeInsets.all(6),
                                           decoration: BoxDecoration(
                                             color: AppColors.tealPrimary,
                                             shape: BoxShape.circle,
@@ -322,21 +322,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
                           Text(
                             _profile?.fullName ?? '',
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 24,
                               fontWeight: FontWeight.w800,
                               color: Theme.of(context).colorScheme.onSurface,
                               letterSpacing: -0.5,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
-                              vertical: 6,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
                               color:
@@ -349,7 +349,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Text(
                               _profile?.department ?? '',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: isDark
                                     ? AppColors.tealLight
@@ -666,11 +666,11 @@ class _PremiumInfoRow extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),

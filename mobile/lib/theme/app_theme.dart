@@ -95,6 +95,7 @@ class GlassCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final double blur;
   final Color? tintColor;
+  final Color? borderColor;
 
   const GlassCard({
     super.key,
@@ -103,6 +104,7 @@ class GlassCard extends StatelessWidget {
     this.padding,
     this.blur = 10,
     this.tintColor,
+    this.borderColor,
   });
 
   @override
@@ -120,8 +122,9 @@ class GlassCard extends StatelessWidget {
             color: (tintColor ?? defaultTint).withValues(alpha: isDark ? 0.4 : 0.75),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
-              width: 1,
+              color: borderColor ??
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+              width: borderColor != null ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(

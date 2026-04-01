@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+
 import '../../controllers/dashboard_controller.dart';
 import '../../models/asset.dart';
 import '../../models/dashboard_data.dart';
@@ -6,6 +8,8 @@ import '../../theme/app_theme.dart';
 import '../../widgets/asset_thumbnail.dart';
 import '../../widgets/status_badge.dart';
 import '../assets/all_assets_screen.dart';
+import '../notifications/notifications_screen.dart';
+
 
 /// Premium Dashboard - modern design with glassmorphism, refined cards, premium FAB
 class DashboardScreen extends StatefulWidget {
@@ -62,6 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final dashboard = _dashboardData;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -83,7 +88,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Modern clean header text
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
+                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -99,7 +104,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       Text(
                                         _controller.getGreeting(),
                                         style: TextStyle(
-                                          fontSize: 14,
+                                          fontSize: 13,
                                           fontWeight: FontWeight.w700,
                                           color: Theme.of(
                                             context,
@@ -111,7 +116,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       Text(
                                         dashboard?.userFirstName ?? 'User',
                                         style: TextStyle(
-                                          fontSize: 34,
+                                          fontSize: 24,
                                           fontWeight: FontWeight.w800,
                                           color: Theme.of(
                                             context,
@@ -126,63 +131,165 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
 
-                                // Avatar with profile navigation
-                                GestureDetector(
-                                  onTap: () async {
-                                    await widget.onProfileTap();
-                                    if (!mounted) {
-                                      return;
-                                    }
-                                    await _loadDashboard();
-                                  },
-                                  child: Container(
-                                    width: 50,
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: dashboard?.avatarUrl == null
-                                          ? AppColors.primaryGradient
-                                          : null,
-                                      color: dashboard?.avatarUrl != null
-                                          ? Colors.white
-                                          : null,
-                                      image: dashboard?.avatarUrl != null
-                                          ? DecorationImage(
-                                              image: NetworkImage(
-                                                dashboard!.avatarUrl!,
-                                              ),
-                                              fit: BoxFit.cover,
-                                            )
-                                          : null,
-                                      boxShadow: [
-                                        BoxShadow(
+                                // Notification and Avatar group
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Notification Icon
+                                    GestureDetector(
+                                      onTap: () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const NotificationScreen(),
+                                        ),
+                                      ),
+                                      child: Container(
+                                        width: 44,
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
                                           color: Theme.of(context)
                                               .colorScheme
-                                              .primary
-                                              .withValues(alpha: 0.2),
-                                          blurRadius: 16,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: dashboard?.avatarUrl == null
-                                        ? const Center(
-                                            child: Icon(
-                                              Icons.person_rounded,
-                                              color: Colors.white,
-                                              size: 24,
+                                              .surface
+                                              .withValues(
+                                                alpha: isDark ? 0.4 : 0.8,
+                                              ),
+                                          border: Border.all(
+                                            color: Colors.white.withValues(
+                                              alpha: isDark ? 0.1 : 0.4,
                                             ),
-                                          )
-                                        : null,
-                                  ),
+                                            width: 1.5,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: isDark ? 0.2 : 0.05,
+                                              ),
+                                              blurRadius: 20,
+                                              offset: const Offset(0, 8),
+                                            ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(22),
+                                          child: BackdropFilter(
+                                            filter: ImageFilter.blur(
+                                              sigmaX: 5,
+                                              sigmaY: 5,
+                                            ),
+                                            child: Center(
+                                              child: Stack(
+                                                clipBehavior: Clip.none,
+                                                children: [
+                                                  Icon(
+                                                    Icons
+                                                        .notifications_none_rounded,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface,
+                                                    size: 22,
+                                                  ),
+                                                  // Notification Badge
+                                                  Positioned(
+                                                    right: -1,
+                                                    top: -1,
+                                                    child: Container(
+                                                      width: 11,
+                                                      height: 11,
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors
+                                                            .statusReported,
+                                                        shape: BoxShape.circle,
+                                                        border: Border.all(
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .surface,
+                                                          width: 2,
+                                                        ),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: AppColors
+                                                                .statusReported
+                                                                .withValues(
+                                                                  alpha: 0.4,
+                                                                ),
+                                                            blurRadius: 4,
+                                                            spreadRadius: 0,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+
+                                    // Avatar with profile navigation
+                                    GestureDetector(
+                                      onTap: () async {
+                                        await widget.onProfileTap();
+                                        if (!mounted) {
+                                          return;
+                                        }
+                                        await _loadDashboard();
+                                      },
+                                      child: Container(
+                                        width: 42,
+                                        height: 42,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: dashboard?.avatarUrl == null
+                                              ? AppColors.primaryGradient
+                                              : null,
+                                          color: dashboard?.avatarUrl != null
+                                              ? Colors.white
+                                              : null,
+                                          image: dashboard?.avatarUrl != null
+                                              ? DecorationImage(
+                                                image: NetworkImage(
+                                                  dashboard!.avatarUrl!,
+                                                ),
+                                                fit: BoxFit.cover,
+                                              )
+                                              : null,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                                  .withValues(alpha: 0.2),
+                                              blurRadius: 16,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: dashboard?.avatarUrl == null
+                                            ? const Center(
+                                              child: Icon(
+                                                Icons.person_rounded,
+                                                color: Colors.white,
+                                                size: 20,
+                                              ),
+                                            )
+                                            : null,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             Text(
                               'Here\'s your asset overview',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w500,
                                 color: Theme.of(
                                   context,
@@ -199,7 +306,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
                         child: SizedBox(
-                          height: 150,
+                          height: 132,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
@@ -251,7 +358,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Assigned Assets
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -321,7 +428,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         dashboard.pendingRequests.isNotEmpty)
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -505,7 +612,7 @@ class _SummaryCard extends StatelessWidget {
     final surfaceColor = Theme.of(context).colorScheme.surface;
 
     return Container(
-      width: 156,
+      width: 140,
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(28),
@@ -536,7 +643,7 @@ class _SummaryCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(28),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -571,7 +678,7 @@ class _SummaryCard extends StatelessWidget {
                       child: Text(
                         value,
                         style: TextStyle(
-                          fontSize: 32,
+                          fontSize: 26,
                           fontWeight: FontWeight.w800,
                           color: Theme.of(context).colorScheme.onSurface,
                           letterSpacing: -0.5,
@@ -670,8 +777,8 @@ class _AssetListCard extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
                     color: isDark
                         ? Theme.of(context).colorScheme.surfaceContainerHighest

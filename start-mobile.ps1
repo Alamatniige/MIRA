@@ -23,7 +23,7 @@ switch ($choice) {
     }
     "3" {
         Write-Host "Running on Mobile Device 2..." -ForegroundColor Green
-        flutter run --dart-define=API_BASE_URL=http://192.168.1.29:8080
+        flutter run --dart-define=API_BASE_URL=http://192.168.1.22:8080
     }
     "4" {
         Write-Host "Running on chrome..." -ForegroundColor Green
