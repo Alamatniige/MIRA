@@ -57,11 +57,11 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       <div className="flex items-center justify-between h-20 px-4 mt-2">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="shrink-0 flex items-center justify-center w-10 h-10">
-            <Image 
-              src="/mira-web-favicon/icon0.svg" 
-              alt="MIRA Logo" 
-              width={32} 
-              height={32} 
+            <Image
+              src="/mira-web-favicon/icon0.svg"
+              alt="MIRA Logo"
+              width={32}
+              height={32}
               className="w-8 h-8 object-contain"
             />
           </div>
@@ -140,6 +140,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
       {/* Bottom Actions */}
       <div className="p-3 border-t border-teal-100 dark:border-slate-700/40 space-y-2">
+
+        {/* {SETTINGS_ITEM.href}
         <Link
           href={SETTINGS_ITEM.href}
           className={cn(
@@ -168,7 +170,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               <div className="absolute top-1/2 -left-1 -mt-1 border-t-4 border-t-transparent border-r-4 border-r-[#0F766E] border-b-4 border-b-transparent"></div>
             </div>
           )}
-        </Link>
+        </Link> 
+        */}
 
         <Button
           variant="ghost"
