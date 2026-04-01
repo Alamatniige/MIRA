@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/storage/token_storage.dart';
+import 'core/storage/onboarding_storage.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_mode_scope.dart';
 import 'views/welcome/welcome_screen.dart';
@@ -10,7 +11,12 @@ import 'views/history/history_screen.dart';
 import 'views/profile/profile_screen.dart';
 import 'widgets/modern_bottom_nav.dart';
 
-void main() {
+import 'package:shared_preferences/shared_preferences.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Pre-initialize SharedPreferences for faster access throughout the app
+  await SharedPreferences.getInstance();
   runApp(const MiraApp());
 }
 
@@ -55,13 +61,42 @@ class AppInitialScreen extends StatefulWidget {
 
 class _AppInitialScreenState extends State<AppInitialScreen> {
   bool _showWelcome = true;
+  bool _isLoading = true;
 
-  void _onGetStarted() {
-    setState(() => _showWelcome = false);
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboardingStatus();
+  }
+
+  Future<void> _checkOnboardingStatus() async {
+    final completed = await OnboardingStorage().isCompleted();
+    if (mounted) {
+      setState(() {
+        _showWelcome = !completed;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _onGetStarted() async {
+    await OnboardingStorage().completeOnboarding();
+    if (mounted) {
+      setState(() => _showWelcome = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.gray50,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.tealPrimary),
+        ),
+      );
+    }
+
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 450),
       switchInCurve: Curves.easeOutCubic,

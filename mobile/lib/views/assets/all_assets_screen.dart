@@ -70,8 +70,9 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
     final lower = status.toLowerCase();
     if (lower == 'active') return AppColors.statusActive;
     if (lower == 'maintenance') return AppColors.statusMaintenance;
-    if (lower == 'reported' || lower == 'issue')
+    if (lower == 'reported' || lower == 'issue') {
       return AppColors.statusReported;
+    }
     if (lower == 'disposed') return AppColors.statusDisposed;
     return AppColors.gray500;
   }

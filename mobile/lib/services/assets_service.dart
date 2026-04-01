@@ -85,13 +85,13 @@ class AssetsService {
     String description, {
     String? imageUrl,
   }) async {
+    final imagePayload = imageUrl == null
+        ? null
+        : <String, dynamic>{'image': imageUrl};
+
     await _apiClient.post(
       '/issues/create',
-      body: {
-        'assetId': assetId,
-        'description': description,
-        if (imageUrl != null) 'image': imageUrl,
-      },
+      body: {'assetId': assetId, 'description': description, ...?imagePayload},
     );
   }
 

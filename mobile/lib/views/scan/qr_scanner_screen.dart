@@ -81,7 +81,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     // Asset QR — fetch live details and navigate to detail screen
     if (code.startsWith('mira-asset:')) {
       final assetId = code.substring(11);
-      _showAssetFromQr(context, assetId);
+      _showAssetFromQr(assetId);
       return;
     }
 
@@ -110,11 +110,12 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     }
   }
 
-  Future<void> _showAssetFromQr(BuildContext context, String assetId) async {
+  Future<void> _showAssetFromQr(String assetId) async {
     _controller.stop();
 
     // Show a loading indicator while fetching
     if (!mounted) return;
+    final nav = Navigator.of(context);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -124,8 +125,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     try {
       final dto = await AssetsService().getAssetDetails(assetId);
       if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss loading
-      final result = await Navigator.of(context).push<bool>(
+      nav.pop(); // dismiss loading
+      final result = await nav.push<bool>(
         MaterialPageRoute(
           builder: (_) =>
               AssetDetailScreen(asset: dto.toAsset(), liveAsset: dto),
@@ -137,7 +138,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
         if (widget.onBack != null) {
           widget.onBack!();
         } else {
-          Navigator.of(context).pop();
+          nav.pop();
         }
         return;
       }
@@ -148,7 +149,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       }
     } catch (_) {
       if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss loading
+      nav.pop(); // dismiss loading
       _showInvalidScan(context, 'mira-asset:$assetId');
       return;
     }
@@ -187,7 +188,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
         onViewDetails: () {
           Navigator.pop(ctx);
           // Re-fetch live DTO so liveAsset is available for request/report actions
-          _showAssetFromQr(context, asset.id);
+          _showAssetFromQr(asset.id);
         },
       ),
     ).then((_) {

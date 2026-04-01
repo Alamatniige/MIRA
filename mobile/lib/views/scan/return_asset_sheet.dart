@@ -180,7 +180,7 @@ class _ReturnAssetSheetState extends State<ReturnAssetSheet> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _assignments.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     const Divider(height: 1, color: AppColors.gray100),
                 itemBuilder: (context, index) {
                   final item = _assignments[index];

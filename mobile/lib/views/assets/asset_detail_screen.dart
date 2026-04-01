@@ -744,7 +744,7 @@ class _DetailRow extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (trailing != null) trailing!,
+                    ?trailing,
                   ],
                 ),
               ],

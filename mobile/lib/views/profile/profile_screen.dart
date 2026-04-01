@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../controllers/profile_controller.dart';
@@ -68,8 +67,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (image == null) return;
 
       setState(() => _isUploading = true);
-
-      final imageUrl = await _controller.uploadAvatar(File(image.path));
 
       // Reload profile to get the updated avatarUrl
       await _loadProfile();

@@ -275,7 +275,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               decoration: BoxDecoration(
                                 color: Theme.of(context)
                                     .colorScheme
-                                    .surfaceVariant
+                                    .surfaceContainerHighest
                                     .withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(12),
                               ),
