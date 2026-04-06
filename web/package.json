@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "dev-turbo": "next dev --turbopack"
+    "dev-turbo": "next dev --turbopack",
+    "supabase:sync": "powershell -ExecutionPolicy Bypass -File ../supabase-sync.ps1"
   },
   "dependencies": {
     "@react-email/components": "^1.0.8",

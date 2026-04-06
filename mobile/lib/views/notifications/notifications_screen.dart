@@ -12,12 +12,12 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   final NotificationService _notificationService = NotificationService();
-  
+
   List<NotificationModel> _todayNotifications = [];
   List<NotificationModel> _earlierNotifications = [];
   bool _isLoading = true;
   String? _error;
-  
+
   // Track seen IDs to trigger push only for new items
   final Set<String> _seenNotificationIds = {};
   bool _isFirstLoad = true;
@@ -26,7 +26,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   void initState() {
     super.initState();
     _fetchNotifications();
-    // In a real app, SSE or FCM would be used. 
+    // In a real app, SSE or FCM would be used.
     // For this implementation, we poll every 30s to detect new events.
     _startPolling();
   }
@@ -56,7 +56,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     try {
       final notifications = await _notificationService.getNotifications();
-      
+
       // Check for new notifications to trigger "push"
       if (!_isFirstLoad) {
         for (var notif in notifications) {
@@ -65,7 +65,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           }
         }
       }
-      
+
       _seenNotificationIds.addAll(notifications.map((n) => n.id));
       _isFirstLoad = false;
       _groupNotifications(notifications);
@@ -110,15 +110,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
         }
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to mark all as read: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to mark all as read: $e')));
     }
   }
 
   Future<void> _markAsRead(NotificationModel notif) async {
     if (notif.isRead) return;
-    
+
     try {
       await _notificationService.markAsRead(notif.id);
       setState(() {
@@ -208,7 +208,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
             if (_isLoading && _todayNotifications.isEmpty)
               const SliverFillRemaining(
                 child: Center(
-                  child: CircularProgressIndicator(color: AppColors.tealPrimary),
+                  child: CircularProgressIndicator(
+                    color: AppColors.tealPrimary,
+                  ),
                 ),
               )
             else if (_error != null && _todayNotifications.isEmpty)
@@ -217,7 +219,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 48, color: AppColors.statusMaintenance),
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: AppColors.statusMaintenance,
+                      ),
                       const SizedBox(height: 16),
                       Text(_error!, textAlign: TextAlign.center),
                       TextButton(
@@ -228,15 +234,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   ),
                 ),
               )
-            else if (_todayNotifications.isEmpty && _earlierNotifications.isEmpty)
+            else if (_todayNotifications.isEmpty &&
+                _earlierNotifications.isEmpty)
               const SliverFillRemaining(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.notifications_none, size: 48, color: AppColors.gray400),
-                      const SizedBox(height: 16),
-                      Text('No notifications yet', style: TextStyle(color: AppColors.gray400)),
+                      Icon(
+                        Icons.notifications_none,
+                        size: 48,
+                        color: AppColors.gray400,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'No notifications yet',
+                        style: TextStyle(color: AppColors.gray400),
+                      ),
                     ],
                   ),
                 ),
@@ -255,7 +269,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? AppColors.gray300 : AppColors.gray400,
+                            color: isDark
+                                ? AppColors.gray300
+                                : AppColors.gray400,
                             letterSpacing: 1.2,
                           ),
                         ),
