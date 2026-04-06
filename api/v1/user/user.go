@@ -10,7 +10,7 @@ type User struct {
 	FullName    string     `json:"fullName" gorm:"column:fullName;not null"`
 	Password    string     `json:"-" gorm:"not null"`
 	Department  string     `json:"department" gorm:"not null"`
-	RoleID      string     `json:"roleId" gorm:"column:roleId;type:uuid;not null"`
+	RoleID      string     `json:"roleId" gorm:"column:roleId;type:smallint;not null"`
 	PhoneNumber string     `json:"phoneNumber" gorm:"column:phoneNumber;not null"`
 	Status      string     `json:"status" gorm:"column:status;default:active;not null"`
 	AvatarUrl   *string    `json:"avatarUrl" gorm:"column:avatarUrl"`

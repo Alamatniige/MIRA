@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authHeader = req.headers.get('authorization');
   const { id } = await params;
 
   try {
     const response = await fetch(`${API_URL}/notifications/${id}/read`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         ...(authHeader ? { Authorization: authHeader } : {}),
       },
@@ -23,7 +23,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error('Proxy PUT /notifications/[id]/read error:', error);
+    console.error('Proxy PATCH /notifications/[id]/read error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }

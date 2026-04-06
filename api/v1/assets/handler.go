@@ -267,19 +267,28 @@ func AddAsset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	actorName := "Unknown"
-	if actorID, ok := r.Context().Value(middleware.UserIDKey).(string); ok && actorID != "" {
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	if actorID != "" {
 		var actor userv1.User
 		if err := db.DB.Select("id", `"fullName"`).First(&actor, "id = ?", actorID).Error; err == nil {
 			actorName = actor.FullName
 		}
 	}
 
-	go notifications.Emit(
-		notifications.TypeAssetRegistered,
-		"New asset registered",
-		fmt.Sprintf("%s registered %s (%s).", actorName, newAsset.AssetName, newAsset.Tag),
-		actorName,
-	)
+	// Notify all admins about the new asset
+	var admins []userv1.User
+	if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+		for _, admin := range admins {
+			go notifications.Emit(
+				admin.ID,
+				actorID,
+				newAsset.ID,
+				notifications.TypeAssetRegistered,
+				"New Asset Registered",
+				fmt.Sprintf("%s registered %s (%s).", actorName, newAsset.AssetName, newAsset.Tag),
+			)
+		}
+	}
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -586,6 +595,29 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 		log.Printf("asset %s updated but failed to clean removed images from storage: %v", asset.ID, err)
 	}
 
+	// Notify all admins about the updated asset
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	actorName := actorID
+	var actor userv1.User
+	if err := db.DB.Select("id", `"fullName"`).First(&actor, "id = ?", actorID).Error; err == nil {
+		if strings.TrimSpace(actor.FullName) != "" {
+			actorName = actor.FullName
+		}
+	}
+	var admins []userv1.User
+	if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+		for _, admin := range admins {
+			go notifications.Emit(
+				admin.ID,
+				actorID,
+				asset.ID,
+				notifications.TypeAssetUpdated,
+				"Asset Updated",
+				fmt.Sprintf("%s updated asset %s (%s).", actorName, asset.AssetName, asset.Tag),
+			)
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)
 }
@@ -637,6 +669,45 @@ func UpdateAssetStatus(w http.ResponseWriter, r *http.Request) {
 		asset.AssignmentStatus = as
 	}
 
+	// Notify all admins about the status change
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	actorName := actorID
+	var actor userv1.User
+	if err := db.DB.Select("id", `"fullName"`).First(&actor, "id = ?", actorID).Error; err == nil {
+		if strings.TrimSpace(actor.FullName) != "" {
+			actorName = actor.FullName
+		}
+	}
+	var admins []userv1.User
+	if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+		for _, admin := range admins {
+			go notifications.Emit(
+				admin.ID,
+				actorID,
+				asset.ID,
+				notifications.TypeAssetStatusChanged,
+				"Asset Status Changed",
+				fmt.Sprintf("%s changed the status of %s (%s) to %s.", actorName, asset.AssetName, asset.Tag, asset.CurrentStatus),
+			)
+		}
+	}
+	// If the asset is currently assigned, also notify the assignee
+	if asset.IsAssigned {
+		var activeAssignment struct {
+			UserID string `gorm:"column:userId"`
+		}
+		if err := db.DB.Raw(`SELECT "userId" FROM "assetsAssignment" WHERE "assetId" = ? AND "returnedDate" IS NULL AND "rejectedAt" IS NULL ORDER BY "assignedDate" DESC LIMIT 1`, asset.ID).Scan(&activeAssignment).Error; err == nil && activeAssignment.UserID != "" && activeAssignment.UserID != actorID {
+			go notifications.Emit(
+				activeAssignment.UserID,
+				actorID,
+				asset.ID,
+				notifications.TypeAssetStatusChanged,
+				"Asset Status Changed",
+				fmt.Sprintf("The status of your assigned asset %s (%s) was changed to %s.", asset.AssetName, asset.Tag, asset.CurrentStatus),
+			)
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)
 }
@@ -654,6 +725,29 @@ func DeleteAsset(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Error fetching asset details: "+result.Error.Error(), http.StatusInternalServerError)
 		}
 		return
+	}
+
+	// Notify all admins BEFORE cascade cleanup so asset FK is still valid
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	actorName := actorID
+	var actor userv1.User
+	if err := db.DB.Select("id", `"fullName"`).First(&actor, "id = ?", actorID).Error; err == nil {
+		if strings.TrimSpace(actor.FullName) != "" {
+			actorName = actor.FullName
+		}
+	}
+	var admins []userv1.User
+	if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+		for _, admin := range admins {
+			notifications.Emit(
+				admin.ID,
+				actorID,
+				asset.ID,
+				notifications.TypeAssetDeleted,
+				"Asset Deleted",
+				fmt.Sprintf("%s deleted asset %s (%s).", actorName, asset.AssetName, asset.Tag),
+			)
+		}
 	}
 
 	// Clean up foreign key references across tables before deleting the asset

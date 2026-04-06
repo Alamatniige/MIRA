@@ -79,12 +79,20 @@ func CreateIssue(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	go notifications.Emit(
-		notifications.TypeReportCreated,
-		"New issue reported",
-		fmt.Sprintf("%s reported an issue for asset %s.", actorName, newIssue.AssetID),
-		actorName,
-	)
+	// Notify all admins about the new report
+	var admins []userv1.User
+	if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+		for _, admin := range admins {
+			go notifications.Emit(
+				admin.ID,
+				reportedBy,
+				req.AssetID,
+				notifications.TypeReportSubmitted,
+				"New Issue Reported",
+				fmt.Sprintf("%s reported an issue for asset %s.", actorName, req.AssetID),
+			)
+		}
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
@@ -117,9 +125,42 @@ func UpdateIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	actorName := actorID
+	var actor userv1.User
+	if err := db.DB.Select("id", `"fullName"`).First(&actor, "id = ?", actorID).Error; err == nil && strings.TrimSpace(actor.FullName) != "" {
+		actorName = actor.FullName
+	}
+
 	// If the issue is being confirmed as in-progress, escalate the asset to Under Maintenance
 	if strings.ToLower(req.Status) == "in_progress" {
 		db.DB.Model(&assetv1.Asset{}).Where("id = ?", issue.AssetID).Update("currentStatus", "Under Maintenance")
+		var a assetv1.Asset
+		assetNameForNotif := issue.AssetID
+		if err := db.DB.First(&a, "id = ?", issue.AssetID).Error; err == nil {
+			assetNameForNotif = a.AssetName
+		}
+		go notifications.Emit(
+			issue.ReportedBy,
+			actorID,
+			issue.AssetID,
+			notifications.TypeIssueAcknowledged,
+			"Issue Acknowledged",
+			fmt.Sprintf("Your issue report for %s is now being handled.", assetNameForNotif),
+		)
+		var admins []userv1.User
+		if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+			for _, admin := range admins {
+				go notifications.Emit(
+					admin.ID,
+					actorID,
+					issue.AssetID,
+					notifications.TypeIssueAcknowledged,
+					"Issue Acknowledged",
+					fmt.Sprintf("%s acknowledged an issue for %s.", actorName, assetNameForNotif),
+				)
+			}
+		}
 	} else if strings.ToLower(req.Status) == "resolved" {
 		var asset assetv1.Asset
 		if err := db.DB.First(&asset, "id = ?", issue.AssetID).Error; err == nil {
@@ -131,6 +172,27 @@ func UpdateIssue(w http.ResponseWriter, r *http.Request) {
 				updates["assignmentStatus"] = "Available"
 			}
 			db.DB.Model(&asset).Updates(updates)
+			go notifications.Emit(
+				issue.ReportedBy,
+				actorID,
+				issue.AssetID,
+				notifications.TypeIssueResolved,
+				"Issue Resolved",
+				fmt.Sprintf("Your issue report for %s has been resolved.", asset.AssetName),
+			)
+			var admins []userv1.User
+			if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+				for _, admin := range admins {
+					go notifications.Emit(
+						admin.ID,
+						actorID,
+						issue.AssetID,
+						notifications.TypeIssueResolved,
+						"Issue Resolved",
+						fmt.Sprintf("%s resolved an issue for %s.", actorName, asset.AssetName),
+					)
+				}
+			}
 		}
 	}
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../models/notification.dart';
+import '../../services/notification_service.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -9,63 +11,122 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  // Mock notifications data with grouping
-  final List<_NotificationModel> _todayNotifications = [
-    _NotificationModel(
-      title: 'New Asset Assigned',
-      message: 'A MacBook Pro 14" has been assigned to your department.',
-      time: '2 hours ago',
-      icon: Icons.inventory_2_rounded,
-      color: AppColors.bluePrimary,
-      isRead: false,
-    ),
-    _NotificationModel(
-      title: 'Maintenance Alert',
-      message: 'The yearly maintenance for IT-Room-01 UPS is due today.',
-      time: '4 hours ago',
-      icon: Icons.error_outline_rounded,
-      color: AppColors.statusMaintenance,
-      isRead: false,
-    ),
-  ];
+  final NotificationService _notificationService = NotificationService();
+  
+  List<NotificationModel> _todayNotifications = [];
+  List<NotificationModel> _earlierNotifications = [];
+  bool _isLoading = true;
+  String? _error;
+  
+  // Track seen IDs to trigger push only for new items
+  final Set<String> _seenNotificationIds = {};
+  bool _isFirstLoad = true;
 
-  final List<_NotificationModel> _earlierNotifications = [
-    _NotificationModel(
-      title: 'Asset Approved',
-      message: 'Your request for a Logitech MX Master 3S has been approved.',
-      time: 'Yesterday',
-      icon: Icons.check_circle_rounded,
-      color: AppColors.statusActive,
-      isRead: true,
-    ),
-    _NotificationModel(
-      title: 'System Update',
-      message: 'MIRA Mobile v2.0.4 is now available in the App Store.',
-      time: '2 days ago',
-      icon: Icons.update_rounded,
-      color: AppColors.tealPrimary,
-      isRead: true,
-    ),
-    _NotificationModel(
-      title: 'Reported Issue Received',
-      message:
-          'Your report regarding the project monitor flickering has been noted.',
-      time: '3 days ago',
-      icon: Icons.report_problem_rounded,
-      color: AppColors.statusReported,
-      isRead: true,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchNotifications();
+    // In a real app, SSE or FCM would be used. 
+    // For this implementation, we poll every 30s to detect new events.
+    _startPolling();
+  }
 
-  void _markAllAsRead() {
-    setState(() {
-      for (var n in _todayNotifications) {
-        n.isRead = true;
-      }
-      for (var n in _earlierNotifications) {
-        n.isRead = true;
+  @override
+  void dispose() {
+    // Polling usually managed via a Timer, but for simplicity we use it in initState
+    super.dispose();
+  }
+
+  void _startPolling() {
+    Future.delayed(const Duration(seconds: 30), () {
+      if (mounted) {
+        _fetchNotifications(silent: true);
+        _startPolling();
       }
     });
+  }
+
+  Future<void> _fetchNotifications({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
+
+    try {
+      final notifications = await _notificationService.getNotifications();
+      
+      // Check for new notifications to trigger "push"
+      if (!_isFirstLoad) {
+        for (var notif in notifications) {
+          if (!_seenNotificationIds.contains(notif.id) && !notif.isRead) {
+            await _notificationService.triggerPushNotification(notif);
+          }
+        }
+      }
+      
+      _seenNotificationIds.addAll(notifications.map((n) => n.id));
+      _isFirstLoad = false;
+      _groupNotifications(notifications);
+    } catch (e) {
+      if (!silent) {
+        setState(() {
+          _error = 'Failed to load notifications: $e';
+        });
+      }
+    } finally {
+      if (!silent) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _groupNotifications(List<NotificationModel> notifications) {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+
+    setState(() {
+      _todayNotifications = notifications
+          .where((n) => n.createdAt.isAfter(todayStart))
+          .toList();
+      _earlierNotifications = notifications
+          .where((n) => n.createdAt.isBefore(todayStart))
+          .toList();
+    });
+  }
+
+  Future<void> _markAllAsRead() async {
+    try {
+      await _notificationService.markAllAsRead();
+      setState(() {
+        for (var n in _todayNotifications) {
+          n.isRead = true;
+        }
+        for (var n in _earlierNotifications) {
+          n.isRead = true;
+        }
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to mark all as read: $e')),
+      );
+    }
+  }
+
+  Future<void> _markAsRead(NotificationModel notif) async {
+    if (notif.isRead) return;
+    
+    try {
+      await _notificationService.markAsRead(notif.id);
+      setState(() {
+        notif.isRead = true;
+      });
+    } catch (e) {
+      debugPrint('Error marking notification read: $e');
+    }
   }
 
   @override
@@ -74,81 +135,170 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.gray50,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Premium Header
-          SliverAppBar(
-            expandedHeight: 100.0,
-            floating: false,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: isDark
-                ? AppColors.darkBackground
-                : AppColors.gray50,
-            leadingWidth: 70,
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: Center(
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurface : AppColors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? 0.2 : 0.05,
+      body: RefreshIndicator(
+        onRefresh: _fetchNotifications,
+        color: AppColors.tealPrimary,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            // Premium Header
+            SliverAppBar(
+              expandedHeight: 100.0,
+              floating: false,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: isDark
+                  ? AppColors.darkBackground
+                  : AppColors.gray50,
+              leadingWidth: 70,
+              leading: Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurface : AppColors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.2 : 0.05,
+                            ),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      size: 16,
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        size: 16,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            actions: const [],
-            flexibleSpace: FlexibleSpaceBar(
-              centerTitle: true,
-              title: Text(
-                'Notifications',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                  letterSpacing: -0.8,
+              actions: const [],
+              flexibleSpace: FlexibleSpaceBar(
+                centerTitle: true,
+                title: Text(
+                  'Notifications',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    letterSpacing: -0.8,
+                  ),
+                ),
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: isDark
+                        ? AppColors.darkBackgroundGradient
+                        : AppColors.softBackgroundGradient,
+                  ),
                 ),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: isDark
-                      ? AppColors.darkBackgroundGradient
-                      : AppColors.softBackgroundGradient,
-                ),
-              ),
             ),
-          ),
 
-          // Today Section
-          if (_todayNotifications.isNotEmpty) ...[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'TODAY',
+            if (_isLoading && _todayNotifications.isEmpty)
+              const SliverFillRemaining(
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColors.tealPrimary),
+                ),
+              )
+            else if (_error != null && _todayNotifications.isEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 48, color: AppColors.statusMaintenance),
+                      const SizedBox(height: 16),
+                      Text(_error!, textAlign: TextAlign.center),
+                      TextButton(
+                        onPressed: _fetchNotifications,
+                        child: const Text('Try Again'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (_todayNotifications.isEmpty && _earlierNotifications.isEmpty)
+              const SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.notifications_none, size: 48, color: AppColors.gray400),
+                      const SizedBox(height: 16),
+                      Text('No notifications yet', style: TextStyle(color: AppColors.gray400)),
+                    ],
+                  ),
+                ),
+              )
+            else ...[
+              // Today Section
+              if (_todayNotifications.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'TODAY',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? AppColors.gray300 : AppColors.gray400,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _markAllAsRead,
+                          child: Text(
+                            'Mark all as read',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? AppColors.tealLight
+                                  : AppColors.tealPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => GestureDetector(
+                        onTap: () => _markAsRead(_todayNotifications[index]),
+                        child: _NotificationCard(
+                          notification: _todayNotifications[index],
+                        ),
+                      ),
+                      childCount: _todayNotifications.length,
+                    ),
+                  ),
+                ),
+              ],
+
+              // Earlier Section
+              if (_earlierNotifications.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                    child: Text(
+                      'EARLIER',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
@@ -156,90 +306,33 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         letterSpacing: 1.2,
                       ),
                     ),
-                    GestureDetector(
-                      onTap: _markAllAsRead,
-                      child: Text(
-                        'Mark all as read',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? AppColors.tealLight
-                              : AppColors.tealPrimary,
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => GestureDetector(
+                        onTap: () => _markAsRead(_earlierNotifications[index]),
+                        child: _NotificationCard(
+                          notification: _earlierNotifications[index],
                         ),
                       ),
+                      childCount: _earlierNotifications.length,
                     ),
-                  ],
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _NotificationCard(
-                    notification: _todayNotifications[index],
                   ),
-                  childCount: _todayNotifications.length,
                 ),
-              ),
-            ),
+              ],
+            ],
           ],
-
-          // Earlier Section
-          if (_earlierNotifications.isNotEmpty) ...[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-                child: Text(
-                  'EARLIER',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.gray300 : AppColors.gray400,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _NotificationCard(
-                    notification: _earlierNotifications[index],
-                  ),
-                  childCount: _earlierNotifications.length,
-                ),
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
 }
 
-class _NotificationModel {
-  final String title;
-  final String message;
-  final String time;
-  final IconData icon;
-  final Color color;
-  bool isRead;
-
-  _NotificationModel({
-    required this.title,
-    required this.message,
-    required this.time,
-    required this.icon,
-    required this.color,
-    required this.isRead,
-  });
-}
-
 class _NotificationCard extends StatelessWidget {
-  final _NotificationModel notification;
+  final NotificationModel notification;
 
   const _NotificationCard({required this.notification});
 

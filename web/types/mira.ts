@@ -151,18 +151,26 @@ export interface User {
 }
 
 export type NotificationType =
-  | 'report_created'
-  | 'asset_assigned'
+  | 'REPORT_SUBMITTED'
+  | 'REQUEST_PENDING'
+  | 'REQUEST_ACCEPTED'
+  | 'REQUEST_REJECTED'
   | 'asset_registered'
-  | 'asset_request'
-  | 'maintenance_scheduled';
+  | 'asset_assigned'
+  | 'asset_updated'
+  | 'asset_deleted'
+  | 'asset_status_changed'
+  | 'issue_acknowledged'
+  | 'issue_resolved';
 
 export interface Notification {
   id: string;
   type: NotificationType;
   title: string;
-  description: string;
-  performedBy: string;
-  read: boolean;
-  createdAt: string;
+  message: string;
+  recipient_id: string;
+  actor_id: string;
+  asset_id?: string;
+  is_read: boolean;
+  created_at: string;
 }

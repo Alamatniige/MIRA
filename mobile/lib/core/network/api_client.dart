@@ -232,6 +232,45 @@ class ApiClient {
     }
   }
 
+  Future<dynamic> patch(
+    String path, {
+    Object? body,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+    bool requiresAuth = true,
+  }) async {
+    final uri = _buildUri(path, query);
+    final h = await _headers(headers: headers, requiresAuth: requiresAuth);
+
+    try {
+      final response = await _http
+          .patch(uri, headers: h, body: body == null ? null : jsonEncode(body))
+          .timeout(AppConfig.receiveTimeout);
+      return _handleResponse(response);
+    } on TimeoutException catch (e) {
+      debugPrint('[ApiClient][PATCH] timeout uri=$uri error=$e');
+      throw ApiException(
+        'Request timeout. Check your network and API_BASE_URL.',
+        cause: e,
+      );
+    } on HandshakeException catch (e) {
+      debugPrint('[ApiClient][PATCH] handshake uri=$uri error=$e');
+      throw ApiException(
+        'TLS/SSL handshake failed. If using local API, use http:// URL.',
+        cause: e,
+      );
+    } on SocketException catch (e) {
+      debugPrint('[ApiClient][PATCH] socket uri=$uri error=$e');
+      throw ApiException(
+        'Unable to reach API server. Check your connection.',
+        cause: e,
+      );
+    } catch (e) {
+      debugPrint('[ApiClient][PATCH] unknown uri=$uri error=$e');
+      throw ApiException('Network error', cause: e);
+    }
+  }
+
   Future<dynamic> delete(
     String path, {
     Object? body,

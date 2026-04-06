@@ -135,11 +135,14 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Notify the user that they have been assigned an asset
 	go notifications.Emit(
+		req.UserID,
+		issuerID,
+		req.AssetID,
 		notifications.TypeAssetAssigned,
-		"Asset assigned",
+		"Asset Assigned",
 		fmt.Sprintf("%s assigned %s (%s).", issuer.FullName, asset.AssetName, asset.Tag),
-		issuer.FullName,
 	)
 
 	w.WriteHeader(http.StatusCreated)
@@ -219,12 +222,20 @@ func RequestAssignment(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	go notifications.Emit(
-		notifications.TypeAssetRequest,
-		"New assignment request",
-		fmt.Sprintf("%s requested asset %s (%s).", requestorName, assetRecord.AssetName, assetRecord.Tag),
-		requestorName,
-	)
+	// Notify all admins about the new asset request
+	var admins []userv1.User
+	if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+		for _, admin := range admins {
+			go notifications.Emit(
+				admin.ID,
+				requestorID,
+				req.AssetID,
+				notifications.TypeRequestPending,
+				"New Asset Request",
+				fmt.Sprintf("%s requested asset %s (%s).", requestorName, assetRecord.AssetName, assetRecord.Tag),
+			)
+		}
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(assignment)
@@ -384,6 +395,41 @@ func RejectAssignment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
 		return
 	}
+
+	// Notify the requestor that the request was rejected
+	go func() {
+		var a asset.Asset
+		if err := db.DB.First(&a, "id = ?", assignment.AssetID).Error; err == nil {
+			notifications.Emit(
+				assignment.UserID,
+				rejectedByUserID,
+				assignment.AssetID,
+				notifications.TypeRequestRejected,
+				"Asset Request Rejected",
+				fmt.Sprintf("Your request for %s has been rejected. Reason: %s", a.AssetName, reason),
+			)
+
+			rejectorName := rejectedByUserID
+			var rejector userv1.User
+			if err := db.DB.Select("id", `"fullName"`).First(&rejector, "id = ?", rejectedByUserID).Error; err == nil && strings.TrimSpace(rejector.FullName) != "" {
+				rejectorName = rejector.FullName
+			}
+
+			var admins []userv1.User
+			if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+				for _, admin := range admins {
+					notifications.Emit(
+						admin.ID,
+						rejectedByUserID,
+						assignment.AssetID,
+						notifications.TypeRequestRejected,
+						"Asset Request Rejected",
+						fmt.Sprintf("%s rejected asset request for %s (%s). Reason: %s", rejectorName, a.AssetName, a.Tag, reason),
+					)
+				}
+			}
+		}
+	}()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -698,6 +744,41 @@ func ConfirmAssignment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to confirm assignment", http.StatusInternalServerError)
 		return
 	}
+
+	// Notify the requestor that the request was accepted
+	go func() {
+		var a asset.Asset
+		if err := db.DB.First(&a, "id = ?", assignment.AssetID).Error; err == nil {
+			notifications.Emit(
+				assignment.UserID,
+				confirmedByUserID,
+				assignment.AssetID,
+				notifications.TypeRequestAccepted,
+				"Asset Request Approved",
+				fmt.Sprintf("Your request for %s has been approved.", a.AssetName),
+			)
+
+			confirmerName := confirmedByUserID
+			var confirmer userv1.User
+			if err := db.DB.Select("id", `"fullName"`).First(&confirmer, "id = ?", confirmedByUserID).Error; err == nil && strings.TrimSpace(confirmer.FullName) != "" {
+				confirmerName = confirmer.FullName
+			}
+
+			var admins []userv1.User
+			if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+				for _, admin := range admins {
+					notifications.Emit(
+						admin.ID,
+						confirmedByUserID,
+						assignment.AssetID,
+						notifications.TypeRequestAccepted,
+						"Asset Request Approved",
+						fmt.Sprintf("%s approved asset request for %s (%s).", confirmerName, a.AssetName, a.Tag),
+					)
+				}
+			}
+		}
+	}()
 
 	if err := db.DB.Model(&asset.Asset{}).Where("id = ?", assignment.AssetID).Update("assignmentStatus", "Unavailable").Error; err != nil {
 		log.Printf("assignment %s confirmed but failed to update asset assignmentStatus: %v", assignment.ID, err)
