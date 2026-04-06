@@ -1967,10 +1967,11 @@ export function AssetRegistry() {
           onClose={closeEditModal}
           title="Edit Asset"
           description="Update asset details"
-          className="w-full max-w-150" // Make it slightly wider since there are more fields
+          className="w-full max-w-150 flex flex-col max-h-[90dvh]" // Make it slightly wider since there are more fields
+          contentClassName="flex-1 overflow-y-auto p-0"
         >
           {selectedEditAsset && (
-            <div className="flex flex-col gap-5 pt-2">
+            <div className="flex flex-col gap-5 p-5">
               {/* Tag (Read-only) & Initial Category block header */}
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-teal-800/25 pb-3">
                 <div>
@@ -2025,26 +2026,6 @@ export function AssetRegistry() {
                     value={selectedEditAsset.serialNumber || ''}
                     onChange={(e) =>
                       setSelectedEditAsset({ ...selectedEditAsset, serialNumber: e.target.value })
-                    }
-                    className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor="edit-specification"
-                    className="text-[11px] font-semibold text-slate-700 dark:text-slate-300"
-                  >
-                    Specifications
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-specification"
-                    value={selectedEditAsset.specification || ''}
-                    onChange={(e) =>
-                      setSelectedEditAsset({ ...selectedEditAsset, specification: e.target.value })
                     }
                     className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
                   />
@@ -2156,33 +2137,55 @@ export function AssetRegistry() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  Location
-                </label>
-                <LocationSelect
-                  rooms={assetRooms}
-                  floors={assetFloors}
-                  value={selectedEditAsset.roomRel?.name || ''}
-                  onChange={(roomName, floorName) =>
-                    setSelectedEditAsset((p) =>
-                      p
-                        ? {
-                            ...p,
-                            roomRel: { id: 0, name: roomName, createdAt: '' },
-                            floorRel: { id: 0, name: floorName, createdAt: '' },
-                          }
-                        : p,
-                    )
-                  }
-                  onAddNew={openLocationFromEdit}
-                  placeholder="Search room..."
-                />
-                {selectedEditAsset.roomRel?.name && selectedEditAsset.floorRel?.name && (
-                  <p className="text-[10px] text-slate-400">
-                    Floor: {selectedEditAsset.floorRel.name}
-                  </p>
-                )}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Specifications */}
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="edit-specification"
+                    className="text-[11px] font-semibold text-slate-700 dark:text-slate-300"
+                  >
+                    Specifications
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-specification"
+                    value={selectedEditAsset.specification || ''}
+                    onChange={(e) =>
+                      setSelectedEditAsset({ ...selectedEditAsset, specification: e.target.value })
+                    }
+                    className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                  />
+                </div>
+
+                {/* Location */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    Location
+                  </label>
+                  <LocationSelect
+                    rooms={assetRooms}
+                    floors={assetFloors}
+                    value={selectedEditAsset.roomRel?.name || ''}
+                    onChange={(roomName, floorName) =>
+                      setSelectedEditAsset((p) =>
+                        p
+                          ? {
+                              ...p,
+                              roomRel: { id: 0, name: roomName, createdAt: '' },
+                              floorRel: { id: 0, name: floorName, createdAt: '' },
+                            }
+                          : p,
+                      )
+                    }
+                    onAddNew={openLocationFromEdit}
+                    placeholder="Search room..."
+                  />
+                  {selectedEditAsset.roomRel?.name && selectedEditAsset.floorRel?.name && (
+                    <p className="text-[10px] text-slate-400">
+                      Floor: {selectedEditAsset.floorRel.name}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Image section synced with Add modal layout */}
@@ -2355,7 +2358,7 @@ export function AssetRegistry() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-teal-800/25 mt-2">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-teal-800/25 mt-2 sticky bottom-0 bg-white dark:bg-[#09090b] pb-1">
                 <Button
                   type="button"
                   variant="outline"
