@@ -467,13 +467,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: AppColors.statusReported,
                           size: 18,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _error!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.statusReported,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                        Expanded(
+                          child: Text(
+                            _error!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.statusReported,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],

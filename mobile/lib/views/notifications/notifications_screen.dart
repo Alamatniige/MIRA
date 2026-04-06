@@ -48,7 +48,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
     ),
     _NotificationModel(
       title: 'Reported Issue Received',
-      message: 'Your report regarding the project monitor flickering has been noted.',
+      message:
+          'Your report regarding the project monitor flickering has been noted.',
       time: '3 days ago',
       icon: Icons.report_problem_rounded,
       color: AppColors.statusReported,
@@ -82,7 +83,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
             floating: false,
             pinned: true,
             elevation: 0,
-            backgroundColor: isDark ? AppColors.darkBackground : AppColors.gray50,
+            backgroundColor: isDark
+                ? AppColors.darkBackground
+                : AppColors.gray50,
             leadingWidth: 70,
             leading: Padding(
               padding: const EdgeInsets.only(left: 16),
@@ -97,7 +100,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.05,
+                          ),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -142,7 +147,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'TODAY',
                       style: TextStyle(
                         fontSize: 12,
@@ -158,7 +163,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.tealLight : AppColors.tealPrimary,
+                          color: isDark
+                              ? AppColors.tealLight
+                              : AppColors.tealPrimary,
                         ),
                       ),
                     ),
@@ -181,7 +188,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
           // Earlier Section
           if (_earlierNotifications.isNotEmpty) ...[
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
                 child: Text(
@@ -246,7 +253,9 @@ class _NotificationCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         borderRadius: 20,
         blur: isDark ? 10 : 5,
-        borderColor: notification.isRead ? null : (isDark ? AppColors.tealLight : AppColors.tealPrimary),
+        borderColor: notification.isRead
+            ? null
+            : (isDark ? AppColors.tealLight : AppColors.tealPrimary),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -298,12 +307,16 @@ class _NotificationCard extends StatelessWidget {
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
-                            color: isDark ? AppColors.tealLight : AppColors.tealPrimary,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.tealLight
+                                : AppColors.tealPrimary,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: isDark ? AppColors.tealLight : AppColors.tealPrimary,
+                                color: isDark
+                                    ? AppColors.tealLight
+                                    : AppColors.tealPrimary,
                                 blurRadius: 6,
                                 spreadRadius: 0,
                               ),
@@ -317,12 +330,12 @@ class _NotificationCard extends StatelessWidget {
                     notification.message,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant
+                      color: Theme.of(context).colorScheme.onSurfaceVariant
                           .withValues(alpha: notification.isRead ? 0.7 : 1.0),
                       height: 1.5,
-                      fontWeight: notification.isRead ? FontWeight.w400 : FontWeight.w500,
+                      fontWeight: notification.isRead
+                          ? FontWeight.w400
+                          : FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 10),
