@@ -9,6 +9,7 @@ class DashboardData {
     required this.myAssets,
     required this.pendingRequests,
     this.avatarUrl,
+    this.unreadNotificationCount = 0,
   });
 
   final String userFirstName;
@@ -18,4 +19,5 @@ class DashboardData {
   final List<Asset> myAssets;
   final List<Asset> pendingRequests;
   final String? avatarUrl;
+  final int unreadNotificationCount;
 }

@@ -191,37 +191,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     size: 22,
                                                   ),
                                                   // Notification Badge
-                                                  Positioned(
-                                                    right: -1,
-                                                    top: -1,
-                                                    child: Container(
-                                                      width: 11,
-                                                      height: 11,
-                                                      decoration: BoxDecoration(
-                                                        color: AppColors
-                                                            .statusReported,
-                                                        shape: BoxShape.circle,
-                                                        border: Border.all(
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .surface,
-                                                          width: 2,
-                                                        ),
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                            color: AppColors
-                                                                .statusReported
-                                                                .withValues(
-                                                                  alpha: 0.4,
-                                                                ),
-                                                            blurRadius: 4,
-                                                            spreadRadius: 0,
+                                                  if ((dashboard
+                                                              ?.unreadNotificationCount ??
+                                                          0) >
+                                                      0)
+                                                    Positioned(
+                                                      right: -1,
+                                                      top: -1,
+                                                      child: Container(
+                                                        width: 11,
+                                                        height: 11,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: AppColors
+                                                              .statusReported,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                          border: Border.all(
+                                                            color: Theme.of(
+                                                              context,
+                                                            ).colorScheme.surface,
+                                                            width: 2,
                                                           ),
-                                                        ],
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: AppColors
+                                                                  .statusReported
+                                                                  .withValues(
+                                                                    alpha: 0.4,
+                                                                  ),
+                                                              blurRadius: 4,
+                                                              spreadRadius: 0,
+                                                            ),
+                                                          ],
+                                                        ),
                                                       ),
                                                     ),
-                                                  ),
                                                 ],
                                               ),
                                             ),

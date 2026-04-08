@@ -41,7 +41,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         setState(() {
           _profile = results[0] as UserProfile;
-          _activeAssetsCount = results[1] as int;
+          final dynamic assetsResult = results[1];
+          _activeAssetsCount = (assetsResult is int) ? assetsResult : 0;
           _isLoading = false;
         });
       }

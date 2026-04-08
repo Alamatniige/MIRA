@@ -2,6 +2,7 @@ Write-Host "--- MIRA Flutter Environment Selection ---" -ForegroundColor Cyan
 Write-Host "1. PC / Android Emulator (10.0.2.2:8080) [Default]" -ForegroundColor White
 Write-Host "2. Ige Mobile" -ForegroundColor White
 Write-Host "3. Rim Burat " -ForegroundColor White
+Write-Host "4. Chrome" -ForegroundColor White
 Write-Host "5. Dynamic Device IP Scan" -ForegroundColor White
 $choice = Read-Host "Select option (1-5)"
 
@@ -44,13 +45,15 @@ switch ($choice) {
             if (Test-Path $adbCommand) {
                 Write-Host "Setting up ADB reverse for localhost mapping (Extra Reliability)..." -ForegroundColor Cyan
                 & $adbCommand reverse tcp:8080 tcp:8080 2>$null
-            } else {
+            }
+            else {
                 Write-Host "Warning: adb.exe not found. Port reversal skipped. If the app fails, ensure your phone is on the same Wi-Fi as your PC." -ForegroundColor Yellow
             }
             
             # Using the PC's IP address for the API_BASE_URL
             flutter run --dart-define=API_BASE_URL=http://$($pcIp):8080
-        } else {
+        }
+        else {
             Write-Host "Failed to get a valid PC IP address." -ForegroundColor Red
         }
     }

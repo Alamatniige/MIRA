@@ -46,10 +46,15 @@ class NotificationService {
   Future<int> getUnreadCount() async {
     try {
       final response = await _apiClient.get('/notifications/unread-count');
-      if (response is Map<String, dynamic> && response.containsKey('unread_count')) {
-        return response['unread_count'] as int;
+      if (response is Map<String, dynamic>) {
+        final count = response['unread_count'] ?? response['unreadCount'];
+        if (count == null) return 0;
+        if (count is int) return count;
+        return int.tryParse(count.toString()) ?? 0;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('MIRA Error: Failed to fetch unread count: $e');
+    }
     return 0;
   }
 

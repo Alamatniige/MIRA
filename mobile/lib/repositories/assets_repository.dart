@@ -2,15 +2,21 @@ import '../dto/assignment_response_dto.dart';
 import '../models/asset.dart';
 import '../models/dashboard_data.dart';
 import '../services/assets_service.dart';
+import '../services/notification_service.dart';
 import '../services/user_service.dart';
 
 class AssetsRepository {
-  AssetsRepository({AssetsService? assetsService, UserService? userService})
-    : _assetsService = assetsService ?? AssetsService(),
-      _userService = userService ?? UserService();
+  AssetsRepository({
+    AssetsService? assetsService,
+    UserService? userService,
+    NotificationService? notificationService,
+  }) : _assetsService = assetsService ?? AssetsService(),
+       _userService = userService ?? UserService(),
+       _notificationService = notificationService ?? NotificationService();
 
   final AssetsService _assetsService;
   final UserService _userService;
+  final NotificationService _notificationService;
 
   Future<DashboardData> getDashboardData() async {
     final userFuture = _userService.getMe();
@@ -18,12 +24,15 @@ class AssetsRepository {
     final pendingFuture = _assetsService.getMyPendingAssignments();
     final allAssetsFuture = _assetsService.getAllAssets();
     final maintenanceFuture = _assetsService.getMaintenanceAssets();
+    final unreadCountFuture = _notificationService.getUnreadCount();
 
     final user = await userFuture;
     final assignedAssets = await assignedFuture;
     final pendingAssets = await pendingFuture;
     final allAssets = await allAssetsFuture;
     final maintenanceAssets = await maintenanceFuture;
+    final dynamic unreadResult = await unreadCountFuture;
+    final int unreadCount = (unreadResult is int) ? unreadResult : 0;
 
     final detailedAssignedAssets = await _buildAssignedAssets(
       assignedAssets,
@@ -45,6 +54,7 @@ class AssetsRepository {
       myAssets: detailedAssignedAssets,
       pendingRequests: detailedPendingAssets,
       avatarUrl: user.avatarUrl,
+      unreadNotificationCount: unreadCount,
     );
   }
 
