@@ -11,6 +11,7 @@ interface User {
   avatarUrl?: string;
   role?: {
     name: string;
+    permittedPages?: string[];
   };
 }
 
@@ -41,13 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsedUser = JSON.parse(savedUser) as User;
 
-        // RBAC: Only Admins are allowed in this console
-        if (parsedUser.role?.name !== 'Admin') {
-          console.warn('Non-admin user session detected during hydration. Clearing session.');
-          logout();
-          return;
-        }
-
+        // Set user to state since non-admins can now log in
         setToken(savedToken);
         setUser(parsedUser);
 
@@ -85,19 +80,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { access_token, user: userData } = response.data;
 
-      // RBAC: Check if user is an Admin
-      if (userData.role?.name !== 'Admin') {
-        throw new Error(
-          'Access denied. Only administrators are allowed to enter the IT Admin Console.',
-        );
-      }
-
       setToken(access_token);
       setUser(userData);
       localStorage.setItem('mira_token', access_token);
       localStorage.setItem('mira_user', JSON.stringify(userData));
 
-      router.push('/dashboard');
+      let redirectPath = '/dashboard';
+      if (userData.role?.name !== 'Admin') {
+        const permitted = userData.role?.permittedPages || [];
+        if (!permitted.includes('Dashboard')) {
+          const routeReverseMap: Record<string, string> = {
+             'Assets': '/asset',
+             'Assignments': '/assignment',
+             'Reports': '/report',
+             'Users': '/users'
+          };
+          const firstPermitted = permitted.find(p => routeReverseMap[p]);
+          if (firstPermitted) {
+             redirectPath = routeReverseMap[firstPermitted];
+          }
+        }
+      }
+
+      router.push(redirectPath);
     } catch (error: any) {
       console.error('Login error:', error);
 
@@ -150,8 +155,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoading && !token && !isPublicRoute) {
       router.push('/login');
+      return;
     }
-  }, [isLoading, token, pathname, isPublicRoute, router]);
+
+    if (!isLoading && user && !isPublicRoute) {
+      if (user.role?.name === 'Admin') return;
+
+      const pathMap: Record<string, string> = {
+        '/dashboard': 'Dashboard',
+        '/asset': 'Assets',
+        '/assignment': 'Assignments',
+        '/report': 'Reports',
+        '/users': 'Users',
+      };
+
+      const activeModule = Object.keys(pathMap).find(p => pathname === p || pathname.startsWith(p + '/'));
+      
+      const getFallbackPath = () => {
+        const routeReverseMap: Record<string, string> = {
+          'Dashboard': '/dashboard',
+          'Assets': '/asset',
+          'Assignments': '/assignment',
+          'Reports': '/report',
+          'Users': '/users'
+        };
+        const firstPermitted = user.role?.permittedPages?.find(p => routeReverseMap[p]);
+        return firstPermitted ? routeReverseMap[firstPermitted] : '/login'; // Or some ultimate fallback
+      };
+
+      // Also handle root pathname specifically if not admin and they hit '/'
+      if (pathname === '/' && !user.role?.permittedPages?.includes('Dashboard')) {
+        router.push(getFallbackPath());
+        return;
+      }
+
+      if (activeModule) {
+        const requiredPerm = pathMap[activeModule];
+        const isPermitted = user.role?.permittedPages?.includes(requiredPerm);
+        if (!isPermitted) {
+          router.push(getFallbackPath());
+          return;
+        }
+      }
+
+      if (pathname.startsWith('/settings')) {
+        router.push(getFallbackPath());
+      }
+    }
+  }, [isLoading, token, pathname, isPublicRoute, router, user]);
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, updateUser, isLoading }}>

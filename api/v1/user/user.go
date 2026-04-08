@@ -1,6 +1,10 @@
 package user
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/datatypes"
+)
 
 // User struct mirrors the 'users' table in Drizzle schema
 // User struct mirrors the 'users' table
@@ -25,8 +29,9 @@ func (User) TableName() string {
 }
 
 type Role struct {
-	ID       string `json:"id" gorm:"primaryKey;type:int"`
-	RoleName string `json:"name" gorm:"column:roleName;not null"`
+	ID             string         `json:"id" gorm:"primaryKey;type:int"`
+	RoleName       string         `json:"name" gorm:"column:roleName;not null"`
+	PermittedPages datatypes.JSON `json:"permittedPages" gorm:"column:permittedPages;type:jsonb;default:'[]'"`
 }
 
 func (Role) TableName() string {

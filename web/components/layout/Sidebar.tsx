@@ -96,6 +96,9 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-6 space-y-2">
         {NAV_ITEMS.map((item) => {
+          const isPermitted = user?.role?.name === 'Admin' || (user?.role?.permittedPages?.includes(item.label) ?? false);
+          if (!isPermitted) return null;
+
           const isActive =
             pathname === item.href || (item.href === '/dashboard' && pathname === '/');
           const Icon = item.icon;
@@ -141,37 +144,37 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       {/* Bottom Actions */}
       <div className="p-3 border-t border-teal-100 dark:border-slate-700/40 space-y-2">
 
-        {/* {SETTINGS_ITEM.href}
-        <Link
-          href={SETTINGS_ITEM.href}
-          className={cn(
-            'group relative flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-300',
-            pathname === SETTINGS_ITEM.href
-              ? 'bg-[#0F766E]/10 dark:bg-linear-to-r dark:from-[#0F766E]/25 dark:to-transparent text-[#0F766E] dark:text-white border-l-[3px] border-[#0F766E] dark:border-[#2dd4bf] dark:shadow-[inset_0_0_20px_rgba(15,118,110,0.1)]'
-              : 'text-slate-600 dark:text-slate-400 hover:text-[#0F766E] dark:hover:text-white hover:bg-teal-100/50 dark:hover:bg-white/5 border-l-[3px] border-transparent hover:scale-[1.02]',
-            isCollapsed ? 'justify-center px-0' : '',
-          )}
-        >
-          <SETTINGS_ITEM.icon
+        {user?.role?.name === 'Admin' && (
+          <Link
+            href={SETTINGS_ITEM.href}
             className={cn(
-              'shrink-0 w-5 h-5 transition-all duration-300',
+              'group relative flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-300',
               pathname === SETTINGS_ITEM.href
-                ? 'text-[#0F766E] dark:text-[#2dd4bf] dark:drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]'
-                : 'text-slate-400 group-hover:text-[#0F766E] dark:group-hover:text-teal-400',
+                ? 'bg-[#0F766E]/10 dark:bg-linear-to-r dark:from-[#0F766E]/25 dark:to-transparent text-[#0F766E] dark:text-white border-l-[3px] border-[#0F766E] dark:border-[#2dd4bf] dark:shadow-[inset_0_0_20px_rgba(15,118,110,0.1)]'
+                : 'text-slate-600 dark:text-slate-400 hover:text-[#0F766E] dark:hover:text-white hover:bg-teal-100/50 dark:hover:bg-white/5 border-l-[3px] border-transparent hover:scale-[1.02]',
+              isCollapsed ? 'justify-center px-0' : '',
             )}
-          />
-          {!isCollapsed && (
-            <span className="font-medium text-sm whitespace-nowrap">{SETTINGS_ITEM.label}</span>
-          )}
+          >
+            <SETTINGS_ITEM.icon
+              className={cn(
+                'shrink-0 w-5 h-5 transition-all duration-300',
+                pathname === SETTINGS_ITEM.href
+                  ? 'text-[#0F766E] dark:text-[#2dd4bf] dark:drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]'
+                  : 'text-slate-400 group-hover:text-[#0F766E] dark:group-hover:text-teal-400',
+              )}
+            />
+            {!isCollapsed && (
+              <span className="font-medium text-sm whitespace-nowrap">{SETTINGS_ITEM.label}</span>
+            )}
 
-          {isCollapsed && (
-            <div className="absolute left-full ml-4 px-2.5 py-1.5 bg-[#0F766E] text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
-              {SETTINGS_ITEM.label}
-              <div className="absolute top-1/2 -left-1 -mt-1 border-t-4 border-t-transparent border-r-4 border-r-[#0F766E] border-b-4 border-b-transparent"></div>
-            </div>
-          )}
-        </Link> 
-        */}
+            {isCollapsed && (
+              <div className="absolute left-full ml-4 px-2.5 py-1.5 bg-[#0F766E] text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+                {SETTINGS_ITEM.label}
+                <div className="absolute top-1/2 -left-1 -mt-1 border-t-4 border-t-transparent border-r-4 border-r-[#0F766E] border-b-4 border-b-transparent"></div>
+              </div>
+            )}
+          </Link>
+        )}
 
         <Button
           variant="ghost"

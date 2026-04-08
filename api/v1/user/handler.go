@@ -444,6 +444,90 @@ func UploadProfileImage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"avatarUrl": publicURL})
+}
+
+// CreateRole adds a new role
+func CreateRole(w http.ResponseWriter, r *http.Request) {
+	var req Role
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Postgres 'id' is a sequence (int). ID string="" causes SQLSTATE 22P02. Omit it.
+	if result := db.DB.Omit("ID").Create(&req); result.Error != nil {
+		http.Error(w, "Error creating role: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(req)
+}
+
+// UpdateRole updates an existing role
+func UpdateRole(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	if id == "" {
+		http.Error(w, "Role ID is required", http.StatusBadRequest)
+		return
+	}
+
+	var role Role
+	if result := db.DB.First(&role, "id = ?", id); result.Error != nil {
+		http.Error(w, "Role not found", http.StatusNotFound)
+		return
+	}
+
+	var req Role
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	role.RoleName = req.RoleName
+	role.PermittedPages = req.PermittedPages
+
+	if result := db.DB.Save(&role); result.Error != nil {
+		http.Error(w, "Error updating role: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(role)
+}
+
+// DeleteRole deletes an existing role
+func DeleteRole(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	if id == "" {
+		http.Error(w, "Role ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Check if role is used by any user
+	var userCount int64
+	db.DB.Model(&User{}).Where("roleId = ?", id).Count(&userCount)
+	if userCount > 0 {
+		http.Error(w, "Cannot delete role because it is currently assigned to users", http.StatusConflict)
+		return
+	}
+
+	var role Role
+	if result := db.DB.First(&role, "id = ?", id); result.Error != nil {
+		http.Error(w, "Role not found", http.StatusNotFound)
+		return
+	}
+
+	if result := db.DB.Delete(&role); result.Error != nil {
+		http.Error(w, "Error deleting role: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
