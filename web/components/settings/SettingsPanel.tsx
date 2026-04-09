@@ -74,7 +74,7 @@ export function SettingsPanel() {
   };
 
   const togglePagePermission = (page: string) => {
-    setFormPermittedPages(prev => 
+    setFormPermittedPages(prev =>
       prev.includes(page) ? prev.filter(p => p !== page) : [...prev, page]
     );
   };
@@ -132,6 +132,14 @@ export function SettingsPanel() {
 
   if (isLoading) return <FullPageLoader label="Loading access control..." />;
 
+  const sortedNonStaffRoles = roles
+    .filter(r => r.name !== 'Staff')
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const sortedNonStaffUsers = users
+    .filter(u => u.role?.name !== 'Staff')
+    .sort((a, b) => a.fullName.localeCompare(b.fullName));
+
   const adminUsersCount = users.filter(u => u.role?.name === 'Admin').length;
 
   return (
@@ -171,7 +179,7 @@ export function SettingsPanel() {
         </Card>
 
         <Card className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b]">
-           <CardContent className="p-5">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div className="rounded-xl p-2.5 text-white shadow-sm transition-transform group-hover:scale-110 bg-blue-600">
                 <Users className="h-5 w-5" />
@@ -183,7 +191,7 @@ export function SettingsPanel() {
             </div>
             <div className="mt-4">
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">{users.length}</span>
+                <span className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">{sortedNonStaffUsers.length}</span>
               </div>
               <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 mt-1">Total Assigned Users</p>
             </div>
@@ -191,7 +199,7 @@ export function SettingsPanel() {
         </Card>
 
         <Card className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b]">
-           <CardContent className="p-5">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div className="rounded-xl p-2.5 text-white shadow-sm transition-transform group-hover:scale-110 bg-violet-600">
                 <ShieldCheck className="h-5 w-5" />
@@ -225,9 +233,9 @@ export function SettingsPanel() {
                   <CardDescription className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">Define responsibilities and access scopes.</CardDescription>
                 </div>
               </div>
-              <Button 
+              <Button
                 onClick={() => handleOpenRoleModal()}
-                size="sm" 
+                size="sm"
                 className="h-8 gap-2 rounded-lg bg-linear-to-r from-[#0F766E] to-[#0E7490] px-4 text-[11px] font-semibold text-white shadow-md transition-all hover:shadow-lg active:scale-95"
               >
                 <UserPlus className="w-3.5 h-3.5" /> Define Role
@@ -236,7 +244,7 @@ export function SettingsPanel() {
           </CardHeader>
           <CardContent className="p-0 flex-1 bg-white/30 dark:bg-transparent overflow-y-auto">
             <div className="divide-y divide-slate-100 dark:divide-white/5">
-              {roles.map(role => (
+              {sortedNonStaffRoles.map(role => (
                 <div key={role.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/30 group">
                   <div className="flex items-center gap-4">
                     <div className={cn(
@@ -273,7 +281,7 @@ export function SettingsPanel() {
           </CardContent>
         </Card>
 
-        {/* User Assignments Card */}
+        {/* Admin Users Card */}
         <Card className="flex flex-col overflow-hidden border-slate-200/60 shadow-sm transition-all dark:border-white/10 dark:bg-[#09090b] min-h-[500px]">
           <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4 backdrop-blur-sm dark:border-white/10 dark:bg-black/50">
             <div className="flex items-center gap-3">
@@ -281,42 +289,42 @@ export function SettingsPanel() {
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <CardTitle className="text-base font-bold text-slate-900 dark:text-white">Active Assignments</CardTitle>
+                <CardTitle className="text-base font-bold text-slate-900 dark:text-white">Admin Users</CardTitle>
                 <CardDescription className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">Control which roles users hold.</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-0 flex-1 bg-white/30 dark:bg-transparent overflow-y-auto">
             <div className="divide-y divide-slate-100 dark:divide-white/5">
-              {users.map(u => (
+              {sortedNonStaffUsers.map(u => (
                 <div key={u.id} className="p-4 flex items-center justify-between transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/30 group">
-                   <div className="flex items-center gap-4">
-                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br ${getAvatarGradient(u.id)} text-lg font-bold text-white shadow-md overflow-hidden ring-2 ring-white dark:ring-[#09090b]`}>
-                        {u.avatarUrl ? (
-                          <img src={u.avatarUrl} alt={u.fullName} className="h-full w-full object-cover" />
-                        ) : (
-                          getInitials(u.fullName)
-                        )}
-                      </div>
-                      <div>
-                         <p className="font-bold text-slate-900 dark:text-slate-100 leading-none">{u.fullName}</p>
-                         <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">{u.email}</p>
-                      </div>
-                   </div>
-                   <div className="relative">
-                     <select 
-                        value={u.roleId} 
-                        onChange={(e) => updateUserRole(u.id, e.target.value)}
-                        className="h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white shadow-sm dark:bg-[#09090b] px-3 pr-8 text-xs font-bold text-slate-700 dark:text-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 cursor-pointer outline-none transition-all appearance-none hover:bg-slate-50 dark:hover:bg-zinc-900"
-                     >
-                       {roles.map(r => (
-                         <option key={r.id} value={r.id}>{r.name}</option>
-                       ))}
-                     </select>
-                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 group-hover:text-slate-600 transition-colors">
-                       <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                     </div>
-                   </div>
+                  <div className="flex items-center gap-4">
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br ${getAvatarGradient(u.id)} text-lg font-bold text-white shadow-md overflow-hidden ring-2 ring-white dark:ring-[#09090b]`}>
+                      {u.avatarUrl ? (
+                        <img src={u.avatarUrl} alt={u.fullName} className="h-full w-full object-cover" />
+                      ) : (
+                        getInitials(u.fullName)
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-slate-100 leading-none">{u.fullName}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">{u.email}</p>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={u.roleId}
+                      onChange={(e) => updateUserRole(u.id, e.target.value)}
+                      className="h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white shadow-sm dark:bg-[#09090b] px-3 pr-8 text-xs font-bold text-slate-700 dark:text-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 cursor-pointer outline-none transition-all appearance-none hover:bg-slate-50 dark:hover:bg-zinc-900"
+                    >
+                      {sortedNonStaffRoles.map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 group-hover:text-slate-600 transition-colors">
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -335,11 +343,11 @@ export function SettingsPanel() {
           <div className="grid gap-5 py-4">
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">Role Designation</label>
-              <Input 
-                 value={formRoleName}
-                 onChange={e => setFormRoleName(e.target.value)}
-                 placeholder="e.g. Content Manager"
-                 className="h-10 text-sm font-medium bg-slate-50/50 dark:bg-white/5 border-slate-200 dark:border-white/10 focus:border-[#0F766E] focus:bg-white dark:focus:bg-[#09090b] transition-all rounded-xl"
+              <Input
+                value={formRoleName}
+                onChange={e => setFormRoleName(e.target.value)}
+                placeholder="e.g. Content Manager"
+                className="h-10 text-sm font-medium bg-slate-50/50 dark:bg-white/5 border-slate-200 dark:border-white/10 focus:border-[#0F766E] focus:bg-white dark:focus:bg-[#09090b] transition-all rounded-xl"
               />
             </div>
             <div className="space-y-2">
@@ -348,23 +356,23 @@ export function SettingsPanel() {
                 {AVAILABLE_PAGES.map(page => {
                   const isChecked = formPermittedPages.includes(page);
                   return (
-                     <label key={page} className={cn(
-                        "flex items-center justify-between cursor-pointer group px-3 py-2.5 rounded-xl border transition-all",
-                        isChecked 
-                           ? "border-[#0F766E]/50 bg-[#0F766E]/5 dark:bg-teal-500/10 shadow-sm" 
-                           : "border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-[#09090b] bg-white/50 dark:bg-transparent"
-                     )}>
-                        <span className={cn(
-                           "text-xs font-bold transition-colors",
-                           isChecked ? "text-[#0F766E] dark:text-teal-400" : "text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200"
-                        )}>{page}</span>
-                        <div className={cn(
-                           "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all",
-                           isChecked ? "border-[#0F766E] bg-[#0F766E] dark:bg-teal-400 dark:border-teal-400" : "border-slate-300 dark:border-slate-600 bg-white dark:bg-zinc-900"
-                        )}>
-                           {isChecked && <CheckCircle2 className="w-3.5 h-3.5 text-white dark:text-[#09090b]" />}
-                        </div>
-                     </label>
+                    <label key={page} className={cn(
+                      "flex items-center justify-between cursor-pointer group px-3 py-2.5 rounded-xl border transition-all",
+                      isChecked
+                        ? "border-[#0F766E]/50 bg-[#0F766E]/5 dark:bg-teal-500/10 shadow-sm"
+                        : "border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-[#09090b] bg-white/50 dark:bg-transparent"
+                    )}>
+                      <span className={cn(
+                        "text-xs font-bold transition-colors",
+                        isChecked ? "text-[#0F766E] dark:text-teal-400" : "text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200"
+                      )}>{page}</span>
+                      <div className={cn(
+                        "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all",
+                        isChecked ? "border-[#0F766E] bg-[#0F766E] dark:bg-teal-400 dark:border-teal-400" : "border-slate-300 dark:border-slate-600 bg-white dark:bg-zinc-900"
+                      )}>
+                        {isChecked && <CheckCircle2 className="w-3.5 h-3.5 text-white dark:text-[#09090b]" />}
+                      </div>
+                    </label>
                   );
                 })}
               </div>
