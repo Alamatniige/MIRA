@@ -15,6 +15,8 @@ import {
   LogOut,
   User,
   Loader2,
+  Activity,
+  Info,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '../ui/button';
@@ -27,6 +29,7 @@ const NAV_ITEMS = [
   { label: 'Assignments', href: '/assignment', icon: ClipboardList },
   { label: 'Reports', href: '/report', icon: BarChart3 },
   { label: 'Users', href: '/users', icon: User },
+  { label: 'Activity Logs', href: '/activity-logs', icon: Activity },
 ];
 
 const SETTINGS_ITEM = { label: 'Settings', href: '/settings', icon: Settings };
