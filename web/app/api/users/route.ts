@@ -1,57 +1,73 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+async function extractErrorBody(response: Response, fallback: string) {
+  const text = await response.text();
+  try {
+    const body = JSON.parse(text);
+    return {
+      code: 'BACKEND_ERROR',
+      message: body.message || body.error || fallback,
+      details: body,
+    };
+  } catch {
+    return { code: 'BACKEND_ERROR', message: text.trim() || fallback };
+  }
+}
 
 export async function GET(req: NextRequest) {
-    const authHeader = req.headers.get("authorization");
+  const authHeader = req.headers.get('authorization');
 
-    try {
-        const response = await fetch(`${API_URL}/users`, {
-            headers: {
-                ...(authHeader ? { Authorization: authHeader } : {}),
-            },
-        });
+  try {
+    const response = await fetch(`${API_URL}/users`, {
+      headers: {
+        ...(authHeader ? { Authorization: authHeader } : {}),
+      },
+    });
 
-        if (!response.ok) {
-            return NextResponse.json({ message: `Backend error: ${response.status}` }, { status: response.status });
-        }
-
-        const data = await response.json();
-        return NextResponse.json(data, { status: response.status });
-    } catch (error) {
-        console.error("Proxy GET Error:", error);
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    if (!response.ok) {
+      const err = await extractErrorBody(response, `Backend error: ${response.status}`);
+      return NextResponse.json(err, { status: response.status });
     }
+
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error('Proxy GET Error:', error);
+    return NextResponse.json(
+      { code: 'INTERNAL_ERROR', message: 'Something went wrong. Please try again.' },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
-    const authHeader = req.headers.get("authorization");
-    const body = await req.json();
+  const authHeader = req.headers.get('authorization');
+  const body = await req.json();
 
-    try {
-        const response = await fetch(`${API_URL}/users`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                ...(authHeader ? { Authorization: authHeader } : {}),
-            },
-            body: JSON.stringify(body),
-        });
+  try {
+    const response = await fetch(`${API_URL}/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
+      },
+      body: JSON.stringify(body),
+    });
 
-        if (!response.ok) {
-            const text = await response.text();
-            try {
-                return NextResponse.json(JSON.parse(text), { status: response.status });
-            } catch {
-                return NextResponse.json({ message: text }, { status: response.status });
-            }
-        }
-
-        const data = await response.json();
-        return NextResponse.json(data, { status: response.status });
-    } catch (error) {
-        console.error("Proxy POST Error:", error);
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    if (!response.ok) {
+      const err = await extractErrorBody(response, `Backend error: ${response.status}`);
+      return NextResponse.json(err, { status: response.status });
     }
-}
 
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error('Proxy POST Error:', error);
+    return NextResponse.json(
+      { code: 'INTERNAL_ERROR', message: 'Something went wrong. Please try again.' },
+      { status: 500 },
+    );
+  }
+}

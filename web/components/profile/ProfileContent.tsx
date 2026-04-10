@@ -9,6 +9,7 @@ import { Avatar } from '../ui/avatar';
 import { User as UserType } from '@/types/mira';
 import { FullPageLoader } from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export function ProfileContent() {
   const [isEditing, setIsEditing] = useState(false);
@@ -31,17 +32,19 @@ export function ProfileContent() {
 
   const [saved, setSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
       setIsLoading(true);
+      setLoadError(null);
 
       try {
         const user = await getCurrentUser();
 
         setFormData(user);
       } catch (err) {
-        console.error('Failed to load profile:', err);
+        setLoadError(err instanceof Error ? err.message : 'Failed to load profile.');
       } finally {
         setIsLoading(false);
       }
@@ -57,7 +60,9 @@ export function ProfileContent() {
       setIsEditing(false);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
-      console.error('Failed to save profile:', error);
+      toast.error('Failed to save profile', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -83,10 +88,12 @@ export function ProfileContent() {
 
     try {
       const result = await uploadAvatar(formDataUpload);
-      setFormData(prev => ({ ...prev, avatarUrl: result.avatarUrl }));
+      setFormData((prev) => ({ ...prev, avatarUrl: result.avatarUrl }));
       updateSessionUser({ avatarUrl: result.avatarUrl });
     } catch (error) {
-      console.error('Failed to upload avatar:', error);
+      toast.error('Failed to upload avatar', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
     } finally {
       setIsUploading(false);
     }
@@ -96,14 +103,35 @@ export function ProfileContent() {
     return <FullPageLoader label="Loading user profile..." />;
   }
 
+  if (loadError) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <p className="text-sm font-medium text-destructive">{loadError}</p>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setLoadError(null);
+            setIsLoading(true);
+            getCurrentUser()
+              .then(setFormData)
+              .catch((err) =>
+                setLoadError(err instanceof Error ? err.message : 'Failed to load profile.'),
+              )
+              .finally(() => setIsLoading(false));
+          }}
+        >
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         {/*Header Section*/}
         <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Admin Profile
-          </h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Admin Profile</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Manage your administrator account settings and preferences.
           </p>
@@ -200,12 +228,9 @@ export function ProfileContent() {
                     )}
                   </div>
                 </div>
-
               </div>
 
-              <h2 className="mt-4 text-xl font-bold text-foreground">
-                {formData.fullName}
-              </h2>
+              <h2 className="mt-4 text-xl font-bold text-foreground">{formData.fullName}</h2>
               <p className="text-sm font-medium text-primary dark:text-teal-400 mt-1">
                 {formData.role?.name}
               </p>
@@ -229,9 +254,7 @@ export function ProfileContent() {
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-6 pb-4 border-b border-border">
               <User className="w-5 h-5 text-primary dark:text-teal-400" />
-              <h2 className="text-lg font-bold text-foreground">
-                Personal Information
-              </h2>
+              <h2 className="text-lg font-bold text-foreground">Personal Information</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -292,9 +315,7 @@ export function ProfileContent() {
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-6 pb-4 border-b border-border">
               <Briefcase className="w-5 h-5 text-primary dark:text-teal-400" />
-              <h2 className="text-lg font-bold text-foreground">
-                Professional Details
-              </h2>
+              <h2 className="text-lg font-bold text-foreground">Professional Details</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

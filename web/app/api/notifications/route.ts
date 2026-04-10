@@ -4,6 +4,20 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export const dynamic = 'force-dynamic';
 
+async function extractErrorBody(response: Response, fallback: string) {
+  const text = await response.text();
+  try {
+    const body = JSON.parse(text);
+    return {
+      code: 'BACKEND_ERROR',
+      message: body.message || body.error || fallback,
+      details: body,
+    };
+  } catch {
+    return { code: 'BACKEND_ERROR', message: text.trim() || fallback };
+  }
+}
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
 
@@ -16,16 +30,17 @@ export async function GET(req: NextRequest) {
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { message: `Backend error: ${response.status}` },
-        { status: response.status },
-      );
+      const err = await extractErrorBody(response, `Backend error: ${response.status}`);
+      return NextResponse.json(err, { status: response.status });
     }
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Proxy GET /notifications error:', error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { code: 'INTERNAL_ERROR', message: 'Something went wrong. Please try again.' },
+      { status: 500 },
+    );
   }
 }

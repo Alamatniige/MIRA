@@ -40,6 +40,7 @@ import { User as UserType } from '@/types/mira';
 import { useUsers } from '@/hooks/useUsers';
 import { getInitials, getAvatarGradient } from '@/utils/user';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { toast } from 'sonner';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -104,7 +105,9 @@ function FilterDropdown({
             : 'border-slate-200 bg-white text-slate-600 dark:border-white/10 dark:bg-[#09090b] dark:text-slate-400'
         }`}
       >
-        <Icon className={`h-3.5 w-3.5 ${value && value !== 'all' ? 'animate-in zoom-in duration-300' : ''}`} />
+        <Icon
+          className={`h-3.5 w-3.5 ${value && value !== 'all' ? 'animate-in zoom-in duration-300' : ''}`}
+        />
         <span>
           {value && value !== 'all' ? (
             <span className="flex items-center gap-1.5">
@@ -219,8 +222,10 @@ export function UsersContent() {
     try {
       await updateUser(editUser.id, editFormData);
       setEditUser(null);
-    } catch {
-      alert('Failed to update user. Please check your inputs.');
+    } catch (err) {
+      toast.error('Failed to update user', {
+        description: err instanceof Error ? err.message : 'Please check your inputs.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -233,8 +238,10 @@ export function UsersContent() {
       await removeUser(deleteUser.id);
       setDeleteUser(null);
       setViewUser(null);
-    } catch {
-      alert('Failed to delete user.');
+    } catch (err) {
+      toast.error('Failed to delete user', {
+        description: err instanceof Error ? err.message : 'Please try again.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -269,8 +276,10 @@ export function UsersContent() {
         department: 'General',
         roleId: '',
       });
-    } catch {
-      alert('Failed to add user. Please check your inputs.');
+    } catch (err) {
+      toast.error('Failed to add user', {
+        description: err instanceof Error ? err.message : 'Please check your inputs.',
+      });
     }
   };
 
@@ -424,7 +433,10 @@ export function UsersContent() {
                   {filtered.length} matching administrative accounts
                 </p>
               </div>
-              {(search || roleFilter !== 'all' || statusFilter !== 'all' || deptFilter !== 'all') && (
+              {(search ||
+                roleFilter !== 'all' ||
+                statusFilter !== 'all' ||
+                deptFilter !== 'all') && (
                 <Button
                   variant="ghost"
                   size="xs"
@@ -526,7 +538,11 @@ export function UsersContent() {
                           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br ${getAvatarGradient(user.id)} text-xs font-bold text-white shadow-sm overflow-hidden`}
                         >
                           {user.avatarUrl ? (
-                            <img src={user.avatarUrl} alt={user.fullName} className="h-full w-full object-cover" />
+                            <img
+                              src={user.avatarUrl}
+                              alt={user.fullName}
+                              className="h-full w-full object-cover"
+                            />
                           ) : (
                             getInitials(user.fullName)
                           )}
@@ -745,7 +761,11 @@ export function UsersContent() {
                 className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br ${getAvatarGradient(viewUser.id)} text-lg font-bold text-white shadow-md overflow-hidden`}
               >
                 {viewUser.avatarUrl ? (
-                  <img src={viewUser.avatarUrl} alt={viewUser.fullName} className="h-full w-full object-cover" />
+                  <img
+                    src={viewUser.avatarUrl}
+                    alt={viewUser.fullName}
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   getInitials(viewUser.fullName)
                 )}

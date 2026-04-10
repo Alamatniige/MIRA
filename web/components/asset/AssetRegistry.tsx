@@ -625,6 +625,14 @@ export function AssetRegistry() {
   }, [assets, generateNextTag, open]);
 
   const handleSaveAsset = async (showQr: boolean = true) => {
+    if (!formData.assetName.trim()) {
+      toast.error('Asset Name is required');
+      return;
+    }
+    if (!formData.assetType) {
+      toast.error('Category is required');
+      return;
+    }
     setIsGeneratingQr(true);
     try {
       const createdAsset = await createAsset({
@@ -755,6 +763,14 @@ export function AssetRegistry() {
 
   const handleUpdateAsset = async () => {
     if (!selectedEditAsset) return;
+    if (!selectedEditAsset.assetName?.trim()) {
+      toast.error('Asset Name is required');
+      return;
+    }
+    if (!selectedEditAsset.assetTypeRel?.name) {
+      toast.error('Category is required');
+      return;
+    }
     setIsUpdating(true);
     try {
       const updatedAsset = await updateAsset({
@@ -1234,135 +1250,833 @@ export function AssetRegistry() {
       </div>
 
       {/* ── Generate QR Modal ── */}
-        <Modal
-          open={qrOpen}
-          onClose={() => setQrOpen(false)}
-          className={open ? 'translate-x-[52%] h-120' : 'h-120'} // Shift to the right if the other modal is open
-        >
-          <div className="space-y-4 text-xs flex flex-col h-110 pt-4">
-            {selectedQrAsset ? (
-              <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 bg-slate-50 dark:bg-slate-900/50 p-6 text-center">
-                <div className="rounded-2xl bg-white p-5 shadow-sm dark:bg-white">
-                  <QRCodeSVG
-                    value={`MIRA Asset\nTag: ${selectedQrAsset.tag || selectedQrAsset.id}\nName: ${selectedQrAsset.assetName}\nCategory: ${selectedQrAsset.assetTypeRel?.name}`}
-                    size={220}
-                    level="H"
-                  />
-                </div>
-                <p className="mt-5 text-[15px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">
-                  {selectedQrAsset.tag}
-                </p>
-                <p className="mt-1.5 text-[12px] text-slate-500">{selectedQrAsset.assetName}</p>
+      <Modal
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        className={open ? 'translate-x-[52%] h-120' : 'h-120'} // Shift to the right if the other modal is open
+      >
+        <div className="space-y-4 text-xs flex flex-col h-110 pt-4">
+          {selectedQrAsset ? (
+            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 bg-slate-50 dark:bg-slate-900/50 p-6 text-center">
+              <div className="rounded-2xl bg-white p-5 shadow-sm dark:bg-white">
+                <QRCodeSVG
+                  value={`MIRA Asset\nTag: ${selectedQrAsset.tag || selectedQrAsset.id}\nName: ${selectedQrAsset.assetName}\nCategory: ${selectedQrAsset.assetTypeRel?.name}`}
+                  size={220}
+                  level="H"
+                />
               </div>
-            ) : (
-              <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 text-center">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600"
-                >
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <rect x="7" y="7" width="3" height="3" />
-                  <rect x="14" y="7" width="3" height="3" />
-                  <rect x="7" y="14" width="3" height="3" />
-                  <rect x="14" y="14" width="3" height="3" />
-                </svg>
-                <p className="text-[11px] text-slate-500">
-                  Select an asset above to view its QR code
-                </p>
-              </div>
-            )}
+              <p className="mt-5 text-[15px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">
+                {selectedQrAsset.tag}
+              </p>
+              <p className="mt-1.5 text-[12px] text-slate-500">{selectedQrAsset.assetName}</p>
+            </div>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 text-center">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <rect x="7" y="7" width="3" height="3" />
+                <rect x="14" y="7" width="3" height="3" />
+                <rect x="7" y="14" width="3" height="3" />
+                <rect x="14" y="14" width="3" height="3" />
+              </svg>
+              <p className="text-[11px] text-slate-500">
+                Select an asset above to view its QR code
+              </p>
+            </div>
+          )}
 
-            <div className="flex items-center justify-end gap-2 pt-2 mt-auto">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 rounded-full border-slate-200 px-4 text-[11px]"
-                onClick={() => setQrOpen(false)}
+          <div className="flex items-center justify-end gap-2 pt-2 mt-auto">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-full border-slate-200 px-4 text-[11px]"
+              onClick={() => setQrOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={!selectedQrAsset}
+              className="h-8 rounded-full bg-slate-900 px-5 text-[11px] font-semibold text-white shadow-sm hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+              onClick={() => window.print()}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                className="mr-1.5 h-3.5 w-3.5"
               >
-                Close
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={!selectedQrAsset}
-                className="h-8 rounded-full bg-slate-900 px-5 text-[11px] font-semibold text-white shadow-sm hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
-                onClick={() => window.print()}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  className="mr-1.5 h-3.5 w-3.5"
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+              Print Tag
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── Add Asset Modal ── */}
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Add Asset"
+        description="Register a new IT hardware asset into the MIRA registry."
+        overlayClassName={
+          qrOpen
+            ? '!bg-transparent dark:!bg-transparent !backdrop-blur-none pointer-events-none'
+            : ''
+        } // Remove double overlay
+        className={qrOpen ? 'pointer-events-auto -translate-x-[52%]' : ''} // Shift to the left if QR modal is open
+      >
+        <form className="space-y-4 text-xs flex flex-col">
+          {/* Row 1: Tag + Name + Category */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Asset Tag
+              </label>
+              <Input
+                placeholder="e.g. AS-01"
+                className="h-8 text-[11px]"
+                disabled
+                value={formData.tag}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Asset Name
+              </label>
+              <Input
+                placeholder="e.g. Lenovo ThinkPad T14 Gen 3"
+                className="h-8 text-[11px]"
+                value={formData.assetName}
+                onChange={(e) => setFormData((p) => ({ ...p, assetName: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Category
+              </label>
+              {!isAddingType ? (
+                <select
+                  className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
+                  value={formData.assetType}
+                  onChange={(e) => {
+                    if (e.target.value === 'Add another category') {
+                      setIsAddingType(true);
+                      setFormData((p) => ({ ...p, assetType: '' }));
+                    } else {
+                      setFormData((p) => ({ ...p, assetType: e.target.value }));
+                    }
+                  }}
                 >
-                  <polyline points="6 9 6 2 18 2 18 9" />
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                  <rect x="6" y="14" width="12" height="8" />
-                </svg>
-                Print Tag
-              </Button>
+                  <option value="" disabled>
+                    Select category
+                  </option>
+                  {Array.from(
+                    new Set([...assetsTypes.map((t) => t.name), ...Object.keys(localCategories)]),
+                  ).map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                  <option value="Add another category" className="font-semibold text-primary">
+                    Add another category
+                  </option>
+                </select>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="New category..."
+                    className="h-8 text-[11px] flex-1"
+                    value={newType}
+                    onChange={(e) => setNewType(e.target.value)}
+                    autoFocus
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2"
+                    onClick={() => {
+                      if (newType.trim()) {
+                        setLocalCategories((p) => ({ ...p, [newType.trim()]: 0 }));
+                        setFormData((p) => ({ ...p, assetType: newType.trim() }));
+                      }
+                      setIsAddingType(false);
+                      setNewType('');
+                    }}
+                  >
+                    OK
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
-        </Modal>
 
-        {/* ── Add Asset Modal ── */}
-        <Modal
-          open={open}
-          onClose={() => setOpen(false)}
-          title="Add Asset"
-          description="Register a new IT hardware asset into the MIRA registry."
-          overlayClassName={
-            qrOpen
-              ? '!bg-transparent dark:!bg-transparent !backdrop-blur-none pointer-events-none'
-              : ''
-          } // Remove double overlay
-          className={qrOpen ? 'pointer-events-auto -translate-x-[52%]' : ''} // Shift to the left if QR modal is open
-        >
-          <form className="space-y-4 text-xs flex flex-col">
-            {/* Row 1: Tag + Name + Category */}
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  Asset Tag
-                </label>
-                <Input
-                  placeholder="e.g. AS-01"
-                  className="h-8 text-[11px]"
-                  disabled
-                  value={formData.tag}
-                />
+          {/* Row 2: Status + Location */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Condition Status
+              </label>
+              <select
+                className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
+                value={formData.currentStatus}
+                onChange={(e) => setFormData((p) => ({ ...p, currentStatus: e.target.value }))}
+              >
+                <option value="" disabled>
+                  Select condition
+                </option>
+                {['Good', 'Under Maintenance'].map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Location
+              </label>
+              <LocationSelect
+                rooms={assetRooms}
+                floors={assetFloors}
+                value={formData.room}
+                onChange={(roomName, floorName) =>
+                  setFormData((p) => ({ ...p, room: roomName, floor: floorName }))
+                }
+                onAddNew={openLocationFromAdd}
+                placeholder="Search room..."
+              />
+              {formData.room && formData.floor && (
+                <p className="mt-1 text-[10px] text-slate-400">Floor: {formData.floor}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Row 3: Specs */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Serial Number
+              </label>
+              <Input
+                placeholder="e.g. SN-123456"
+                className="h-8 text-[11px]"
+                value={formData.serialNumber}
+                onChange={(e) => setFormData((p) => ({ ...p, serialNumber: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Specifications
+              </label>
+              <Input
+                placeholder="e.g. Intel i7, 16GB RAM, 512GB SSD"
+                className="h-8 text-[11px]"
+                value={formData.specification}
+                onChange={(e) => setFormData((p) => ({ ...p, specification: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Asset Images
+              </label>
+              {imagePreviews.length > 1 && (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="xs"
+                  onClick={() => {
+                    setGallerySource('add');
+                    openGallery(0);
+                  }}
+                  className="text-[10px] font-semibold text-primary hover:underline p-0 h-auto"
+                >
+                  View All ({imagePreviews.length})
+                </Button>
+              )}
+            </div>
+
+            <div
+              className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${
+                isDragging
+                  ? 'border-primary bg-primary/5 dark:bg-teal-900/10'
+                  : 'border-slate-200 dark:border-teal-800/30'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              {/* Invisible file input - only top layer when no images */}
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                className={`absolute inset-0 h-full w-full cursor-pointer opacity-0 ${imagePreviews.length === 0 ? 'z-10' : 'z-0'}`}
+                onChange={(e) => handleImageChange(e.target.files)}
+              />
+
+              {imagePreviews.length === 0 ? (
+                /* Empty state */
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <div
+                    className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${
+                      isDragging
+                        ? 'bg-primary/20 text-primary'
+                        : 'bg-white dark:bg-slate-800 text-slate-400 shadow-sm'
+                    }`}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      className="h-5 w-5"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                  </div>
+                  <p className="mb-1 text-[12px] font-semibold text-slate-700 dark:text-slate-200">
+                    Click to upload{' '}
+                    <span className="font-normal text-slate-500">or drag and drop</span>
+                  </p>
+                  <p className="text-[10px] text-slate-500">SVG, PNG, JPG or GIF (max. 5MB)</p>
+                </div>
+              ) : (
+                <div
+                  className="relative z-20 h-36 bg-slate-100 dark:bg-slate-900 group cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setGallerySource('add');
+                    openGallery(0);
+                  }}
+                >
+                  <Image
+                    src={imagePreviews[0]}
+                    alt="Preview"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 360px"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  {/* dark overlay for readability */}
+                  <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+
+                  {/* [NEW] Hover Overlay with Plus Sign */}
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 shadow-xl transform scale-75 group-hover:scale-100 transition-transform focus:outline-none">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                        className="h-6 w-6"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Count badge (simplified) */}
+                  {imagePreviews.length > 1 && (
+                    <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.1}
+                        className="h-3 w-3"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 9h18M9 21V9" />
+                      </svg>
+                      {imagePreviews.length} photos
+                    </div>
+                  )}
+
+                  {/* Remove first image - Stop propagation so it doesn't open gallery */}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      removeImage(0);
+                    }}
+                    className="absolute right-2 top-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-500 transition-all hover:scale-110 active:scale-95 shadow-lg p-0"
+                    title="Remove image"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                      className="h-3.5 w-3.5"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-full border-slate-200 px-4 text-[11px]"
+              onClick={() => {
+                setOpen(false);
+                setIsAddingType(false);
+              }}
+            >
+              Close
+            </Button>
+            <Button
+              type="button"
+              disabled={
+                isGeneratingQr || !formData.assetName.trim() || !formData.tag || !formData.assetType
+              }
+              onClick={() => handleSaveAsset(true)}
+              size="sm"
+              className="h-8 rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-5 text-[11px] font-semibold text-white shadow-sm hover:bg-slate-800 hover:shadow-lg transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-80 flex items-center justify-center gap-1.5"
+            >
+              {isGeneratingQr ? (
+                <>
+                  <svg
+                    className="animate-spin h-3.5 w-3.5 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                'Save & Generate QR'
+              )}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ── View Asset Modal ── */}
+      <Modal
+        open={viewOpen}
+        onClose={() => {
+          setViewOpen(false);
+        }}
+        title="View Asset Details"
+        description="Detailed information and QR code for this asset."
+        className="w-full max-w-3xl"
+        contentClassName="p-0"
+      >
+        {selectedViewAsset && (
+          <div className="text-xs flex flex-col">
+            <div className="p-6 space-y-6">
+              {/* Top Section: Three Columns */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                <div className="flex flex-col gap-3">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Asset QR
+                  </h4>
+                  <div
+                    className="group relative flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 aspect-square w-full overflow-hidden"
+                    data-asset-qr={`mira-asset:${selectedViewAsset.id}`}
+                  >
+                    <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-white mb-0 transition-transform duration-300 group-hover:scale-95">
+                      <QRCodeSVG
+                        value={`mira-asset:${selectedViewAsset.id}`}
+                        size={135}
+                        level="H"
+                      />
+                    </div>
+
+                    {/* Hover Overlay for Print */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100 backdrop-blur-[1px]">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-10 rounded-full bg-white px-5 text-[12px] font-bold text-slate-900 shadow-xl hover:bg-slate-50 transition-all active:scale-95 flex items-center gap-2"
+                        onClick={() => {
+                          window.print();
+                        }}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                          className="h-4 w-4"
+                        >
+                          <polyline points="6 9 6 2 18 2 18 9" />
+                          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                          <rect x="6" y="14" width="12" height="8" />
+                        </svg>
+                        Print Tag
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 2: Info (Tag, Name, Status, Location) */}
+                <div className="space-y-4 pt-1">
+                  <div>
+                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                      Asset Tag
+                    </h4>
+                    <p className="text-[14px] font-semibold text-slate-700 dark:text-slate-300 font-mono tracking-tight">
+                      {selectedViewAsset.tag}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                      Asset Name
+                    </h4>
+                    <p className="text-[16px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                      {selectedViewAsset.assetName}
+                    </p>
+                    <p className="text-[12px] text-slate-500 mt-1">
+                      {selectedViewAsset.serialNumber || 'No Serial'} &nbsp;•&nbsp;{' '}
+                      {selectedViewAsset.assetTypeRel?.name}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-slate-400/80 uppercase tracking-widest mb-1">
+                      Condition Status
+                    </h4>
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold ${conditionBadge[getConditionStatus(selectedViewAsset)] || conditionBadge.Unknown}`}
+                    >
+                      <span
+                        className={`h-2 w-2 rounded-full ${statusDot[getConditionStatus(selectedViewAsset)] || 'bg-slate-400'}`}
+                      ></span>
+                      {getConditionStatus(selectedViewAsset)}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-slate-400/80 uppercase tracking-widest mb-1">
+                      Assignment Status
+                    </h4>
+                    <p className="text-[14px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                      {getAssignmentStatus(selectedViewAsset)}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-slate-400/80 uppercase tracking-widest mb-1">
+                      Location
+                    </h4>
+                    <div className="flex items-center gap-1.5">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                        className="h-4 w-4 text-slate-500"
+                      >
+                        <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      <p className="text-[16px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                        {selectedViewAsset.roomRel?.name || 'N/A'}{' '}
+                        {selectedViewAsset.floorRel ? `– ${selectedViewAsset.floorRel.name}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 3: Images */}
+                <div className="flex flex-col">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                    Asset Images
+                  </h4>
+                  {selectedViewAsset.image && selectedViewAsset.image.length > 0 ? (
+                    <div
+                      className="relative z-20 aspect-square w-full overflow-hidden rounded-xl border border-slate-200 dark:border-teal-800/30 bg-slate-100 dark:bg-slate-900 group cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setGallerySource('view');
+                        openGallery(0);
+                      }}
+                    >
+                      <Image
+                        src={selectedViewAsset.image[0]}
+                        alt="Asset preview"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 420px"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+
+                      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 shadow-xl transform scale-75 group-hover:scale-100 transition-transform">
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-6 w-6"
+                          >
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {selectedViewAsset.image.length > 1 && (
+                        <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2.1}
+                            className="h-3 w-3"
+                          >
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <path d="M3 9h18M9 21V9" />
+                          </svg>
+                          {selectedViewAsset.image.length} photos
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 bg-slate-50 dark:bg-slate-900/30">
+                      <p className="text-[10px] text-slate-400 italic">No images</p>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Bottom Section: Assignment & Specs - Two Column Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left Column: Assignment Details */}
+                <div className="p-4 border border-slate-100 dark:border-teal-800/25 rounded-2xl bg-slate-50/50 dark:bg-[#09090b]">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                    Assignment Details
+                  </h4>
+                  {selectedViewAsset.assignedTo ? (
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-bold ${getAvatarColor(selectedViewAsset.assignedTo.slice(0, 2).toUpperCase())} shadow-sm`}
+                      >
+                        {selectedViewAsset.assignedTo.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-[14px] font-bold text-slate-800 dark:text-slate-200">
+                          {selectedViewAsset.assignedTo}
+                        </p>
+                        <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                          Current Assignee
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 py-1">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          className="h-5 w-5"
+                        >
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                      </div>
+                      <p className="text-[12px] font-medium text-slate-500 italic">
+                        This asset is not currently assigned to anyone.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column: Asset Specs */}
+                <div className="p-4 border border-slate-100 dark:border-teal-800/25 rounded-2xl bg-slate-50/50 dark:bg-[#09090b]">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                    Asset Specs
+                  </h4>
+                  {selectedViewAsset.specification ? (
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2.5">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                          className="h-3.5 w-3.5 mt-0.5 text-slate-400"
+                        >
+                          <path d="m21 16-4 4-4-4" />
+                          <path d="M17 20V4" />
+                          <path d="m3 8 4-4 4 4" />
+                          <path d="M7 4v16" />
+                        </svg>
+                        <p className="text-[12px] font-medium text-slate-600 dark:text-slate-400 leading-snug">
+                          {selectedViewAsset.specification}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 py-1">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          className="h-5 w-5"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                      </div>
+                      <p className="text-[12px] font-medium text-slate-500 italic">
+                        No specifications provided for this asset.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ── Edit Asset Modal ── */}
+      <Modal
+        open={editModal}
+        onClose={closeEditModal}
+        title="Edit Asset"
+        description="Update asset details"
+        className="w-full max-w-150 flex flex-col max-h-[90dvh]" // Make it slightly wider since there are more fields
+        contentClassName="flex-1 overflow-y-auto p-0"
+      >
+        {selectedEditAsset && (
+          <div className="flex flex-col gap-5 p-5">
+            {/* Tag (Read-only) & Initial Category block header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-teal-800/25 pb-3">
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2">
+                  Asset Tag
+                </span>
+                <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 font-mono text-[13px] font-semibold text-slate-700 dark:text-slate-300 tracking-wide">
+                  {selectedEditAsset.tag}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${statusDot[getConditionStatus(selectedEditAsset)] || 'bg-slate-400'}`}
+                ></span>
+                <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">
+                  {getConditionStatus(selectedEditAsset)}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Asset Name */}
+              <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                <label
+                  htmlFor="edit-assetName"
+                  className="text-[11px] font-semibold text-slate-700 dark:text-slate-300"
+                >
                   Asset Name
                 </label>
-                <Input
-                  placeholder="e.g. Lenovo ThinkPad T14 Gen 3"
-                  className="h-8 text-[11px]"
-                  value={formData.assetName}
-                  onChange={(e) => setFormData((p) => ({ ...p, assetName: e.target.value }))}
+                <input
+                  type="text"
+                  id="edit-assetName"
+                  value={selectedEditAsset.assetName || ''}
+                  onChange={(e) =>
+                    setSelectedEditAsset({ ...selectedEditAsset, assetName: e.target.value })
+                  }
+                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
                 />
               </div>
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+
+              {/* Serial Number */}
+              <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                <label
+                  htmlFor="edit-serialNumber"
+                  className="text-[11px] font-semibold text-slate-700 dark:text-slate-300"
+                >
+                  Serial Number
+                </label>
+                <input
+                  type="text"
+                  id="edit-serialNumber"
+                  value={selectedEditAsset.serialNumber || ''}
+                  onChange={(e) =>
+                    setSelectedEditAsset({ ...selectedEditAsset, serialNumber: e.target.value })
+                  }
+                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Category */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   Category
                 </label>
                 {!isAddingType ? (
                   <select
-                    className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
-                    value={formData.assetType}
+                    value={selectedEditAsset.assetTypeRel?.name || ''}
                     onChange={(e) => {
                       if (e.target.value === 'Add another category') {
                         setIsAddingType(true);
-                        setFormData((p) => ({ ...p, assetType: '' }));
+                        setSelectedEditAsset((p) =>
+                          p ? { ...p, assetTypeRel: { id: 0, name: '', createdAt: '' } } : p,
+                        );
                       } else {
-                        setFormData((p) => ({ ...p, assetType: e.target.value }));
+                        setSelectedEditAsset((p) =>
+                          p
+                            ? {
+                                ...p,
+                                assetTypeRel: { id: 0, name: e.target.value, createdAt: '' },
+                              }
+                            : p,
+                        );
                       }
                     }}
+                    className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
                   >
                     <option value="" disabled>
                       Select category
@@ -1395,7 +2109,14 @@ export function AssetRegistry() {
                       onClick={() => {
                         if (newType.trim()) {
                           setLocalCategories((p) => ({ ...p, [newType.trim()]: 0 }));
-                          setFormData((p) => ({ ...p, assetType: newType.trim() }));
+                          setSelectedEditAsset((p) =>
+                            p
+                              ? {
+                                  ...p,
+                                  assetTypeRel: { id: 0, name: newType.trim(), createdAt: '' },
+                                }
+                              : p,
+                          );
                         }
                         setIsAddingType(false);
                         setNewType('');
@@ -1406,18 +2127,18 @@ export function AssetRegistry() {
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Row 2: Status + Location */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+              {/* Status */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   Condition Status
                 </label>
                 <select
-                  className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[11px] text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors"
-                  value={formData.currentStatus}
-                  onChange={(e) => setFormData((p) => ({ ...p, currentStatus: e.target.value }))}
+                  value={selectedEditAsset.currentStatus || ''}
+                  onChange={(e) =>
+                    setSelectedEditAsset({ ...selectedEditAsset, currentStatus: e.target.value })
+                  }
+                  className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
                 >
                   <option value="" disabled>
                     Select condition
@@ -1429,71 +2150,90 @@ export function AssetRegistry() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Specifications */}
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="edit-specification"
+                  className="text-[11px] font-semibold text-slate-700 dark:text-slate-300"
+                >
+                  Specifications
+                </label>
+                <input
+                  type="text"
+                  id="edit-specification"
+                  value={selectedEditAsset.specification || ''}
+                  onChange={(e) =>
+                    setSelectedEditAsset({ ...selectedEditAsset, specification: e.target.value })
+                  }
+                  className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
+                />
+              </div>
+
+              {/* Location */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   Location
                 </label>
                 <LocationSelect
                   rooms={assetRooms}
                   floors={assetFloors}
-                  value={formData.room}
+                  value={selectedEditAsset.roomRel?.name || ''}
                   onChange={(roomName, floorName) =>
-                    setFormData((p) => ({ ...p, room: roomName, floor: floorName }))
+                    setSelectedEditAsset((p) =>
+                      p
+                        ? {
+                            ...p,
+                            roomRel: { id: 0, name: roomName, createdAt: '' },
+                            floorRel: { id: 0, name: floorName, createdAt: '' },
+                          }
+                        : p,
+                    )
                   }
-                  onAddNew={openLocationFromAdd}
+                  onAddNew={openLocationFromEdit}
                   placeholder="Search room..."
                 />
-                {formData.room && formData.floor && (
-                  <p className="mt-1 text-[10px] text-slate-400">Floor: {formData.floor}</p>
+                {selectedEditAsset.roomRel?.name && selectedEditAsset.floorRel?.name && (
+                  <p className="text-[10px] text-slate-400">
+                    Floor: {selectedEditAsset.floorRel.name}
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Row 3: Specs */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  Serial Number
-                </label>
-                <Input
-                  placeholder="e.g. SN-123456"
-                  className="h-8 text-[11px]"
-                  value={formData.serialNumber}
-                  onChange={(e) => setFormData((p) => ({ ...p, serialNumber: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  Specifications
-                </label>
-                <Input
-                  placeholder="e.g. Intel i7, 16GB RAM, 512GB SSD"
-                  className="h-8 text-[11px]"
-                  value={formData.specification}
-                  onChange={(e) => setFormData((p) => ({ ...p, specification: e.target.value }))}
-                />
-              </div>
-            </div>
-
+            {/* Image section synced with Add modal layout */}
             <div>
               <div className="flex justify-between items-center mb-1.5">
                 <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   Asset Images
                 </label>
-                {imagePreviews.length > 1 && (
+                <div className="flex items-center gap-3">
                   <Button
                     type="button"
                     variant="link"
                     size="xs"
-                    onClick={() => {
-                      setGallerySource('add');
-                      openGallery(0);
-                    }}
+                    onClick={() => editImageInputRef.current?.click()}
                     className="text-[10px] font-semibold text-primary hover:underline p-0 h-auto"
                   >
-                    View All ({imagePreviews.length})
+                    Add image
                   </Button>
-                )}
+                  {editAllImages.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="xs"
+                      onClick={() => {
+                        setGallerySource('edit');
+                        openGallery(0);
+                      }}
+                      className="text-[10px] font-semibold text-primary hover:underline p-0 h-auto"
+                    >
+                      View All ({editAllImages.length})
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <div
@@ -1508,14 +2248,16 @@ export function AssetRegistry() {
               >
                 {/* Invisible file input - only top layer when no images */}
                 <input
+                  id="edit-asset-images-input"
+                  ref={editImageInputRef}
                   type="file"
                   multiple
                   accept="image/*"
-                  className={`absolute inset-0 h-full w-full cursor-pointer opacity-0 ${imagePreviews.length === 0 ? 'z-10' : 'z-0'}`}
-                  onChange={(e) => handleImageChange(e.target.files)}
+                  className={`absolute inset-0 h-full w-full cursor-pointer opacity-0 ${editAllImages.length === 0 ? 'z-10' : 'z-0'}`}
+                  onChange={(e) => handleEditImageChange(e.target.files)}
                 />
 
-                {imagePreviews.length === 0 ? (
+                {editAllImages.length === 0 ? (
                   /* Empty state */
                   <div className="flex flex-col items-center justify-center p-6 text-center">
                     <div
@@ -1549,12 +2291,12 @@ export function AssetRegistry() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setGallerySource('add');
+                      setGallerySource('edit');
                       openGallery(0);
                     }}
                   >
                     <Image
-                      src={imagePreviews[0]}
+                      src={editAllImages[0]}
                       alt="Preview"
                       fill
                       sizes="(max-width: 768px) 100vw, 360px"
@@ -1563,7 +2305,7 @@ export function AssetRegistry() {
                     {/* dark overlay for readability */}
                     <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
 
-                    {/* [NEW] Hover Overlay with Plus Sign */}
+                    {/* Hover Overlay with Plus Sign */}
                     <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 shadow-xl transform scale-75 group-hover:scale-100 transition-transform focus:outline-none">
                         <svg
@@ -1579,22 +2321,24 @@ export function AssetRegistry() {
                       </div>
                     </div>
 
-                    {/* Count badge (simplified) */}
-                    {imagePreviews.length > 1 && (
-                      <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2.1}
-                          className="h-3 w-3"
-                        >
-                          <rect x="3" y="3" width="18" height="18" rx="2" />
-                          <path d="M3 9h18M9 21V9" />
-                        </svg>
-                        {imagePreviews.length} photos
-                      </div>
-                    )}
+                    {/* Count badge */}
+                    <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.1}
+                        className="h-3 w-3"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 9h18M9 21V9" />
+                      </svg>
+                      {editAllImages.length} photos
+                      <span className="ml-1 opacity-60">
+                        ({selectedEditAsset.image?.length || 0} saved, {editImagePreviews.length}{' '}
+                        new)
+                      </span>
+                    </div>
 
                     {/* Remove first image - Stop propagation so it doesn't open gallery */}
                     <Button
@@ -1604,7 +2348,11 @@ export function AssetRegistry() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        removeImage(0);
+                        if (0 < (selectedEditAsset.image?.length || 0)) {
+                          removeExistingImage(0);
+                        } else {
+                          removeEditImage(0 - (selectedEditAsset.image?.length || 0));
+                        }
                       }}
                       className="absolute right-2 top-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-500 transition-all hover:scale-110 active:scale-95 shadow-lg p-0"
                       title="Remove image"
@@ -1625,27 +2373,29 @@ export function AssetRegistry() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-teal-800/25 mt-2 sticky bottom-0 bg-white dark:bg-[#09090b] pb-1">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 rounded-full border-slate-200 px-4 text-[11px]"
-                onClick={() => {
-                  setOpen(false);
-                  setIsAddingType(false);
-                }}
+                className="h-8 rounded-full border-slate-200 px-5 text-[11px] font-medium"
+                onClick={closeEditModal}
               >
-                Close
+                Cancel
               </Button>
               <Button
                 type="button"
-                disabled={isGeneratingQr || !formData.assetName || !formData.tag}
-                onClick={() => handleSaveAsset(true)}
+                variant="default"
                 size="sm"
-                className="h-8 rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-5 text-[11px] font-semibold text-white shadow-sm hover:bg-slate-800 hover:shadow-lg transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-80 flex items-center justify-center gap-1.5"
+                disabled={
+                  isUpdating ||
+                  !selectedEditAsset?.assetName?.trim() ||
+                  !selectedEditAsset?.assetTypeRel?.name
+                }
+                className="h-8 rounded-full px-6 text-[11px] font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm flex items-center justify-center gap-1.5"
+                onClick={handleUpdateAsset}
               >
-                {isGeneratingQr ? (
+                {isUpdating ? (
                   <>
                     <svg
                       className="animate-spin h-3.5 w-3.5 text-white"
@@ -1666,792 +2416,61 @@ export function AssetRegistry() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Generating...
+                    Saving...
                   </>
                 ) : (
-                  'Save & Generate QR'
+                  'Save Changes'
                 )}
               </Button>
             </div>
-          </form>
-        </Modal>
-
-        {/* ── View Asset Modal ── */}
-        <Modal
-          open={viewOpen}
-          onClose={() => {
-            setViewOpen(false);
-          }}
-          title="View Asset Details"
-          description="Detailed information and QR code for this asset."
-          className="w-full max-w-3xl"
-          contentClassName="p-0"
-        >
-          {selectedViewAsset && (
-            <div className="text-xs flex flex-col">
-              <div className="p-6 space-y-6">
-                {/* Top Section: Three Columns */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                  <div className="flex flex-col gap-3">
-                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      Asset QR
-                    </h4>
-                    <div
-                      className="group relative flex flex-col items-center justify-center p-4 border border-slate-200 dark:border-teal-800/30 rounded-2xl bg-slate-50 dark:bg-slate-900/50 aspect-square w-full overflow-hidden"
-                      data-asset-qr={`mira-asset:${selectedViewAsset.id}`}
-                    >
-                      <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-white mb-0 transition-transform duration-300 group-hover:scale-95">
-                        <QRCodeSVG
-                          value={`mira-asset:${selectedViewAsset.id}`}
-                          size={135}
-                          level="H"
-                        />
-                      </div>
-
-                      {/* Hover Overlay for Print */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100 backdrop-blur-[1px]">
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="h-10 rounded-full bg-white px-5 text-[12px] font-bold text-slate-900 shadow-xl hover:bg-slate-50 transition-all active:scale-95 flex items-center gap-2"
-                          onClick={() => {
-                            window.print();
-                          }}
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2.5}
-                            className="h-4 w-4"
-                          >
-                            <polyline points="6 9 6 2 18 2 18 9" />
-                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                            <rect x="6" y="14" width="12" height="8" />
-                          </svg>
-                          Print Tag
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Column 2: Info (Tag, Name, Status, Location) */}
-                  <div className="space-y-4 pt-1">
-                    <div>
-                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                        Asset Tag
-                      </h4>
-                      <p className="text-[14px] font-semibold text-slate-700 dark:text-slate-300 font-mono tracking-tight">
-                        {selectedViewAsset.tag}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                        Asset Name
-                      </h4>
-                      <p className="text-[16px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                        {selectedViewAsset.assetName}
-                      </p>
-                      <p className="text-[12px] text-slate-500 mt-1">
-                        {selectedViewAsset.serialNumber || 'No Serial'} &nbsp;•&nbsp;{' '}
-                        {selectedViewAsset.assetTypeRel?.name}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-bold text-slate-400/80 uppercase tracking-widest mb-1">
-                        Condition Status
-                      </h4>
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold ${conditionBadge[getConditionStatus(selectedViewAsset)] || conditionBadge.Unknown}`}
-                      >
-                        <span
-                          className={`h-2 w-2 rounded-full ${statusDot[getConditionStatus(selectedViewAsset)] || 'bg-slate-400'}`}
-                        ></span>
-                        {getConditionStatus(selectedViewAsset)}
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-bold text-slate-400/80 uppercase tracking-widest mb-1">
-                        Assignment Status
-                      </h4>
-                      <p className="text-[14px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                        {getAssignmentStatus(selectedViewAsset)}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-bold text-slate-400/80 uppercase tracking-widest mb-1">
-                        Location
-                      </h4>
-                      <div className="flex items-center gap-1.5">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                          className="h-4 w-4 text-slate-500"
-                        >
-                          <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
-                          <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        <p className="text-[16px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                          {selectedViewAsset.roomRel?.name || 'N/A'}{' '}
-                          {selectedViewAsset.floorRel ? `– ${selectedViewAsset.floorRel.name}` : ''}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Column 3: Images */}
-                  <div className="flex flex-col">
-                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                      Asset Images
-                    </h4>
-                    {selectedViewAsset.image && selectedViewAsset.image.length > 0 ? (
-                      <div
-                        className="relative z-20 aspect-square w-full overflow-hidden rounded-xl border border-slate-200 dark:border-teal-800/30 bg-slate-100 dark:bg-slate-900 group cursor-pointer"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setGallerySource('view');
-                          openGallery(0);
-                        }}
-                      >
-                        <Image
-                          src={selectedViewAsset.image[0]}
-                          alt="Asset preview"
-                          fill
-                          sizes="(max-width: 768px) 100vw, 420px"
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
-
-                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 shadow-xl transform scale-75 group-hover:scale-100 transition-transform">
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-6 w-6"
-                            >
-                              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                              <circle cx="12" cy="12" r="3" />
-                            </svg>
-                          </div>
-                        </div>
-
-                        {selectedViewAsset.image.length > 1 && (
-                          <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth={2.1}
-                              className="h-3 w-3"
-                            >
-                              <rect x="3" y="3" width="18" height="18" rx="2" />
-                              <path d="M3 9h18M9 21V9" />
-                            </svg>
-                            {selectedViewAsset.image.length} photos
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-teal-800/30 bg-slate-50 dark:bg-slate-900/30">
-                        <p className="text-[10px] text-slate-400 italic">No images</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bottom Section: Assignment & Specs - Two Column Layout */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Left Column: Assignment Details */}
-                  <div className="p-4 border border-slate-100 dark:border-teal-800/25 rounded-2xl bg-slate-50/50 dark:bg-[#09090b]">
-                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                      Assignment Details
-                    </h4>
-                    {selectedViewAsset.assignedTo ? (
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-bold ${getAvatarColor(selectedViewAsset.assignedTo.slice(0, 2).toUpperCase())} shadow-sm`}
-                        >
-                          {selectedViewAsset.assignedTo.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-[14px] font-bold text-slate-800 dark:text-slate-200">
-                            {selectedViewAsset.assignedTo}
-                          </p>
-                          <p className="text-[11px] font-medium text-slate-500 mt-0.5">
-                            Current Assignee
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3 py-1">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            className="h-5 w-5"
-                          >
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
-                          </svg>
-                        </div>
-                        <p className="text-[12px] font-medium text-slate-500 italic">
-                          This asset is not currently assigned to anyone.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right Column: Asset Specs */}
-                  <div className="p-4 border border-slate-100 dark:border-teal-800/25 rounded-2xl bg-slate-50/50 dark:bg-[#09090b]">
-                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                      Asset Specs
-                    </h4>
-                    {selectedViewAsset.specification ? (
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2.5">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2.5}
-                            className="h-3.5 w-3.5 mt-0.5 text-slate-400"
-                          >
-                            <path d="m21 16-4 4-4-4" />
-                            <path d="M17 20V4" />
-                            <path d="m3 8 4-4 4 4" />
-                            <path d="M7 4v16" />
-                          </svg>
-                          <p className="text-[12px] font-medium text-slate-600 dark:text-slate-400 leading-snug">
-                            {selectedViewAsset.specification}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3 py-1">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            className="h-5 w-5"
-                          >
-                            <path d="M12 20h9" />
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                          </svg>
-                        </div>
-                        <p className="text-[12px] font-medium text-slate-500 italic">
-                          No specifications provided for this asset.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </Modal>
-
-        {/* ── Edit Asset Modal ── */}
-        <Modal
-          open={editModal}
-          onClose={closeEditModal}
-          title="Edit Asset"
-          description="Update asset details"
-          className="w-full max-w-150 flex flex-col max-h-[90dvh]" // Make it slightly wider since there are more fields
-          contentClassName="flex-1 overflow-y-auto p-0"
-        >
-          {selectedEditAsset && (
-            <div className="flex flex-col gap-5 p-5">
-              {/* Tag (Read-only) & Initial Category block header */}
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-teal-800/25 pb-3">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2">
-                    Asset Tag
-                  </span>
-                  <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 font-mono text-[13px] font-semibold text-slate-700 dark:text-slate-300 tracking-wide">
-                    {selectedEditAsset.tag}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`h-2.5 w-2.5 rounded-full ${statusDot[getConditionStatus(selectedEditAsset)] || 'bg-slate-400'}`}
-                  ></span>
-                  <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">
-                    {getConditionStatus(selectedEditAsset)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Asset Name */}
-                <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
-                  <label
-                    htmlFor="edit-assetName"
-                    className="text-[11px] font-semibold text-slate-700 dark:text-slate-300"
-                  >
-                    Asset Name
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-assetName"
-                    value={selectedEditAsset.assetName || ''}
-                    onChange={(e) =>
-                      setSelectedEditAsset({ ...selectedEditAsset, assetName: e.target.value })
-                    }
-                    className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                  />
-                </div>
-
-                {/* Serial Number */}
-                <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
-                  <label
-                    htmlFor="edit-serialNumber"
-                    className="text-[11px] font-semibold text-slate-700 dark:text-slate-300"
-                  >
-                    Serial Number
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-serialNumber"
-                    value={selectedEditAsset.serialNumber || ''}
-                    onChange={(e) =>
-                      setSelectedEditAsset({ ...selectedEditAsset, serialNumber: e.target.value })
-                    }
-                    className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Category */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    Category
-                  </label>
-                  {!isAddingType ? (
-                    <select
-                      value={selectedEditAsset.assetTypeRel?.name || ''}
-                      onChange={(e) => {
-                        if (e.target.value === 'Add another category') {
-                          setIsAddingType(true);
-                          setSelectedEditAsset((p) =>
-                            p ? { ...p, assetTypeRel: { id: 0, name: '', createdAt: '' } } : p,
-                          );
-                        } else {
-                          setSelectedEditAsset((p) =>
-                            p
-                              ? {
-                                  ...p,
-                                  assetTypeRel: { id: 0, name: e.target.value, createdAt: '' },
-                                }
-                              : p,
-                          );
-                        }
-                      }}
-                      className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                    >
-                      <option value="" disabled>
-                        Select category
-                      </option>
-                      {Array.from(
-                        new Set([
-                          ...assetsTypes.map((t) => t.name),
-                          ...Object.keys(localCategories),
-                        ]),
-                      ).map((o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
-                      ))}
-                      <option value="Add another category" className="font-semibold text-primary">
-                        Add another category
-                      </option>
-                    </select>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="New category..."
-                        className="h-8 text-[11px] flex-1"
-                        value={newType}
-                        onChange={(e) => setNewType(e.target.value)}
-                        autoFocus
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-8 px-2"
-                        onClick={() => {
-                          if (newType.trim()) {
-                            setLocalCategories((p) => ({ ...p, [newType.trim()]: 0 }));
-                            setSelectedEditAsset((p) =>
-                              p
-                                ? {
-                                    ...p,
-                                    assetTypeRel: { id: 0, name: newType.trim(), createdAt: '' },
-                                  }
-                                : p,
-                            );
-                          }
-                          setIsAddingType(false);
-                          setNewType('');
-                        }}
-                      >
-                        OK
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Status */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    Condition Status
-                  </label>
-                  <select
-                    value={selectedEditAsset.currentStatus || ''}
-                    onChange={(e) =>
-                      setSelectedEditAsset({ ...selectedEditAsset, currentStatus: e.target.value })
-                    }
-                    className="h-8 w-full rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-2 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                  >
-                    <option value="" disabled>
-                      Select condition
-                    </option>
-                    {['Good', 'Under Maintenance'].map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Specifications */}
-                <div className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor="edit-specification"
-                    className="text-[11px] font-semibold text-slate-700 dark:text-slate-300"
-                  >
-                    Specifications
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-specification"
-                    value={selectedEditAsset.specification || ''}
-                    onChange={(e) =>
-                      setSelectedEditAsset({ ...selectedEditAsset, specification: e.target.value })
-                    }
-                    className="h-8 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:focus:border-teal-500 transition-colors"
-                  />
-                </div>
-
-                {/* Location */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    Location
-                  </label>
-                  <LocationSelect
-                    rooms={assetRooms}
-                    floors={assetFloors}
-                    value={selectedEditAsset.roomRel?.name || ''}
-                    onChange={(roomName, floorName) =>
-                      setSelectedEditAsset((p) =>
-                        p
-                          ? {
-                              ...p,
-                              roomRel: { id: 0, name: roomName, createdAt: '' },
-                              floorRel: { id: 0, name: floorName, createdAt: '' },
-                            }
-                          : p,
-                      )
-                    }
-                    onAddNew={openLocationFromEdit}
-                    placeholder="Search room..."
-                  />
-                  {selectedEditAsset.roomRel?.name && selectedEditAsset.floorRel?.name && (
-                    <p className="text-[10px] text-slate-400">
-                      Floor: {selectedEditAsset.floorRel.name}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Image section synced with Add modal layout */}
-              <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    Asset Images
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      type="button"
-                      variant="link"
-                      size="xs"
-                      onClick={() => editImageInputRef.current?.click()}
-                      className="text-[10px] font-semibold text-primary hover:underline p-0 h-auto"
-                    >
-                      Add image
-                    </Button>
-                    {editAllImages.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="link"
-                        size="xs"
-                        onClick={() => {
-                          setGallerySource('edit');
-                          openGallery(0);
-                        }}
-                        className="text-[10px] font-semibold text-primary hover:underline p-0 h-auto"
-                      >
-                        View All ({editAllImages.length})
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                <div
-                  className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${
-                    isDragging
-                      ? 'border-primary bg-primary/5 dark:bg-teal-900/10'
-                      : 'border-slate-200 dark:border-teal-800/30'
-                  }`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  {/* Invisible file input - only top layer when no images */}
-                  <input
-                    id="edit-asset-images-input"
-                    ref={editImageInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className={`absolute inset-0 h-full w-full cursor-pointer opacity-0 ${editAllImages.length === 0 ? 'z-10' : 'z-0'}`}
-                    onChange={(e) => handleEditImageChange(e.target.files)}
-                  />
-
-                  {editAllImages.length === 0 ? (
-                    /* Empty state */
-                    <div className="flex flex-col items-center justify-center p-6 text-center">
-                      <div
-                        className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${
-                          isDragging
-                            ? 'bg-primary/20 text-primary'
-                            : 'bg-white dark:bg-slate-800 text-slate-400 shadow-sm'
-                        }`}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          className="h-5 w-5"
-                        >
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="17 8 12 3 7 8" />
-                          <line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                      </div>
-                      <p className="mb-1 text-[12px] font-semibold text-slate-700 dark:text-slate-200">
-                        Click to upload{' '}
-                        <span className="font-normal text-slate-500">or drag and drop</span>
-                      </p>
-                      <p className="text-[10px] text-slate-500">SVG, PNG, JPG or GIF (max. 5MB)</p>
-                    </div>
-                  ) : (
-                    <div
-                      className="relative z-20 h-36 bg-slate-100 dark:bg-slate-900 group cursor-pointer"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setGallerySource('edit');
-                        openGallery(0);
-                      }}
-                    >
-                      <Image
-                        src={editAllImages[0]}
-                        alt="Preview"
-                        fill
-                        sizes="(max-width: 768px) 100vw, 360px"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      {/* dark overlay for readability */}
-                      <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
-
-                      {/* Hover Overlay with Plus Sign */}
-                      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 shadow-xl transform scale-75 group-hover:scale-100 transition-transform focus:outline-none">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={3}
-                            className="h-6 w-6"
-                          >
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Count badge */}
-                      <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2.1}
-                          className="h-3 w-3"
-                        >
-                          <rect x="3" y="3" width="18" height="18" rx="2" />
-                          <path d="M3 9h18M9 21V9" />
-                        </svg>
-                        {editAllImages.length} photos
-                        <span className="ml-1 opacity-60">
-                          ({selectedEditAsset.image?.length || 0} saved, {editImagePreviews.length}{' '}
-                          new)
-                        </span>
-                      </div>
-
-                      {/* Remove first image - Stop propagation so it doesn't open gallery */}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (0 < (selectedEditAsset.image?.length || 0)) {
-                            removeExistingImage(0);
-                          } else {
-                            removeEditImage(0 - (selectedEditAsset.image?.length || 0));
-                          }
-                        }}
-                        className="absolute right-2 top-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-500 transition-all hover:scale-110 active:scale-95 shadow-lg p-0"
-                        title="Remove image"
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                          className="h-3.5 w-3.5"
-                        >
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-teal-800/25 mt-2 sticky bottom-0 bg-white dark:bg-[#09090b] pb-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-full border-slate-200 px-5 text-[11px] font-medium"
-                  onClick={closeEditModal}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  disabled={isUpdating}
-                  className="h-8 rounded-full px-6 text-[11px] font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm flex items-center justify-center gap-1.5"
-                  onClick={handleUpdateAsset}
-                >
-                  {isUpdating ? (
-                    <>
-                      <svg
-                        className="animate-spin h-3.5 w-3.5 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Changes'
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-        </Modal>
-
-        {/* ── Delete Asset Modal ── */}
-        <Modal
-          open={deleteModal}
-          onClose={() => {
-            setDeleteModal(false);
-            setSelectedDeleteAsset(null);
-          }}
-          title="Delete Asset"
-          description="Are you sure you want to delete this asset?"
-          className="w-full max-w-400px"
-        >
-          <div className="flex flex-col gap-6 pt-4">
-            <p className="text-[13px] text-slate-600 dark:text-slate-400">
-              This action cannot be undone. This will permanently delete the asset{' '}
-              <span className="font-bold text-slate-900 dark:text-slate-100">
-                {selectedDeleteAsset?.assetName}
-              </span>{' '}
-              and remove all associated data.
-            </p>
-            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-teal-800/25">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 rounded-full border-slate-200 px-5 text-[11px] font-medium"
-                onClick={() => {
-                  setDeleteModal(false);
-                  setSelectedDeleteAsset(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                className="h-8 rounded-full px-5 text-[11px] font-semibold bg-red-600 hover:bg-red-700 text-white shadow-sm"
-                onClick={handleDeleteAsset}
-              >
-                Delete
-              </Button>
-            </div>
           </div>
-        </Modal>
+        )}
+      </Modal>
+
+      {/* ── Delete Asset Modal ── */}
+      <Modal
+        open={deleteModal}
+        onClose={() => {
+          setDeleteModal(false);
+          setSelectedDeleteAsset(null);
+        }}
+        title="Delete Asset"
+        description="Are you sure you want to delete this asset?"
+        className="w-full max-w-400px"
+      >
+        <div className="flex flex-col gap-6 pt-4">
+          <p className="text-[13px] text-slate-600 dark:text-slate-400">
+            This action cannot be undone. This will permanently delete the asset{' '}
+            <span className="font-bold text-slate-900 dark:text-slate-100">
+              {selectedDeleteAsset?.assetName}
+            </span>{' '}
+            and remove all associated data.
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-teal-800/25">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-full border-slate-200 px-5 text-[11px] font-medium"
+              onClick={() => {
+                setDeleteModal(false);
+                setSelectedDeleteAsset(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="h-8 rounded-full px-5 text-[11px] font-semibold bg-red-600 hover:bg-red-700 text-white shadow-sm"
+              onClick={handleDeleteAsset}
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* ── Image Lightbox Modal ── */}
       {galleryOpen && allImages.length > 0 && (

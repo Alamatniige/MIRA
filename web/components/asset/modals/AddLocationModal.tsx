@@ -119,7 +119,10 @@ export function AddLocationModal({
   const handleUpdateFloor = useCallback(async () => {
     if (editFloorId == null) return;
     const name = editFloorName.trim();
-    if (!name) return;
+    if (!name) {
+      toast.error('Floor name is required');
+      return;
+    }
     setIsSaving(true);
     try {
       await updateFloor(editFloorId, {
@@ -190,7 +193,10 @@ export function AddLocationModal({
   const handleUpdateRoom = useCallback(async () => {
     if (editRoomId == null) return;
     const name = editRoomName.trim();
-    if (!name) return;
+    if (!name) {
+      toast.error('Room name is required');
+      return;
+    }
     setIsSaving(true);
     try {
       const floorIdNum = editRoomFloorId !== '' ? parseInt(editRoomFloorId, 10) : null;
@@ -323,7 +329,7 @@ export function AddLocationModal({
                         size="icon-xs"
                         variant="ghost"
                         onClick={handleUpdateFloor}
-                        disabled={isSaving}
+                        disabled={isSaving || !editFloorName.trim()}
                       >
                         <Check className="h-3.5 w-3.5 text-teal-600" />
                       </Button>
@@ -471,7 +477,7 @@ export function AddLocationModal({
                             size="icon-xs"
                             variant="ghost"
                             onClick={handleUpdateRoom}
-                            disabled={isSaving}
+                            disabled={isSaving || !editRoomName.trim()}
                           >
                             <Check className="h-3.5 w-3.5 text-teal-600" />
                           </Button>

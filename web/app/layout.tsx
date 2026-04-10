@@ -1,20 +1,19 @@
-import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/lib/auth";
-import { Toaster } from "@/components/ui/sonner";
-import "../styles/globals.css";
+import type { Metadata } from 'next';
+import { Poppins } from 'next/font/google';
+import { ThemeProvider } from '@/components/theme-provider';
+import { AuthProvider } from '@/lib/auth';
+import { Toaster } from '@/components/ui/sonner';
+import '../styles/globals.css';
 
 const poppins = Poppins({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  variable: '--font-sans',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
-  title: "MIRA – Management of IT Resources and Assets",
-  description:
-    "Enterprise IT hardware asset management dashboard for internal IT departments.",
+  title: 'MIRA – Management of IT Resources and Assets',
+  description: 'Enterprise IT hardware asset management dashboard for internal IT departments.',
 };
 
 export default function RootLayout({
@@ -40,4 +39,3 @@ export default function RootLayout({
     </html>
   );
 }
-

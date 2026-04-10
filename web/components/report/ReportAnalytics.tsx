@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,12 +21,9 @@ import {
   Clock,
   CheckCircle2,
   Activity,
-  ArrowUpRight,
   TrendingUp,
   User,
   Box,
-  MoreVertical,
-  ChevronRight,
   Calendar,
   ExternalLink,
   ShieldAlert,
@@ -35,7 +32,6 @@ import {
   Eye,
 } from 'lucide-react';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
 import { BuildingFloorMap } from './BuildingFloorMap';
 import { useIssueReports, useUpdateReportStatus } from '@/hooks/useReports';
 import { toast } from 'sonner';
@@ -94,7 +90,6 @@ const kpis = (reports: Report[]) => [
 export function ReportAnalytics() {
   const { reports: rawReports, isLoading: reportsLoading, refetch } = useIssueReports();
   const { updateStatus, isUpdating: statusUpdating } = useUpdateReportStatus();
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -110,10 +105,10 @@ export function ReportAnalytics() {
     images: r.image ? [r.image] : [],
     initials: r.userName
       ? r.userName
-        .split(' ')
-        .filter(Boolean)
-        .map((n) => n[0].toUpperCase())
-        .join('')
+          .split(' ')
+          .filter(Boolean)
+          .map((n) => n[0].toUpperCase())
+          .join('')
       : '?',
   }));
 
@@ -127,20 +122,17 @@ export function ReportAnalytics() {
 
     try {
       await updateStatus(selectedReport.id, nextStatus);
-      const successMsg = nextStatus === 'in_progress' ? 'Acknowledge: Under Maintenance' : 'Resolved: Good';
+      const successMsg =
+        nextStatus === 'in_progress' ? 'Acknowledge: Under Maintenance' : 'Resolved: Good';
       toast.success(`Case #${selectedReport.id}: ${successMsg}`);
       refetch();
-      setSelectedReport((prev) => prev ? { ...prev, status: nextStatus } : null);
+      setSelectedReport((prev) => (prev ? { ...prev, status: nextStatus } : null));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update status');
     }
   };
 
-  useEffect(() => {
-    if (!reportsLoading) setIsLoading(false);
-  }, [reportsLoading]);
-
-  if (isLoading || reportsLoading) {
+  if (reportsLoading) {
     return <FullPageLoader label="Loading reports..." />;
   }
 
@@ -178,7 +170,6 @@ export function ReportAnalytics() {
             <Download className="mr-2 h-3.5 w-3.5" />
             Export Data
           </Button>
-
         </div>
       </div>
 
@@ -192,7 +183,7 @@ export function ReportAnalytics() {
         {reportKpis.map((kpi) => (
           <div
             key={kpi.label}
-            className={`flex flex-col gap-2 rounded-2xl border bg-linear-to-br p-4 transition-all hover:shadow-lg hover:translate-y-[-2px] dark:hover:shadow-teal-900/10 dark:bg-[#09090b] ${kpi.color}`}
+            className={`flex flex-col gap-2 rounded-2xl border bg-linear-to-br p-4 transition-all hover:shadow-lg hover:-translate-y-0.5 dark:hover:shadow-teal-900/10 dark:bg-[#09090b] ${kpi.color}`}
           >
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider opacity-75 dark:opacity-90">
@@ -240,22 +231,22 @@ export function ReportAnalytics() {
           <Table>
             <TableHeader className="bg-slate-100/30 dark:bg-teal-950/20">
               <TableRow className="border-slate-100 dark:border-teal-800/20">
-                <TableHead className="w-[120px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                <TableHead className="w-30 px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
                   Asset Tag
                 </TableHead>
                 <TableHead className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
                   Name
                 </TableHead>
-                <TableHead className="w-[180px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                <TableHead className="w-45 px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
                   User
                 </TableHead>
-                <TableHead className="w-[140px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                <TableHead className="w-35 px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
                   Date of Reported
                 </TableHead>
                 <TableHead className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
                   Description
                 </TableHead>
-                <TableHead className="w-[100px] px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60 text-right">
+                <TableHead className="w-25 px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60 text-right">
                   Action
                 </TableHead>
               </TableRow>

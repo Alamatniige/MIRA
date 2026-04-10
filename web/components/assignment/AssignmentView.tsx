@@ -41,6 +41,7 @@ import { createMorReference, encodeMorData, type MorData } from '@/lib/mor';
 import type { Assignment, User } from '@/types/mira';
 import { useAuth } from '@/lib/auth';
 import { QRCodeSVG } from 'qrcode.react';
+import { toast } from 'sonner';
 
 function getInitials(name: string) {
   return name
@@ -445,8 +446,9 @@ export function AssignmentView() {
       if (previewWindow && !previewWindow.closed) {
         previewWindow.close();
       }
-
-      console.error('Failed to create assignment:', err);
+      toast.error('Failed to create assignment', {
+        description: err instanceof Error ? err.message : 'Please try again.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -456,11 +458,12 @@ export function AssignmentView() {
     if (!assignmentToConfirm) return;
     try {
       await confirmAssignment(assignmentToConfirm.id);
-    } catch (err) {
-      console.error('Failed to confirm assignment:', err);
-    } finally {
       setIsConfirmModalOpen(false);
       setAssignmentToConfirm(null);
+    } catch (err) {
+      toast.error('Failed to confirm assignment', {
+        description: err instanceof Error ? err.message : 'Please try again.',
+      });
     }
   };
 
@@ -474,7 +477,9 @@ export function AssignmentView() {
       setAssignmentToReject(null);
       setRejectReason('');
     } catch (err) {
-      console.error('Failed to reject assignment:', err);
+      toast.error('Failed to reject assignment', {
+        description: err instanceof Error ? err.message : 'Please try again.',
+      });
     } finally {
       setIsRejecting(false);
     }
@@ -503,7 +508,9 @@ export function AssignmentView() {
       setReturnQrPayload(data.payload);
       setIsReturnQrOpen(true);
     } catch (err) {
-      console.error('Failed to load global return QR:', err);
+      toast.error('Failed to load return QR', {
+        description: err instanceof Error ? err.message : 'Please try again.',
+      });
     } finally {
       setIsLoadingReturnQr(false);
     }
@@ -610,408 +617,418 @@ export function AssignmentView() {
                 </Button>
               </CardHeader>
 
-              <CardContent className="p-0">                {viewTimeline ? (
-                /* Global Chronological Timeline — grouped by date */
-                <div className="p-6 relative">
-                  {/* Continuous vertical line */}
-                  <div className="absolute left-10 top-0 bottom-0 w-px bg-slate-200 dark:bg-white/10 hidden sm:block" />
+              <CardContent className="p-0">
+                {' '}
+                {viewTimeline ? (
+                  /* Global Chronological Timeline — grouped by date */
+                  <div className="p-6 relative">
+                    {/* Continuous vertical line */}
+                    <div className="absolute left-10 top-0 bottom-0 w-px bg-slate-200 dark:bg-white/10 hidden sm:block" />
 
-                  <div className="space-y-10">
-                    {Object.entries(groupedEvents).map(([date, events]) => (
-                      <div key={date} className="relative">
-                        {/* Date Header */}
-                        <div className="flex items-center gap-4 mb-6 sticky top-0 z-10 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-lg">
-                          <div className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 ring-4 ring-white dark:ring-[#09090b] z-20">
-                            <Calendar className="h-4 w-4 text-slate-500" />
+                    <div className="space-y-10">
+                      {Object.entries(groupedEvents).map(([date, events]) => (
+                        <div key={date} className="relative">
+                          {/* Date Header */}
+                          <div className="flex items-center gap-4 mb-6 sticky top-0 z-10 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-lg">
+                            <div className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 ring-4 ring-white dark:ring-[#09090b] z-20">
+                              <Calendar className="h-4 w-4 text-slate-500" />
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                              {date}
+                            </h3>
+                            <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
                           </div>
-                          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-                            {date}
-                          </h3>
-                          <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
-                        </div>
 
-                        <div className="space-y-6 sm:ml-12">
-                          {events.map((ev) => {
-                            const initials = getInitials(ev.assignee);
-                            const a = ev.assignment;
+                          <div className="space-y-6 sm:ml-12">
+                            {events.map((ev) => {
+                              const initials = getInitials(ev.assignee);
+                              const a = ev.assignment;
+                              const variant = statusVariant(a.status);
+                              const label = statusLabel(a.status);
+                              const dateStr = formatDate(a.assignedAt);
+
+                              return (
+                                <div
+                                  key={`${ev.assignmentId}-${ev.eventType}`}
+                                  className="relative group"
+                                >
+                                  {/* Event Icon/Dot */}
+                                  <div
+                                    className={`absolute -left-12 top-1.5 hidden sm:flex h-8 w-8 items-center justify-center rounded-full border-4 border-white dark:border-[#09090b] z-20 transition-transform group-hover:scale-110 ${
+                                      ev.eventType === 'PENDING'
+                                        ? 'bg-amber-500 text-white'
+                                        : ev.eventType === 'CONFIRMED'
+                                          ? 'bg-emerald-500 text-white'
+                                          : ev.eventType === 'REJECTED'
+                                            ? 'bg-red-500 text-white'
+                                            : 'bg-slate-400 text-white'
+                                    }`}
+                                  >
+                                    {ev.eventType === 'PENDING' && (
+                                      <PlusCircle className="h-4 w-4" />
+                                    )}
+                                    {ev.eventType === 'CONFIRMED' && (
+                                      <CheckCircle2 className="h-4 w-4" />
+                                    )}
+                                    {ev.eventType === 'REJECTED' && <XCircle className="h-4 w-4" />}
+                                    {ev.eventType === 'RETURNED' && (
+                                      <RotateCcw className="h-4 w-4" />
+                                    )}
+                                  </div>
+
+                                  <div className="bg-white dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 rounded-2xl p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-200 dark:hover:border-white/10 group-hover:-translate-y-0.5">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                      <div className="flex items-start gap-3">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-slate-100 to-slate-200 text-xs font-bold text-slate-600 dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
+                                          {initials}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            <span
+                                              className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${eventBadgeStyle(ev.eventType)}`}
+                                            >
+                                              {ev.eventLabel}
+                                            </span>
+                                            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
+                                              {new Date(ev.timestamp).toLocaleTimeString('en-US', {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                hour12: false,
+                                              })}
+                                            </span>
+                                          </div>
+                                          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-1 truncate">
+                                            {ev.assetName}
+                                          </h4>
+                                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                            <span className="font-mono text-[10px] opacity-70">
+                                              {ev.assetTag}
+                                            </span>
+                                            {' · '}
+                                            <span className="font-medium text-slate-700 dark:text-slate-300">
+                                              {ev.assignee}
+                                            </span>
+                                            {' · '}
+                                            <span className="opacity-80">{ev.department}</span>
+                                          </p>
+
+                                          {ev.notes && (
+                                            <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/5 p-2 rounded-lg italic border-l-2 border-slate-200 dark:border-white/10">
+                                              &quot;{ev.notes}&quot;
+                                            </div>
+                                          )}
+                                          {ev.rejectionReason && (
+                                            <div className="mt-2 text-[11px] text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/5 p-2 rounded-lg italic border-l-2 border-red-200 dark:border-red-500/20">
+                                              Reason: {ev.rejectionReason}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center gap-2 self-end sm:self-center">
+                                        {ev.eventType === 'PENDING' && a.status === 'PENDING' && (
+                                          <>
+                                            <button
+                                              onClick={() => {
+                                                setAssignmentToConfirm({
+                                                  id: a.id,
+                                                  asset: a.assetTag,
+                                                  name: a.assetName,
+                                                  assignee: a.assignee,
+                                                  initials,
+                                                  department: a.department,
+                                                });
+                                                setIsConfirmModalOpen(true);
+                                              }}
+                                              className="flex h-8 px-3 items-center gap-1.5 rounded-lg bg-teal-600/10 text-teal-600 text-[11px] font-semibold transition-all hover:bg-teal-600 hover:text-white"
+                                            >
+                                              <Check className="h-3.5 w-3.5" />
+                                              Confirm
+                                            </button>
+                                            <button
+                                              onClick={() => {
+                                                setAssignmentToReject({
+                                                  id: a.id,
+                                                  asset: a.assetTag,
+                                                  name: a.assetName,
+                                                  assignee: a.assignee,
+                                                });
+                                                setRejectReason('');
+                                                setIsRejectModalOpen(true);
+                                              }}
+                                              className="flex h-8 px-3 items-center gap-1.5 rounded-lg bg-red-600/10 text-red-600 text-[11px] font-semibold transition-all hover:bg-red-600 hover:text-white"
+                                            >
+                                              <X className="h-3.5 w-3.5" />
+                                              Reject
+                                            </button>
+                                          </>
+                                        )}
+                                        <button
+                                          onClick={() => {
+                                            setViewingAssignment({
+                                              asset: a.assetTag,
+                                              name: a.assetName,
+                                              assignee: a.assignee,
+                                              issuerName: resolveMorIssuerName(a),
+                                              initials,
+                                              department: a.department,
+                                              date: dateStr,
+                                              documentDate: a.assignedAt,
+                                              status: label,
+                                              statusVariant: variant,
+                                              notes: a.notes,
+                                              rejectionReason: a.rejectionReason,
+                                              confirmedAt: a.confirmedAt,
+                                              returnedAt: a.returnedAt,
+                                              rejectedAt: a.rejectedAt,
+                                            });
+                                            setIsViewModalOpen(true);
+                                          }}
+                                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                                          title="View Details"
+                                        >
+                                          <Eye className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  /* Table View */
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-slate-50/50 dark:bg-black/50">
+                        <TableRow className="border-slate-100 hover:bg-transparent dark:border-white/5">
+                          <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                            Asset
+                          </TableHead>
+                          <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                            Assignee
+                          </TableHead>
+                          <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                            Department
+                          </TableHead>
+                          <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                            Lifecycle
+                          </TableHead>
+                          <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                            Status
+                          </TableHead>
+                          <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
+                            Action
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedAssignments.length > 0 ? (
+                          paginatedAssignments.map((a) => {
                             const variant = statusVariant(a.status);
                             const label = statusLabel(a.status);
-                            const dateStr = formatDate(a.assignedAt);
-
+                            const initials = getInitials(a.assignee);
                             return (
-                              <div key={`${ev.assignmentId}-${ev.eventType}`} className="relative group">
-                                {/* Event Icon/Dot */}
-                                <div
-                                  className={`absolute -left-12 top-1.5 hidden sm:flex h-8 w-8 items-center justify-center rounded-full border-4 border-white dark:border-[#09090b] z-20 transition-transform group-hover:scale-110 ${ev.eventType === 'PENDING'
-                                    ? 'bg-amber-500 text-white'
-                                    : ev.eventType === 'CONFIRMED'
-                                      ? 'bg-emerald-500 text-white'
-                                      : ev.eventType === 'REJECTED'
-                                        ? 'bg-red-500 text-white'
-                                        : 'bg-slate-400 text-white'
-                                    }`}
-                                >
-                                  {ev.eventType === 'PENDING' && <PlusCircle className="h-4 w-4" />}
-                                  {ev.eventType === 'CONFIRMED' && (
-                                    <CheckCircle2 className="h-4 w-4" />
-                                  )}
-                                  {ev.eventType === 'REJECTED' && <XCircle className="h-4 w-4" />}
-                                  {ev.eventType === 'RETURNED' && <RotateCcw className="h-4 w-4" />}
-                                </div>
-
-                                <div className="bg-white dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 rounded-2xl p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-200 dark:hover:border-white/10 group-hover:-translate-y-0.5">
-                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <div className="flex items-start gap-3">
-                                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-slate-100 to-slate-200 text-xs font-bold text-slate-600 dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
-                                        {initials}
-                                      </div>
-                                      <div className="min-w-0">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                          <span
-                                            className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${eventBadgeStyle(ev.eventType)}`}
-                                          >
-                                            {ev.eventLabel}
-                                          </span>
-                                          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
-                                            {new Date(ev.timestamp).toLocaleTimeString('en-US', {
-                                              hour: '2-digit',
-                                              minute: '2-digit',
-                                              hour12: false,
-                                            })}
-                                          </span>
-                                        </div>
-                                        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-1 truncate">
-                                          {ev.assetName}
-                                        </h4>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                          <span className="font-mono text-[10px] opacity-70">
-                                            {ev.assetTag}
-                                          </span>
-                                          {' · '}
-                                          <span className="font-medium text-slate-700 dark:text-slate-300">
-                                            {ev.assignee}
-                                          </span>
-                                          {' · '}
-                                          <span className="opacity-80">{ev.department}</span>
-                                        </p>
-
-                                        {ev.notes && (
-                                          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/5 p-2 rounded-lg italic border-l-2 border-slate-200 dark:border-white/10">
-                                            "{ev.notes}"
-                                          </div>
-                                        )}
-                                        {ev.rejectionReason && (
-                                          <div className="mt-2 text-[11px] text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/5 p-2 rounded-lg italic border-l-2 border-red-200 dark:border-red-500/20">
-                                            Reason: {ev.rejectionReason}
-                                          </div>
-                                        )}
-                                      </div>
+                              <TableRow
+                                key={a.id}
+                                className="group cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/80 dark:border-white/5 dark:hover:bg-zinc-900/50"
+                              >
+                                <TableCell className="p-3 sm:p-4">
+                                  <p className="font-mono text-[11px] font-medium text-slate-400 dark:text-slate-500 group-hover:text-[#0F766E] dark:group-hover:text-teal-400 transition-colors">
+                                    {a.assetTag}
+                                  </p>
+                                  <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                                    {a.assetName}
+                                  </p>
+                                </TableCell>
+                                <TableCell className="p-3 sm:p-4">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-slate-100 to-slate-200 text-[10px] font-bold text-slate-600 shadow-sm dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
+                                      {initials}
                                     </div>
-
-                                    <div className="flex items-center gap-2 self-end sm:self-center">
-                                      {ev.eventType === 'PENDING' && a.status === 'PENDING' && (
-                                        <>
-                                          <button
-                                            onClick={() => {
-                                              setAssignmentToConfirm({
-                                                id: a.id,
-                                                asset: a.assetTag,
-                                                name: a.assetName,
-                                                assignee: a.assignee,
-                                                initials,
-                                                department: a.department,
-                                              });
-                                              setIsConfirmModalOpen(true);
-                                            }}
-                                            className="flex h-8 px-3 items-center gap-1.5 rounded-lg bg-teal-600/10 text-teal-600 text-[11px] font-semibold transition-all hover:bg-teal-600 hover:text-white"
-                                          >
-                                            <Check className="h-3.5 w-3.5" />
-                                            Confirm
-                                          </button>
-                                          <button
-                                            onClick={() => {
-                                              setAssignmentToReject({
-                                                id: a.id,
-                                                asset: a.assetTag,
-                                                name: a.assetName,
-                                                assignee: a.assignee,
-                                              });
-                                              setRejectReason('');
-                                              setIsRejectModalOpen(true);
-                                            }}
-                                            className="flex h-8 px-3 items-center gap-1.5 rounded-lg bg-red-600/10 text-red-600 text-[11px] font-semibold transition-all hover:bg-red-600 hover:text-white"
-                                          >
-                                            <X className="h-3.5 w-3.5" />
-                                            Reject
-                                          </button>
-                                        </>
-                                      )}
-                                      <button
-                                        onClick={() => {
-                                          setViewingAssignment({
-                                            asset: a.assetTag,
-                                            name: a.assetName,
-                                            assignee: a.assignee,
-                                            issuerName: resolveMorIssuerName(a),
-                                            initials,
-                                            department: a.department,
-                                            date: dateStr,
-                                            documentDate: a.assignedAt,
-                                            status: label,
-                                            statusVariant: variant,
-                                            notes: a.notes,
-                                            rejectionReason: a.rejectionReason,
-                                            confirmedAt: a.confirmedAt,
-                                            returnedAt: a.returnedAt,
-                                            rejectedAt: a.rejectedAt,
-                                          });
-                                          setIsViewModalOpen(true);
-                                        }}
-                                        className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-                                        title="View Details"
-                                      >
-                                        <Eye className="h-4 w-4" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                /* Table View */
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader className="bg-slate-50/50 dark:bg-black/50">
-                      <TableRow className="border-slate-100 hover:bg-transparent dark:border-white/5">
-                        <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
-                          Asset
-                        </TableHead>
-                        <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
-                          Assignee
-                        </TableHead>
-                        <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
-                          Department
-                        </TableHead>
-                        <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
-                          Lifecycle
-                        </TableHead>
-                        <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
-                          Status
-                        </TableHead>
-                        <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
-                          Action
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedAssignments.length > 0 ? (
-                        paginatedAssignments.map((a) => {
-                          const variant = statusVariant(a.status);
-                          const label = statusLabel(a.status);
-                          const initials = getInitials(a.assignee);
-                          return (
-                            <TableRow
-                              key={a.id}
-                              className="group cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/80 dark:border-white/5 dark:hover:bg-zinc-900/50"
-                            >
-                              <TableCell className="p-3 sm:p-4">
-                                <p className="font-mono text-[11px] font-medium text-slate-400 dark:text-slate-500 group-hover:text-[#0F766E] dark:group-hover:text-teal-400 transition-colors">
-                                  {a.assetTag}
-                                </p>
-                                <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                                  {a.assetName}
-                                </p>
-                              </TableCell>
-                              <TableCell className="p-3 sm:p-4">
-                                <div className="flex items-center gap-2.5">
-                                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-slate-100 to-slate-200 text-[10px] font-bold text-slate-600 shadow-sm dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
-                                    {initials}
-                                  </div>
-                                  <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                                    {a.assignee}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="p-3 text-xs text-slate-500 dark:text-slate-400 sm:p-4">
-                                {a.department}
-                              </TableCell>
-                              <TableCell className="p-3 sm:p-4">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                                      {formatDate(a.assignedAt)}
+                                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                                      {a.assignee}
                                     </span>
                                   </div>
-                                  {a.confirmedAt && (
+                                </TableCell>
+                                <TableCell className="p-3 text-xs text-slate-500 dark:text-slate-400 sm:p-4">
+                                  {a.department}
+                                </TableCell>
+                                <TableCell className="p-3 sm:p-4">
+                                  <div className="space-y-1">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
                                       <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                                        {formatDate(a.confirmedAt)}
+                                        {formatDate(a.assignedAt)}
                                       </span>
                                     </div>
-                                  )}
-                                  {a.returnedAt && (
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
-                                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                                        {formatDate(a.returnedAt)}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {a.rejectedAt && (
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
-                                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                                        {formatDate(a.rejectedAt)}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="p-3 sm:p-4">
-                                <Badge
-                                  variant={variant}
-                                  className={`text-[10px] shadow-sm ${badgeStyles[variant]}`}
-                                >
-                                  {label}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="p-3 sm:p-4">
-                                <div className="flex items-center gap-2">
-                                  {a.status === 'PENDING' && (
-                                    <>
-                                      <button
-                                        onClick={() => {
-                                          setAssignmentToConfirm({
-                                            id: a.id,
-                                            asset: a.assetTag,
-                                            name: a.assetName,
-                                            assignee: a.assignee,
-                                            initials,
-                                            department: a.department,
-                                          });
-                                          setIsConfirmModalOpen(true);
-                                        }}
-                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600/10 text-teal-700 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
-                                        title="Confirm Assignment"
-                                      >
-                                        <Check className="h-4 w-4" />
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setAssignmentToReject({
-                                            id: a.id,
-                                            asset: a.assetTag,
-                                            name: a.assetName,
-                                            assignee: a.assignee,
-                                          });
-                                          setRejectReason('');
-                                          setIsRejectModalOpen(true);
-                                        }}
-                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600/10 text-red-700 transition-all hover:bg-red-600 hover:text-white dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white"
-                                        title="Reject Assignment"
-                                      >
-                                        <X className="h-4 w-4" />
-                                      </button>
-                                    </>
-                                  )}
-
-                                  <button
-                                    onClick={() => {
-                                      setViewingAssignment({
-                                        asset: a.assetTag,
-                                        name: a.assetName,
-                                        assignee: a.assignee,
-                                        issuerName: resolveMorIssuerName(a),
-                                        initials,
-                                        department: a.department,
-                                        date: formatDate(a.assignedAt),
-                                        documentDate: a.assignedAt,
-                                        status: label,
-                                        statusVariant: variant,
-                                        notes: a.notes,
-                                        rejectionReason: a.rejectionReason,
-                                        confirmedAt: a.confirmedAt,
-                                        returnedAt: a.returnedAt,
-                                        rejectedAt: a.rejectedAt,
-                                      });
-                                      setIsViewModalOpen(true);
-                                    }}
-                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-500 dark:hover:bg-zinc-700"
-                                    title="View Details"
+                                    {a.confirmedAt && (
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                          {formatDate(a.confirmedAt)}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {a.returnedAt && (
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                          {formatDate(a.returnedAt)}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {a.rejectedAt && (
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                          {formatDate(a.rejectedAt)}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="p-3 sm:p-4">
+                                  <Badge
+                                    variant={variant}
+                                    className={`text-[10px] shadow-sm ${badgeStyles[variant]}`}
                                   >
-                                    <Eye className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={6} className="h-24 text-center text-slate-500">
-                            No assignments found.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                                    {label}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="p-3 sm:p-4">
+                                  <div className="flex items-center gap-2">
+                                    {a.status === 'PENDING' && (
+                                      <>
+                                        <button
+                                          onClick={() => {
+                                            setAssignmentToConfirm({
+                                              id: a.id,
+                                              asset: a.assetTag,
+                                              name: a.assetName,
+                                              assignee: a.assignee,
+                                              initials,
+                                              department: a.department,
+                                            });
+                                            setIsConfirmModalOpen(true);
+                                          }}
+                                          className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600/10 text-teal-700 transition-all hover:bg-teal-600 hover:text-white dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500 dark:hover:text-white"
+                                          title="Confirm Assignment"
+                                        >
+                                          <Check className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            setAssignmentToReject({
+                                              id: a.id,
+                                              asset: a.assetTag,
+                                              name: a.assetName,
+                                              assignee: a.assignee,
+                                            });
+                                            setRejectReason('');
+                                            setIsRejectModalOpen(true);
+                                          }}
+                                          className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600/10 text-red-700 transition-all hover:bg-red-600 hover:text-white dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white"
+                                          title="Reject Assignment"
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </button>
+                                      </>
+                                    )}
 
-                  {/* Pagination Controls */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 dark:border-white/5">
-                      <div className="text-[11px] text-slate-500">
-                        Page <span className="font-semibold">{currentPage}</span> of{' '}
-                        <span className="font-semibold">{totalPages}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 rounded-lg"
-                          disabled={currentPage === 1}
-                          onClick={() => setCurrentPage((p) => p - 1)}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <div className="flex items-center gap-1">
-                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                            <Button
-                              key={page}
-                              variant={currentPage === page ? 'default' : 'outline'}
-                              size="sm"
-                              className={`h-8 w-8 p-0 rounded-lg text-[11px] ${
-                                currentPage === page
-                                  ? 'bg-[#0F766E] hover:bg-[#0E7490]'
-                                  : 'text-slate-500'
-                              }`}
-                              onClick={() => setCurrentPage(page)}
-                            >
-                              {page}
-                            </Button>
-                          ))}
+                                    <button
+                                      onClick={() => {
+                                        setViewingAssignment({
+                                          asset: a.assetTag,
+                                          name: a.assetName,
+                                          assignee: a.assignee,
+                                          issuerName: resolveMorIssuerName(a),
+                                          initials,
+                                          department: a.department,
+                                          date: formatDate(a.assignedAt),
+                                          documentDate: a.assignedAt,
+                                          status: label,
+                                          statusVariant: variant,
+                                          notes: a.notes,
+                                          rejectionReason: a.rejectionReason,
+                                          confirmedAt: a.confirmedAt,
+                                          returnedAt: a.returnedAt,
+                                          rejectedAt: a.rejectedAt,
+                                        });
+                                        setIsViewModalOpen(true);
+                                      }}
+                                      className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-500 dark:hover:bg-zinc-700"
+                                      title="View Details"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={6} className="h-24 text-center text-slate-500">
+                              No assignments found.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 dark:border-white/5">
+                        <div className="text-[11px] text-slate-500">
+                          Page <span className="font-semibold">{currentPage}</span> of{' '}
+                          <span className="font-semibold">{totalPages}</span>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 rounded-lg"
-                          disabled={currentPage === totalPages}
-                          onClick={() => setCurrentPage((p) => p + 1)}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 rounded-lg"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage((p) => p - 1)}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                              <Button
+                                key={page}
+                                variant={currentPage === page ? 'default' : 'outline'}
+                                size="sm"
+                                className={`h-8 w-8 p-0 rounded-lg text-[11px] ${
+                                  currentPage === page
+                                    ? 'bg-[#0F766E] hover:bg-[#0E7490]'
+                                    : 'text-slate-500'
+                                }`}
+                                onClick={() => setCurrentPage(page)}
+                              >
+                                {page}
+                              </Button>
+                            ))}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 rounded-lg"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage((p) => p + 1)}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -1347,7 +1364,7 @@ export function AssignmentView() {
                     </h4>
                     <div className="space-y-0 relative">
                       {/* Sub-vertical line for the internal timeline */}
-                      <div className="absolute left-[5px] top-2 bottom-2 w-px bg-slate-200 dark:bg-zinc-700" />
+                      <div className="absolute left-1.25 top-2 bottom-2 w-px bg-slate-200 dark:bg-zinc-700" />
                       {(() => {
                         const events: { label: string; type: string; date: string }[] = [];
                         if (viewingAssignment.date)
