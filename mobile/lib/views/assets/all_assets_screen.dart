@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/network/error_formatter.dart';
 import '../../dto/asset_response_dto.dart';
 import '../../services/assets_service.dart';
 import '../../theme/app_theme.dart';
@@ -44,7 +45,8 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString();
+        // Fix 4: formatted message, not raw e.toString()
+        _errorMessage = formatErrorForUser(e);
         _isLoading = false;
       });
     }
@@ -101,23 +103,41 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
+          // Fix 9: styled error state matching _DashboardErrorState visual language
           ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    color: Theme.of(context).colorScheme.error,
-                    size: 48,
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Failed to load assets: $_errorMessage'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadAssets,
-                    child: const Text('Retry'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.cloud_off_rounded,
+                      size: 52,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load assets',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadAssets,
+                      child: const Text('Try Again'),
+                    ),
+                  ],
+                ),
               ),
             )
           : _assetDtos.isEmpty

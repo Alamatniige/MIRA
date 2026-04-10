@@ -1,4 +1,9 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import 'core/storage/token_storage.dart';
 import 'core/storage/onboarding_storage.dart';
 import 'theme/app_theme.dart';
@@ -17,8 +22,119 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Pre-initialize SharedPreferences for faster access throughout the app
   await SharedPreferences.getInstance();
-  runApp(const MiraApp());
+
+  // ── Fix 1: Global error handler ────────────────────────────────────────────
+
+  // 1a. Catch Flutter widget/framework exceptions (render errors, etc.)
+  FlutterError.onError = (FlutterErrorDetails details) {
+    // Keep default behavior in debug so the red error screen still works.
+    FlutterError.presentError(details);
+  };
+
+  // 1b. Override the render error widget with a branded fallback.
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return const CrashFallbackScreen();
+  };
+
+  // 1c. Catch platform-channel / dart:ui level errors.
+  PlatformDispatcher.instance.onError = (error, stack) {
+    // Log in debug; in production wire this to a crash reporter.
+    debugPrint('[MIRA] Unhandled platform error: $error');
+    return true; // returning true prevents the default crash
+  };
+
+  // 1d. Catch all unhandled async exceptions thrown inside the Flutter zone.
+  runZonedGuarded(
+    () => runApp(const MiraApp()),
+    (error, stack) {
+      debugPrint('[MIRA] Unhandled async error: $error');
+    },
+  );
 }
+
+// ── Branded crash fallback widget ─────────────────────────────────────────────
+
+/// Shown whenever a widget's build() throws an unhandled error at runtime.
+/// Matches the visual language of _DashboardErrorState: icon + message + action.
+class CrashFallbackScreen extends StatelessWidget {
+  const CrashFallbackScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.gray50,
+      appBar: AppBar(
+        backgroundColor: AppColors.tealPrimary,
+        title: const Text(
+          'Something went wrong',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 64,
+                color: AppColors.statusReported,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Oops! An unexpected error occurred.',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.navy,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Please restart the app. If this keeps happening, contact IT support.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.gray500,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () => SystemNavigator.pop(),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text(
+                  'Restart App',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.tealPrimary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Existing app widgets (unchanged) ──────────────────────────────────────────
 
 class MiraApp extends StatefulWidget {
   const MiraApp({super.key});

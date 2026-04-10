@@ -1,6 +1,3 @@
-import 'dart:math';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
@@ -36,28 +33,28 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   double _pageValue = 0.0;
 
   List<OnboardingData> get _pages => [
-        OnboardingData(
-          title: 'Smart IT Inventory',
-          subtitle:
-              'Turn your messy asset list into an organized, always up-to-date workspace with effortless tracking.',
-          illustration: 'assets/illustrations/inventory.png',
-          accentColor: AppColors.tealPrimary,
-        ),
-        OnboardingData(
-          title: 'Real-time Visibility',
-          subtitle:
-              'Monitor hardware status, assign items to team members, and manage lifecycle events.',
-          illustration: 'assets/illustrations/visibility.png',
-          accentColor: AppColors.tealPrimary,
-        ),
-        OnboardingData(
-          title: 'Seamless Reporting',
-          subtitle:
-              'Generate detailed reports and history logs for compliance and internal audits without the headache.',
-          illustration: 'assets/illustrations/reporting.png',
-          accentColor: AppColors.tealPrimary,
-        ),
-      ];
+    OnboardingData(
+      title: 'Smart IT Inventory',
+      subtitle:
+          'Turn your messy asset list into an organized, always up-to-date workspace with effortless tracking.',
+      illustration: 'assets/illustrations/inventory.png',
+      accentColor: AppColors.tealPrimary,
+    ),
+    OnboardingData(
+      title: 'Real-time Visibility',
+      subtitle:
+          'Monitor hardware status, assign items to team members, and manage lifecycle events.',
+      illustration: 'assets/illustrations/visibility.png',
+      accentColor: AppColors.tealPrimary,
+    ),
+    OnboardingData(
+      title: 'Seamless Reporting',
+      subtitle:
+          'Generate detailed reports and history logs for compliance and internal audits without the headache.',
+      illustration: 'assets/illustrations/reporting.png',
+      accentColor: AppColors.tealPrimary,
+    ),
+  ];
 
   @override
   void initState() {
@@ -68,7 +65,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         _pageValue = _pageController.page ?? 0.0;
       });
     });
-
   }
 
   @override
@@ -107,7 +103,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.white, // Pure white seamlessly blends with illustration backgrounds
+      backgroundColor: Colors
+          .white, // Pure white seamlessly blends with illustration backgrounds
       body: Stack(
         children: [
           // 1. Image Layer (Takes up top 60%)
@@ -142,10 +139,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       itemBuilder: (context, index) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 60, 16, 24),
-          child: Image.asset(
-            _pages[index].illustration,
-            fit: BoxFit.contain,
-          ),
+          child: Image.asset(_pages[index].illustration, fit: BoxFit.contain),
         );
       },
     );
@@ -168,7 +162,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(36, 40, 36, 32), // Reduced bottom padding to drop pagination
+          padding: const EdgeInsets.fromLTRB(
+            36,
+            40,
+            36,
+            32,
+          ), // Reduced bottom padding to drop pagination
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -236,11 +235,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28)),
+                              borderRadius: BorderRadius.circular(28),
+                            ),
                           ),
-                          child: const Text('Get Started',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w600)),
+                          child: const Text(
+                            'Get Started',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       )
                     : Row(
@@ -253,14 +257,21 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 onPressed: _finishOnboarding,
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.tealPrimary,
-                                  side: const BorderSide(color: AppColors.tealPrimary, width: 1.5),
+                                  side: const BorderSide(
+                                    color: AppColors.tealPrimary,
+                                    width: 1.5,
+                                  ),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(28)),
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
                                 ),
-                                child: const Text('Skip',
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600)),
+                                child: const Text(
+                                  'Skip',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -276,19 +287,23 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                   foregroundColor: Colors.white,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(28)),
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
                                 ),
-                                child: const Text('Next',
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600)),
+                                child: const Text(
+                                  'Next',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
               ),
-              
+
               const SizedBox(height: 48),
 
               // Sleek Page Indicators (Center Bottom)

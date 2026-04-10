@@ -76,6 +76,14 @@ class _LoginScreenState extends State<LoginScreen> {
       });
       return;
     }
+    // Fix 8: client-side email format validation before any network call
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email)) {
+      setState(() {
+        _error = 'Please enter a valid email address.';
+        _isLoading = false;
+      });
+      return;
+    }
     if (password.isEmpty) {
       setState(() {
         _error = 'Please enter your password.';
@@ -123,17 +131,30 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String _mapLoginError(ApiException error) {
-    final message = error.message.trim();
-    if (message.isNotEmpty) {
-      return message;
+    // Check status codes first — they produce deterministic, friendly messages.
+    // Never show the raw server body for auth failures; it can be ambiguous or
+    // developer-facing (e.g. "Unauthorized", "Bad credentials").
+    if (error.statusCode == 401 || error.statusCode == 403) {
+      return 'Incorrect email or password. Please try again.';
     }
 
-    if (error.statusCode == 401) {
-      return 'Invalid email or password.';
+    if (error.statusCode == 429) {
+      return 'Too many sign-in attempts. Please wait a moment and try again.';
     }
 
     if (error.statusCode == 408) {
       return 'Request timed out. Please check your network and try again.';
+    }
+
+    if (error.statusCode != null && error.statusCode! >= 500) {
+      return 'The server is temporarily unavailable. Please try again later.';
+    }
+
+    // For all other cases, use the server message if it looks user-friendly,
+    // otherwise fall back to the generic message.
+    final message = error.message.trim();
+    if (message.isNotEmpty) {
+      return message;
     }
 
     return 'Unable to sign in right now. Please try again.';

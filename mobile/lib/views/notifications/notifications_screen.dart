@@ -110,9 +110,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
         }
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to mark all as read: $e')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to mark all as read: $e')),
+      );
     }
   }
 
@@ -121,11 +122,28 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     try {
       await _notificationService.markAsRead(notif.id);
-      setState(() {
-        notif.isRead = true;
-      });
+      // Fix 7: only flip isRead after the API confirms success
+      if (mounted) {
+        setState(() {
+          notif.isRead = true;
+        });
+      }
     } catch (e) {
-      debugPrint('Error marking notification read: $e');
+      // Fix 7: surface the failure so the user can retry
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Could not mark notification as read. Tap to retry.',
+            ),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: () => _markAsRead(notif),
+            ),
+          ),
+        );
+      }
     }
   }
 

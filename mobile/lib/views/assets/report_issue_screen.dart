@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/network/error_formatter.dart';
 import '../../models/asset.dart';
 import '../../services/assets_service.dart';
 import '../../theme/app_theme.dart';
@@ -39,7 +40,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
+        SnackBar(content: Text('Failed to pick image: ${formatErrorForUser(e)}')),
       );
     }
   }
@@ -83,7 +84,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to report issue: $e'),
+          content: Text('Failed to report issue: ${formatErrorForUser(e)}'),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.statusReported,
         ),

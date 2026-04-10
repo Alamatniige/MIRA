@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/network/error_formatter.dart';
 import '../../services/assets_service.dart';
 import '../../dto/return_qr_scan_dto.dart';
 import '../../theme/app_theme.dart';
@@ -40,7 +41,8 @@ class _ReturnAssetSheetState extends State<ReturnAssetSheet> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        // Fix 4: formatted message, not raw e.toString()
+        _errorMessage = formatErrorForUser(e);
         _state = _ReturnSheetState.error;
       });
     }
@@ -56,7 +58,8 @@ class _ReturnAssetSheetState extends State<ReturnAssetSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to return asset: ${e.toString()}'),
+            // Fix 4: formatted message, not raw e.toString()
+            content: Text('Failed to return asset: ${formatErrorForUser(e)}'),
             backgroundColor: AppColors.statusReported,
           ),
         );

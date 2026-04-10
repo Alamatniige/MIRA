@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/network/error_formatter.dart';
 import '../../theme/app_theme.dart';
 import '../../models/asset.dart';
 import '../../widgets/status_badge.dart';
@@ -89,8 +90,22 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
           _resolveAssignmentUserName();
         }
       }
-    } catch (_) {
-      // Refresh is best-effort; ignore failures
+    } catch (e) {
+      // Fix 6: non-intrusive SnackBar so user knows the data may be stale
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Asset status could not be refreshed. Some actions may be unavailable.',
+            ),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _refreshLiveAsset,
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -136,7 +151,10 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
         }
       }
     } catch (_) {
-      // Best effort; ignore failures
+      // Fix 6: make stale data visible instead of silently showing "Unassigned"
+      if (mounted) {
+        setState(() => _fetchedAssignedTo = 'Unknown (could not load)');
+      }
     }
   }
 
@@ -191,9 +209,10 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
       if (!mounted) return;
       // Re-sync UI with server state (handles stale-data 409)
       await _refreshLiveAsset();
-      final message = e.toString().contains('409')
+      // Fix 4: use centralised formatter — no raw e.toString() to the user
+      final message = (e is Exception && e.toString().contains('409'))
           ? 'This asset is no longer available for request.'
-          : 'Failed to submit request: $e';
+          : formatErrorForUser(e);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

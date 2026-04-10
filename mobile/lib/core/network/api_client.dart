@@ -97,6 +97,9 @@ class ApiClient {
         'Unable to reach API server. If using a physical phone, set API_BASE_URL to your PC LAN IP (for example: http://192.168.1.8:8080). 10.0.2.2 works only on Android emulator.',
         cause: e,
       );
+    } on ApiException {
+      // Already a typed ApiException from _handleResponse — pass it through unchanged.
+      rethrow;
     } catch (e) {
       debugPrint('[ApiClient][GET] unknown uri=$uri error=$e');
       throw ApiException('Network error', cause: e);
@@ -136,8 +139,10 @@ class ApiClient {
         'Unable to reach API server. If using a physical phone, set API_BASE_URL to your PC LAN IP (for example: http://192.168.1.8:8080). 10.0.2.2 works only on Android emulator.',
         cause: e,
       );
+    } on ApiException {
+      // Already a typed ApiException from _handleResponse — pass it through unchanged.
+      rethrow;
     } catch (e) {
-      debugPrint('[ApiClient][POST] unknown uri=$uri error=$e');
       debugPrint('[ApiClient][POST] unknown uri=$uri error=$e');
       throw ApiException('Network error', cause: e);
     }
@@ -187,6 +192,9 @@ class ApiClient {
         'Unable to reach API server. Check your connection.',
         cause: e,
       );
+    } on ApiException {
+      // Already a typed ApiException from _handleResponse — pass it through unchanged.
+      rethrow;
     } catch (e) {
       debugPrint('[ApiClient][MultipartPOST] unknown uri=$uri error=$e');
       throw ApiException('Network error', cause: e);
@@ -226,6 +234,9 @@ class ApiClient {
         'Unable to reach API server. If using a physical phone, set API_BASE_URL to your PC LAN IP (for example: http://192.168.1.8:8080). 10.0.2.2 works only on Android emulator.',
         cause: e,
       );
+    } on ApiException {
+      // Already a typed ApiException from _handleResponse — pass it through unchanged.
+      rethrow;
     } catch (e) {
       debugPrint('[ApiClient][PUT] unknown uri=$uri error=$e');
       throw ApiException('Network error', cause: e);
@@ -265,6 +276,9 @@ class ApiClient {
         'Unable to reach API server. Check your connection.',
         cause: e,
       );
+    } on ApiException {
+      // Already a typed ApiException from _handleResponse — pass it through unchanged.
+      rethrow;
     } catch (e) {
       debugPrint('[ApiClient][PATCH] unknown uri=$uri error=$e');
       throw ApiException('Network error', cause: e);
@@ -311,6 +325,9 @@ class ApiClient {
         'Unable to reach API server. If using a physical phone, set API_BASE_URL to your PC LAN IP (for example: http://192.168.1.8:8080). 10.0.2.2 works only on Android emulator.',
         cause: e,
       );
+    } on ApiException {
+      // Already a typed ApiException from _handleResponse — pass it through unchanged.
+      rethrow;
     } catch (e) {
       debugPrint('[ApiClient][DELETE] unknown uri=$uri error=$e');
       throw ApiException('Network error', cause: e);

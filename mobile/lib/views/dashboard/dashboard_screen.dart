@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../controllers/dashboard_controller.dart';
+import '../../core/network/error_formatter.dart';
 import '../../models/asset.dart';
 import '../../models/dashboard_data.dart';
 import '../../theme/app_theme.dart';
@@ -57,7 +58,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
 
       setState(() {
-        _errorMessage = error.toString();
+        // Fix 4: use formatter — no raw exception class names shown to the user
+        _errorMessage = formatErrorForUser(error);
         _isLoading = false;
       });
     }

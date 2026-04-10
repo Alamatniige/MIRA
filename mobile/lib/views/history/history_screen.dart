@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../models/activity.dart';
 import '../../controllers/history_controller.dart';
+import '../../core/network/error_formatter.dart';
 import '../../services/assets_service.dart';
 import '../assets/asset_detail_screen.dart';
 import 'reported_issue_detail_screen.dart';
@@ -17,6 +18,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final HistoryController _controller = HistoryController();
   String _selectedFilter = 'all';
   bool _isLoading = true;
+  // Fix 2: proper error state fields
+  bool _hasError = false;
+  String _errorMessage = '';
   List<ActivityItem> _items = [];
 
   @override
@@ -26,12 +30,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    setState(() => _isLoading = true);
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+      _errorMessage = '';
+    });
     try {
       final data = await _controller.loadHistory(_selectedFilter);
       if (mounted) setState(() => _items = data);
-    } catch (_) {
-      // Handle error
+    } catch (e) {
+      // Fix 2: surface the error instead of swallowing it
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = formatErrorForUser(e);
+        });
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -57,7 +72,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.gray50,
       body: SafeArea(
@@ -87,7 +102,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
               ),
             ),
-            
+
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 40,
@@ -112,59 +127,109 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
               ),
             ),
-            
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                child: Row(
-                  children: [
-                    Text(
-                      'Sorting by:',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    _SortOption(
-                      label: 'Date',
-                      isActive: _controller.sortBy == 'date',
-                      isAscending: _controller.sortAscending,
-                      onTap: () => _onSortChanged('date'),
-                    ),
-                    const SizedBox(width: 8),
-                    _SortOption(
-                      label: 'Name',
-                      isActive: _controller.sortBy == 'name',
-                      isAscending: _controller.sortAscending,
-                      onTap: () => _onSortChanged('name'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: _isLoading
-                  ? const SliverToBoxAdapter(
-                      child: Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(48),
-                          child: CircularProgressIndicator(),
+
+            // Only show sort controls when we have data
+            if (!_isLoading && !_hasError)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Sorting by:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    )
-                  : _buildActivitiesList(isDark),
+                      const SizedBox(width: 12),
+                      _SortOption(
+                        label: 'Date',
+                        isActive: _controller.sortBy == 'date',
+                        isAscending: _controller.sortAscending,
+                        onTap: () => _onSortChanged('date'),
+                      ),
+                      const SizedBox(width: 8),
+                      _SortOption(
+                        label: 'Name',
+                        isActive: _controller.sortBy == 'name',
+                        isAscending: _controller.sortAscending,
+                        onTap: () => _onSortChanged('name'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              sliver: _buildBody(isDark),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 48)),
           ],
         ),
       ),
     );
+  }
+
+  // Fix 2: tri-state body: loading → error → success list
+  Widget _buildBody(bool isDark) {
+    if (_isLoading) {
+      return const SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(48),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
+    if (_hasError) {
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.cloud_off_rounded,
+                  size: 52,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load activity',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _errorMessage,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _loadInitialData,
+                  child: const Text('Try Again'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return _buildActivitiesList(isDark);
   }
 
   Widget _buildSearchBar(bool isDark) {
@@ -193,7 +258,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           color: Theme.of(context).colorScheme.onSurface,
         ),
         decoration: InputDecoration(
-          filled: false, // Ensure no double-layer background
+          filled: false,
           hintText: 'Search activities...',
           hintStyle: TextStyle(
             fontSize: 15,
@@ -215,6 +280,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildActivitiesList(bool isDark) {
+    // Fix P3: distinct empty state copy — never reused for error states
     if (_items.isEmpty) {
       return SliverToBoxAdapter(
         child: Center(
@@ -226,7 +292,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: isDark 
+                    color: isDark
                         ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5)
                         : AppColors.tealMuted.withValues(alpha: 0.5),
                     shape: BoxShape.circle,
@@ -234,14 +300,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   child: Icon(
                     Icons.history_rounded,
                     size: 56,
-                    color: isDark 
+                    color: isDark
                         ? AppColors.tealLight.withValues(alpha: 0.7)
                         : AppColors.tealPrimary.withValues(alpha: 0.7),
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'No activity found',
+                  'No activity yet',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -262,7 +328,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       );
     }
-    
+
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -310,9 +376,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         );
       }
     } catch (e) {
+      // Fix M4: use formatter instead of e.toString()
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load details: ${e.toString()}')),
+          SnackBar(content: Text('Could not load details: ${formatErrorForUser(e)}')),
         );
       }
     }
@@ -390,8 +457,8 @@ class _FilterPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? AppColors.tealLight : AppColors.tealPrimary;
-    final backgroundColor = isSelected 
-        ? primaryColor 
+    final backgroundColor = isSelected
+        ? primaryColor
         : (isDark ? AppColors.darkSurface : Colors.white);
     final textColor = isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant;
 
@@ -571,7 +638,7 @@ class _ActivityCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 if (activity.description != null && activity.description!.isNotEmpty) ...[
-                   Text(
+                  Text(
                     activity.description!,
                     style: TextStyle(
                       fontSize: 14,

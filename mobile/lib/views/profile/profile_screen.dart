@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../controllers/profile_controller.dart';
+import '../../core/network/api_exception.dart';
+import '../../core/network/error_formatter.dart';
 import '../../models/types.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/theme_mode_scope.dart';
@@ -49,7 +53,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString();
+          // Fix 4: use formatter instead of e.toString()
+          _errorMessage = formatErrorForUser(e);
           _isLoading = false;
         });
       }
@@ -67,36 +72,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (image == null) return;
 
+      if (!mounted) return;
       setState(() => _isUploading = true);
 
-      // Reload profile to get the updated avatarUrl
+      // Fix 5, step 1: actually upload the image
+      await _controller.uploadAvatar(File(image.path));
+
+      // Fix 5, step 2: reload profile to receive the updated avatarUrl from the server
       await _loadProfile();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Profile picture updated successfully!'),
-            backgroundColor: AppColors.tealPrimary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Profile picture updated successfully!'),
+          backgroundColor: AppColors.tealPrimary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        );
-      }
+        ),
+      );
+    } on PlatformException catch (e) {
+      // Fix 5: friendly permission denial messages
+      if (!mounted) return;
+      final message = e.code == 'camera_access_denied'
+          ? 'Camera access denied. Please allow access in Settings.'
+          : 'Could not access your photos. Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppColors.statusReported,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.statusReported,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to upload image: $e'),
-            backgroundColor: AppColors.statusReported,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(formatErrorForUser(e)),
+          backgroundColor: AppColors.statusReported,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        );
-      }
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }

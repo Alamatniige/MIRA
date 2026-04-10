@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../core/network/api_exception.dart';
+import '../../core/network/error_formatter.dart';
 import '../../theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../models/asset.dart';
@@ -147,11 +151,29 @@ class _QrScannerScreenState extends State<QrScannerScreen>
         _controller.start();
         setState(() => _hasScanned = false);
       }
-    } catch (_) {
+    } on ApiException catch (e) {
+      // Fix 3: server/auth errors ≠ invalid QR — show a specific dialog
       if (!mounted) return;
       nav.pop(); // dismiss loading
-      _showInvalidScan(context, 'mira-asset:$assetId');
-      return;
+      _showAssetLoadError(context, e.message);
+    } on SocketException {
+      if (!mounted) return;
+      nav.pop();
+      _showAssetLoadError(
+        context,
+        'No internet connection. Please check your network and try again.',
+      );
+    } on TimeoutException {
+      if (!mounted) return;
+      nav.pop();
+      _showAssetLoadError(
+        context,
+        'The request timed out. Please try again.',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      nav.pop();
+      _showAssetLoadError(context, formatErrorForUser(e));
     }
 
     if (mounted) {
@@ -199,6 +221,33 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     });
   }
 
+  /// Fix 3: Shown ONLY for network/server errors — NOT for unrecognised QR content.
+  void _showAssetLoadError(BuildContext context, String message) {
+    _controller.stop();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Could Not Load Asset'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (mounted) setState(() => _hasScanned = false);
+            },
+            child: const Text('Try Again'),
+          ),
+        ],
+      ),
+    ).then((_) {
+      if (mounted) {
+        _controller.start();
+        setState(() => _hasScanned = false);
+      }
+    });
+  }
+
+  /// Shown ONLY when the QR content successfully resolves but matches no known MIRA asset.
   void _showInvalidScan(BuildContext context, String code) {
     _controller.stop();
     showDialog(
