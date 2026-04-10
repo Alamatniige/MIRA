@@ -2,6 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
+async function extractErrorBody(response: Response, fallback: string) {
+  const text = await response.text();
+  try {
+    const body = JSON.parse(text);
+    return {
+      code: 'BACKEND_ERROR',
+      message: body.message || body.error || fallback,
+      details: body,
+    };
+  } catch {
+    return { code: 'BACKEND_ERROR', message: text.trim() || fallback };
+  }
+}
+
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authHeader = req.headers.get('authorization');
   const { id } = await params;
@@ -17,22 +31,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       body: JSON.stringify(body),
     });
 
-    const text = await response.text();
-    const data = (() => {
-      try {
-        return JSON.parse(text);
-      } catch {
-        return { message: text.trim() };
-      }
-    })();
-
     if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
+      const err = await extractErrorBody(response, `Backend error: ${response.status}`);
+      return NextResponse.json(err, { status: response.status });
     }
 
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
     return NextResponse.json(data);
   } catch (error) {
     console.error('Proxy PUT reject Error:', error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { code: 'INTERNAL_ERROR', message: 'Something went wrong. Please try again.' },
+      { status: 500 },
+    );
   }
 }

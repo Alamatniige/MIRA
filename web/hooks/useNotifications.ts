@@ -84,6 +84,7 @@ export function useNotifications() {
       } catch (err) {
         if (isMounted) {
           console.error('SSE Error:', err);
+          setError(err instanceof Error ? err.message : 'Realtime connection lost');
           // Retry after 5s
           setTimeout(() => {
             if (isMounted) connectSSE();

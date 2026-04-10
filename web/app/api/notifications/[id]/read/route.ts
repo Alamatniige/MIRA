@@ -15,15 +15,30 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { message: `Backend error: ${response.status}` },
-        { status: response.status },
-      );
+      const text = await response.text();
+      let errBody: { code: string; message: string; details?: unknown };
+      try {
+        const body = JSON.parse(text);
+        errBody = {
+          code: 'BACKEND_ERROR',
+          message: body.message || body.error || `Backend error: ${response.status}`,
+          details: body,
+        };
+      } catch {
+        errBody = {
+          code: 'BACKEND_ERROR',
+          message: text.trim() || `Backend error: ${response.status}`,
+        };
+      }
+      return NextResponse.json(errBody, { status: response.status });
     }
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Proxy PATCH /notifications/[id]/read error:', error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { code: 'INTERNAL_ERROR', message: 'Something went wrong. Please try again.' },
+      { status: 500 },
+    );
   }
 }

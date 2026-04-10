@@ -1,10 +1,15 @@
 'use client';
 
-import Link from 'next/link';
-import { FileQuestion, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export function NotFound() {
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-linear-to-br from-slate-50 via-teal-50/30 to-slate-100 dark:from-[#020617] dark:via-[#041112] dark:to-[#020617] px-4">
       {/* Decorative blobs */}
@@ -14,44 +19,38 @@ export function NotFound() {
       </div>
 
       <div className="relative z-10 w-full max-w-md text-center">
-        {/* Card */}
         <div className="rounded-2xl border border-border bg-card shadow-lg px-8 py-12 flex flex-col items-center gap-6 dark:shadow-teal-950/30">
           {/* Icon */}
-          <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-linear-to-br from-[#0f766e] to-[#0e7490] shadow-md">
-            <FileQuestion className="w-10 h-10 text-white" strokeWidth={1.5} />
+          <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-linear-to-br from-red-500 to-red-600 shadow-md">
+            <AlertTriangle className="w-10 h-10 text-white" strokeWidth={1.5} />
           </div>
 
-          {/* 404 heading */}
+          {/* Heading */}
           <div className="space-y-1">
-            <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[#0e7490] dark:text-teal-400">
-              Error 404
+            <p className="text-xs font-semibold tracking-[0.2em] uppercase text-red-500 dark:text-red-400">
+              Something went wrong
             </p>
-            <h1 className="text-7xl font-bold tracking-tight bg-linear-to-br from-[#0f766e] to-[#0e7490] bg-clip-text text-transparent leading-none">
-              404
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Unexpected Error</h1>
           </div>
 
           {/* Message */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-foreground">Page Not Found</h2>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-              The page you are looking for doesn&apos;t exist or may have been moved.
+              {error.message || 'An unexpected error occurred. Please try again.'}
             </p>
           </div>
 
           {/* Divider */}
           <div className="w-full h-px bg-border" />
 
-          {/* Actions */}
+          {/* Action */}
           <div className="w-full">
             <Button
-              asChild
+              onClick={reset}
               className="w-full gap-2 bg-linear-to-r from-[#0f766e] to-[#0e7490] hover:from-[#0d6c65] hover:to-[#0b6582] text-white shadow-sm"
             >
-              <Link href="/dashboard">
-                <Home className="w-4 h-4" />
-                Back to Dashboard
-              </Link>
+              <RefreshCw className="w-4 h-4" />
+              Try again
             </Button>
           </div>
 

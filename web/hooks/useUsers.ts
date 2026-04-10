@@ -40,11 +40,17 @@ export function useUsers() {
           headers: getHeaders(),
           body: JSON.stringify(userData),
         });
-        if (!response.ok) throw new Error('Failed to add user');
+        if (!response.ok) {
+          let msg = 'Failed to add user';
+          try {
+            const body = await response.json();
+            msg = body.message || body.error || msg;
+          } catch {}
+          throw new Error(msg);
+        }
         await fetchUsers();
         return await response.json();
       } catch (err) {
-        console.error('Failed to add user:', err);
         throw err;
       }
     },
@@ -58,10 +64,16 @@ export function useUsers() {
           method: 'DELETE',
           headers: getHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to delete user');
+        if (!response.ok) {
+          let msg = 'Failed to delete user';
+          try {
+            const body = await response.json();
+            msg = body.message || body.error || msg;
+          } catch {}
+          throw new Error(msg);
+        }
         await fetchUsers();
       } catch (err) {
-        console.error('Failed to delete user:', err);
         throw err;
       }
     },
@@ -91,11 +103,17 @@ export function useUsers() {
           headers: getHeaders(),
           body: JSON.stringify(userData),
         });
-        if (!response.ok) throw new Error('Failed to update user');
+        if (!response.ok) {
+          let msg = 'Failed to update user';
+          try {
+            const body = await response.json();
+            msg = body.message || body.error || msg;
+          } catch {}
+          throw new Error(msg);
+        }
         await fetchUsers();
         return await response.json();
       } catch (err) {
-        console.error('Failed to update user:', err);
         throw err;
       }
     },

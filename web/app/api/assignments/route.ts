@@ -2,6 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
+async function extractErrorBody(response: Response, fallback: string) {
+  const text = await response.text();
+  try {
+    const body = JSON.parse(text);
+    return {
+      code: 'BACKEND_ERROR',
+      message: body.message || body.error || fallback,
+      details: body,
+    };
+  } catch {
+    return { code: 'BACKEND_ERROR', message: text.trim() || fallback };
+  }
+}
+
 // Get All Assignments
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -11,12 +25,20 @@ export async function GET(req: NextRequest) {
         ...(authHeader ? { Authorization: authHeader } : {}),
       },
     });
-    const data = await parseBody(response);
 
+    if (!response.ok) {
+      const err = await extractErrorBody(response, `Backend error: ${response.status}`);
+      return NextResponse.json(err, { status: response.status });
+    }
+
+    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error('Proxy GET Error:', error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { code: 'INTERNAL_ERROR', message: 'Something went wrong. Please try again.' },
+      { status: 500 },
+    );
   }
 }
 
@@ -33,23 +55,19 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify(body),
     });
-    const data = await parseBody(response);
 
     if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
+      const err = await extractErrorBody(response, `Backend error: ${response.status}`);
+      return NextResponse.json(err, { status: response.status });
     }
+
+    const data = await response.json();
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error('Proxy POST Error:', error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
-  }
-}
-
-async function parseBody(response: Response) {
-  const text = await response.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { message: text.trim() };
+    return NextResponse.json(
+      { code: 'INTERNAL_ERROR', message: 'Something went wrong. Please try again.' },
+      { status: 500 },
+    );
   }
 }

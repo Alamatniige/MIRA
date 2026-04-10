@@ -44,7 +44,11 @@ function MorPreview() {
         filename: `MOR-${data?.date || 'Asset'}.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: 'in' as const, format: [8.5, 13] as const, orientation: 'portrait' as const },
+        jsPDF: {
+          unit: 'in' as const,
+          format: [8.5, 13] as [number, number],
+          orientation: 'portrait' as const,
+        },
       };
 
       const worker = html2pdf().set(opt).from(element).toPdf().outputPdf('blob');
