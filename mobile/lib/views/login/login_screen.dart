@@ -232,10 +232,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 90,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFEAB308).withValues(alpha: 0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFEAB308).withValues(alpha: 0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       blurRadius: 30,
                       spreadRadius: 10,
                     ),
@@ -248,33 +248,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 70,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFEAB308).withValues(alpha: 0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                 ),
               ),
               // Core Icon Circle
               Container(
                 height: 56,
                 width: 56,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFFACC15), Color(0xFFEAB308)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFEAB308),
+                      color: Colors.white.withValues(alpha: 0.5),
                       blurRadius: 15,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: const Center(
-                  child: Icon(
-                    Icons.email_rounded,
-                    size: 28,
-                    color: Colors.white,
+                child: Center(
+                  child: Image.asset(
+                    'mira-favicon/web-app-manifest-192x192.png',
+                    width: 32,
+                    height: 32,
                   ),
                 ),
               ),

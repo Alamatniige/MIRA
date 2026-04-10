@@ -79,6 +79,7 @@ flutter:
     - assets/illustrations/inventory.png
     - assets/illustrations/visibility.png
     - assets/illustrations/reporting.png
+    - mira-favicon/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
