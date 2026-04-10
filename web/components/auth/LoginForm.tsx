@@ -211,20 +211,8 @@ export function LoginForm() {
 
             <div className="mt-4 text-center border-t border-slate-100 pt-3">
               <p className="text-xs text-slate-500 font-medium">
-                By signing in, you agree to the <br />
-                <a
-                  href="#"
-                  className="text-slate-700 hover:text-[#0F766E] transition-colors underline decoration-slate-300 underline-offset-4 font-semibold"
-                >
-                  Terms of Service
-                </a>{' '}
-                &{' '}
-                <a
-                  href="#"
-                  className="text-slate-700 hover:text-[#0F766E] transition-colors underline decoration-slate-300 underline-offset-4 font-semibold"
-                >
-                  Privacy Policy
-                </a>
+                By signing in, you agree to use the system responsibly. <br />
+
               </p>
             </div>
           </div>
