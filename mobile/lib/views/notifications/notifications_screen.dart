@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../models/notification.dart';
 import '../../services/notification_service.dart';
+import '../../services/assets_service.dart';
+import '../assets/asset_detail_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -142,6 +144,45 @@ class _NotificationScreenState extends State<NotificationScreen> {
               onPressed: () => _markAsRead(notif),
             ),
           ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleNotificationTap(NotificationModel notif) async {
+    if (!notif.isRead) {
+      _markAsRead(notif);
+    }
+
+    if (notif.type == 'REQUEST_ACCEPTED' && notif.assetId != null) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(color: AppColors.tealPrimary),
+        ),
+      );
+
+      try {
+        final assetDto = await AssetsService().getAssetDetails(notif.assetId!);
+        if (!mounted) return;
+        Navigator.pop(context); // Dismiss loading
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AssetDetailScreen(
+              asset: assetDto.toAsset(),
+              liveAsset: assetDto,
+              autoScrollToApproval: true,
+            ),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.pop(context); // Dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load asset details.')),
         );
       }
     }
@@ -315,7 +356,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => GestureDetector(
-                        onTap: () => _markAsRead(_todayNotifications[index]),
+                        onTap: () => _handleNotificationTap(_todayNotifications[index]),
                         child: _NotificationCard(
                           notification: _todayNotifications[index],
                         ),
@@ -347,7 +388,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => GestureDetector(
-                        onTap: () => _markAsRead(_earlierNotifications[index]),
+                        onTap: () => _handleNotificationTap(_earlierNotifications[index]),
                         child: _NotificationCard(
                           notification: _earlierNotifications[index],
                         ),

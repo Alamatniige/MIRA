@@ -14,8 +14,16 @@ class AssetDetailScreen extends StatefulWidget {
   /// Live DTO from the API, used to drive action button state.
   /// When null the action buttons are still shown but in a safe disabled state.
   final AssetResponseDto? liveAsset;
+  
+  /// If true, automatically scrolls to the Approval Details section after rendering.
+  final bool autoScrollToApproval;
 
-  const AssetDetailScreen({super.key, required this.asset, this.liveAsset});
+  const AssetDetailScreen({
+    super.key,
+    required this.asset,
+    this.liveAsset,
+    this.autoScrollToApproval = false,
+  });
 
   @override
   State<AssetDetailScreen> createState() => _AssetDetailScreenState();
@@ -29,6 +37,9 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
   // Mutable copy so it can be refreshed after actions
   AssetResponseDto? _liveAsset;
   String? _fetchedAssignedTo;
+  
+  // Key for scrolling to Approval Details
+  final GlobalKey _approvalKey = GlobalKey();
 
   @override
   void initState() {
@@ -40,6 +51,23 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     }
     // Always fetch live data to get the current assignment status
     _refreshLiveAsset();
+    
+    if (widget.autoScrollToApproval) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // A slight delay to ensure everything is fully laid out and images didn't shift things right away
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (!mounted) return;
+          final context = _approvalKey.currentContext;
+          if (context != null) {
+            Scrollable.ensureVisible(
+              context,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeInOutCubic,
+            );
+          }
+        });
+      });
+    }
   }
 
   String? get _assetUuid =>
@@ -251,7 +279,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          'Asset Details',
+          'Assignment Details',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w700,
@@ -673,6 +701,96 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                       value: widget.asset.specifications,
                     ),
                   ],
+                ],
+              ),
+            ),
+
+            // Approval Details section (Mock Data)
+            const SizedBox(height: 36),
+            Align(
+              key: _approvalKey,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Approval Details',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.shadow.withValues(alpha: 0.04),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.gray200,
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  _DetailRow(
+                    icon: Icons.admin_panel_settings_rounded,
+                    label: 'Approved By',
+                    value: 'Admin Dima',
+                  ),
+                  _Divider(isDark: isDark),
+                  _DetailRow(
+                    icon: Icons.access_time_filled_rounded,
+                    label: 'Approval Date',
+                    value: 'April 13, 2026, 10:00 AM',
+                  ),
+                  _Divider(isDark: isDark),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.tealPrimary.withValues(alpha: isDark ? 0.15 : 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.tealPrimary.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 20,
+                            color: isDark ? AppColors.tealLight : AppColors.tealPrimary,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Request has been approved. Kindly proceed to the IT Office for device release and memorandum signing.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                height: 1.4,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

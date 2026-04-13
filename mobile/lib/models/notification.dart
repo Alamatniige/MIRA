@@ -7,6 +7,7 @@ class NotificationModel {
   final String title;
   final String message;
   final String time;
+  final String type;
   final IconData icon;
   final Color color;
   bool isRead;
@@ -19,6 +20,7 @@ class NotificationModel {
     required this.title,
     required this.message,
     required this.time,
+    required this.type,
     required this.icon,
     required this.color,
     required this.isRead,
@@ -33,6 +35,7 @@ class NotificationModel {
       title: dto.title,
       message: dto.message,
       time: _getTimeString(dto.createdAt),
+      type: dto.type,
       icon: _getIconForType(dto.type),
       color: _getColorForType(dto.type),
       isRead: dto.isRead,
