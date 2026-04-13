@@ -1,16 +1,17 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/network/error_formatter.dart';
 import '../../theme/app_theme.dart';
-import '../../data/mock_data.dart';
 import '../../models/asset.dart';
 import '../../widgets/status_badge.dart';
 import '../../services/assets_service.dart';
 import '../assets/asset_detail_screen.dart';
 import 'return_asset_sheet.dart';
+import '../../dto/asset_response_dto.dart';
 
 /// High-end QR Scanner - full screen dark, glowing frame, bottom sheet
 class QrScannerScreen extends StatefulWidget {
@@ -70,11 +71,11 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     if (_hasScanned) return;
     final barcodes = capture.barcodes;
     if (barcodes.isEmpty) return;
-
     final code = barcodes.first.rawValue;
     if (code == null || code.isEmpty) return;
 
     _hasScanned = true;
+    HapticFeedback.mediumImpact();
 
     // Global return QR — route to asset picker sheet
     if (code.startsWith('mira-return:')) {
@@ -89,29 +90,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       return;
     }
 
-    String? assetId;
-    if (code.startsWith('AST-') || code.startsWith('MIRA-')) {
-      final parts = code.split('-');
-      if (parts.contains('AST') && parts.length > 1) {
-        final idx = parts.indexOf('AST');
-        if (idx + 1 < parts.length) {
-          assetId = 'AST-${parts[idx + 1]}';
-        }
-      }
-      if (assetId == null && code.startsWith('AST-')) {
-        assetId = code;
-      }
-    }
-    assetId ??= code;
-
-    final asset = findAssetById(assetId);
-    if (!mounted) return;
-
-    if (asset != null) {
-      _showScanResultSheet(context, asset);
-    } else {
-      _showInvalidScan(context, code);
-    }
+    // If it doesn't match MIRA patterns, it's invalid
+    _showInvalidScan(context, code);
   }
 
   Future<void> _showAssetFromQr(String assetId) async {
@@ -123,11 +103,55 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      builder: (_) => PopScope(
+        canPop: false,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.1),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation(AppColors.tealLight),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Identifying Asset...',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
 
     try {
-      final dto = await AssetsService().getAssetDetails(assetId);
+      // Use Future.wait to ensure a minimum loading time of 800ms for premium feel
+      final results = await Future.wait([
+        AssetsService().getAssetDetails(assetId),
+        Future.delayed(const Duration(milliseconds: 800)),
+      ]);
+
+      final dto = results[0] as AssetResponseDto;
+
       if (!mounted) return;
       nav.pop(); // dismiss loading
       final result = await nav.push<bool>(
@@ -166,10 +190,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     } on TimeoutException {
       if (!mounted) return;
       nav.pop();
-      _showAssetLoadError(
-        context,
-        'The request timed out. Please try again.',
-      );
+      _showAssetLoadError(context, 'The request timed out. Please try again.');
     } catch (e) {
       if (!mounted) return;
       nav.pop();
@@ -398,26 +419,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
-            ),
-          ),
-          // Simulate scan (for testing)
-          Positioned(
-            bottom: 40,
-            left: 24,
-            right: 24,
-            child: TextButton(
-              onPressed: () {
-                if (_hasScanned) return;
-                _hasScanned = true;
-                final asset = mockMyAssets.isNotEmpty
-                    ? mockMyAssets.first
-                    : mockAllAssets.first;
-                _showScanResultSheet(context, asset);
-              },
-              child: Text(
-                'Simulate scan (${mockAllAssets.first.id})',
-                style: TextStyle(color: AppColors.gray400, fontSize: 12),
               ),
             ),
           ),

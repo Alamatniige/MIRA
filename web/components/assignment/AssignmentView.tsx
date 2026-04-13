@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -184,7 +184,6 @@ const EMPTY_FORM = {
   userQuery: '',
   userId: '',
   department: '',
-  date: new Date().toISOString().split('T')[0],
   notes: '',
 };
 
@@ -205,6 +204,7 @@ export function AssignmentView() {
     assignee: string;
     initials: string;
     department: string;
+    avatarUrl?: string;
   } | null>(null);
   const [assignmentToReject, setAssignmentToReject] = useState<{
     id: string;
@@ -230,6 +230,7 @@ export function AssignmentView() {
     confirmedAt?: string;
     returnedAt?: string;
     rejectedAt?: string;
+    avatarUrl?: string;
   } | null>(null);
 
   const [form, setForm] = useState(EMPTY_FORM);
@@ -242,6 +243,8 @@ export function AssignmentView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [currentUserName, setCurrentUserName] = useState<string>('');
+  const assetRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
 
   const {
     assignments,
@@ -313,6 +316,23 @@ export function AssignmentView() {
     return () => window.removeEventListener('afterprint', handleAfterPrint);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        assetRef.current &&
+        !assetRef.current.contains(event.target as Node) &&
+        userRef.current &&
+        !userRef.current.contains(event.target as Node)
+      ) {
+        setAssetOpen(false);
+        setUserOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const filteredAssets = availableAssets.filter(
     (a) =>
       a.tag.toLowerCase().includes(form.assetQuery.toLowerCase()) ||
@@ -320,9 +340,20 @@ export function AssignmentView() {
   );
   const filteredUsers = users.filter(
     (u: User) =>
-      u.fullName.toLowerCase().includes(form.userQuery.toLowerCase()) ||
-      u.department.toLowerCase().includes(form.userQuery.toLowerCase()),
+      (u.fullName.toLowerCase().includes(form.userQuery.toLowerCase()) ||
+        u.department.toLowerCase().includes(form.userQuery.toLowerCase())) &&
+      u.role?.name === 'Staff',
   );
+
+  const resetAssignmentForm = () => {
+    setIsModalOpen(false);
+    setAssetOpen(false);
+    setUserOpen(false);
+    setForm(EMPTY_FORM);
+    refreshAssets();
+  };
+
+  const getAssigneeAvatar = (name: string) => users.find((u) => u.fullName === name)?.avatarUrl;
 
   const totalCount = assignments.length;
   const assignedCount = assignments.filter(
@@ -434,7 +465,7 @@ export function AssignmentView() {
         assetLabel: form.assetQuery,
         assigneeName: form.userQuery,
         department: form.department,
-        date: form.date,
+        date: new Date().toISOString(),
         notes: form.notes,
         status: 'Pending',
       });
@@ -679,9 +710,19 @@ export function AssignmentView() {
                                   <div className="bg-white dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 rounded-2xl p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-200 dark:hover:border-white/10 group-hover:-translate-y-0.5">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                       <div className="flex items-start gap-3">
-                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-slate-100 to-slate-200 text-xs font-bold text-slate-600 dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
-                                          {initials}
-                                        </div>
+                                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full overflow-hidden bg-linear-to-br from-slate-100 to-slate-200 shadow-sm dark:from-slate-700 dark:to-slate-800">
+                                        {getAssigneeAvatar(ev.assignee) ? (
+                                          <img
+                                            src={getAssigneeAvatar(ev.assignee)}
+                                            alt={ev.assignee}
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                                            {initials}
+                                          </span>
+                                        )}
+                                      </div>
                                         <div className="min-w-0">
                                           <div className="flex flex-wrap items-center gap-2">
                                             <span
@@ -737,6 +778,7 @@ export function AssignmentView() {
                                                   assignee: a.assignee,
                                                   initials,
                                                   department: a.department,
+                                                  avatarUrl: getAssigneeAvatar(a.assignee),
                                                 });
                                                 setIsConfirmModalOpen(true);
                                               }}
@@ -781,6 +823,7 @@ export function AssignmentView() {
                                               confirmedAt: a.confirmedAt,
                                               returnedAt: a.returnedAt,
                                               rejectedAt: a.rejectedAt,
+                                              avatarUrl: getAssigneeAvatar(a.assignee),
                                             });
                                             setIsViewModalOpen(true);
                                           }}
@@ -847,8 +890,18 @@ export function AssignmentView() {
                                 </TableCell>
                                 <TableCell className="p-3 sm:p-4">
                                   <div className="flex items-center gap-2.5">
-                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-slate-100 to-slate-200 text-[10px] font-bold text-slate-600 shadow-sm dark:from-slate-700 dark:to-slate-800 dark:text-slate-300">
-                                      {initials}
+                                    <div className="flex h-7 w-7 items-center justify-center rounded-full overflow-hidden bg-linear-to-br from-slate-100 to-slate-200 shadow-sm dark:from-slate-700 dark:to-slate-800">
+                                      {getAssigneeAvatar(a.assignee) ? (
+                                        <img
+                                          src={getAssigneeAvatar(a.assignee)}
+                                          alt={a.assignee}
+                                          className="h-full w-full object-cover"
+                                        />
+                                      ) : (
+                                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                          {initials}
+                                        </span>
+                                      )}
                                     </div>
                                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
                                       {a.assignee}
@@ -958,6 +1011,7 @@ export function AssignmentView() {
                                           confirmedAt: a.confirmedAt,
                                           returnedAt: a.returnedAt,
                                           rejectedAt: a.rejectedAt,
+                                          avatarUrl: getAssigneeAvatar(a.assignee),
                                         });
                                         setIsViewModalOpen(true);
                                       }}
@@ -1037,10 +1091,7 @@ export function AssignmentView() {
         {/* Assign Asset */}
         <Modal
           open={isModalOpen}
-          onClose={() => {
-            refreshAssets();
-            setIsModalOpen(false);
-          }}
+          onClose={resetAssignmentForm}
           title="New Asset Assignment"
           description="Capture a new asset assignment or reassignment."
         >
@@ -1050,7 +1101,7 @@ export function AssignmentView() {
               <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Select Asset
               </label>
-              <div className="relative">
+              <div className="relative" ref={assetRef}>
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
@@ -1094,7 +1145,7 @@ export function AssignmentView() {
 
             {/* Assignee + Department */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="relative">
+              <div className="relative" ref={userRef}>
                 <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   Assign To
                 </label>
@@ -1139,6 +1190,7 @@ export function AssignmentView() {
                   Department
                 </label>
                 <Input
+                  disabled
                   placeholder="Auto-filled from user"
                   className="h-9 rounded-xl border-slate-200 bg-slate-50/50 text-[12px] placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-200"
                   value={form.department}
@@ -1147,29 +1199,7 @@ export function AssignmentView() {
               </div>
             </div>
 
-            {/* Date + Status */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  <CalendarDays className="h-3.5 w-3.5 text-slate-400" /> Date
-                </label>
-                <Input
-                  type="date"
-                  className="h-9 rounded-xl border-slate-200 bg-slate-50/50 text-[12px] focus:border-[#0F766E] focus:ring-[#0F766E]/20 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-200"
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" /> Initial Status
-                </label>
-                <div className="flex h-9 items-center rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-[12px] text-amber-600 dark:border-white/10 dark:bg-zinc-900/50 dark:text-amber-400 font-medium">
-                  Pending
-                </div>
-              </div>
-            </div>
+
 
             {/* Notes */}
             <div>
@@ -1192,10 +1222,7 @@ export function AssignmentView() {
                 variant="outline"
                 size="sm"
                 className="h-9 rounded-full border-slate-200 px-6 text-[11px] font-medium dark:border-white/10 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/5"
-                onClick={() => {
-                  setForm(EMPTY_FORM);
-                  setIsModalOpen(false);
-                }}
+                onClick={resetAssignmentForm}
               >
                 Cancel
               </Button>
@@ -1232,8 +1259,18 @@ export function AssignmentView() {
                   </p>
                   <div className="pt-2 border-t border-slate-100 dark:border-white/5">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-linear-to-br from-teal-500 to-teal-600 flex items-center justify-center text-[10px] font-bold text-white shadow-sm font-mono">
-                        {assignmentToConfirm.initials}
+                      <div className="h-8 w-8 rounded-full overflow-hidden bg-linear-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm">
+                        {assignmentToConfirm.avatarUrl ? (
+                          <img
+                            src={assignmentToConfirm.avatarUrl}
+                            alt={assignmentToConfirm.assignee}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-[10px] font-bold text-white font-mono">
+                            {assignmentToConfirm.initials}
+                          </span>
+                        )}
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
@@ -1320,8 +1357,18 @@ export function AssignmentView() {
                       Assignee Details
                     </h4>
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 shrink-0 rounded-full bg-linear-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-[11px] font-bold text-slate-600 dark:text-slate-300 font-mono">
-                        {viewingAssignment.initials}
+                      <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden bg-linear-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center shadow-sm">
+                        {viewingAssignment.avatarUrl ? (
+                          <img
+                            src={viewingAssignment.avatarUrl}
+                            alt={viewingAssignment.assignee}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 font-mono">
+                            {viewingAssignment.initials}
+                          </span>
+                        )}
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">

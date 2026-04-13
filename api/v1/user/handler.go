@@ -211,7 +211,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -512,7 +512,10 @@ func DeleteRole(w http.ResponseWriter, r *http.Request) {
 
 	// Check if role is used by any user
 	var userCount int64
-	db.DB.Model(&User{}).Where("roleId = ?", id).Count(&userCount)
+	if err := db.DB.Model(&User{}).Where("\"roleId\" = ?", id).Count(&userCount).Error; err != nil {
+		http.Error(w, "Error checking role usage: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 	if userCount > 0 {
 		http.Error(w, "Cannot delete role because it is currently assigned to users", http.StatusConflict)
 		return
@@ -529,5 +532,5 @@ func DeleteRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }

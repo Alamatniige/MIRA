@@ -30,7 +30,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late final PageController _pageController;
 
   int _currentPage = 0;
-  double _pageValue = 0.0;
 
   List<OnboardingData> get _pages => [
     OnboardingData(
@@ -60,11 +59,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   void initState() {
     super.initState();
     _pageController = PageController();
-    _pageController.addListener(() {
-      setState(() {
-        _pageValue = _pageController.page ?? 0.0;
-      });
-    });
   }
 
   @override

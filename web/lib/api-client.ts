@@ -51,12 +51,18 @@ export async function apiClient<T>(
             throw new Error(errorMessage);
         }
 
-        // Handle empty responses
-        if (response.status === 204) {
+        // Handle empty responses or non-JSON responses
+        const text = await response.text();
+        if (!text) {
             return {} as T;
         }
 
-        return await response.json();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error('Failed to parse response as JSON:', text);
+            return text as unknown as T;
+        }
     } catch (error) {
         console.error('API Client Error:', error);
         throw error;
