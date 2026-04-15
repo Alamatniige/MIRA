@@ -113,13 +113,15 @@ function SetupPasswordForm() {
         </div>
 
         <h2 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">Setup Complete</h2>
-        <p className="text-slate-500 font-medium mb-10">Your enterprise credentials are now active.</p>
+        <p className="text-slate-500 font-medium mb-10">
+          Your enterprise credentials are now active.
+        </p>
 
         <div className="bg-[#f1f5f9]/50 border border-slate-200/40 p-8 rounded-[1.5rem] relative">
           <p className="text-slate-600 text-sm leading-relaxed font-medium">
             As a Staff member, please log in via the{' '}
-            <strong className="text-[#0F766E] font-bold">MIRA Mobile Interface</strong> using your institutional email and
-            new access key.
+            <strong className="text-[#0F766E] font-bold">MIRA Mobile Interface</strong> using your
+            institutional email and new access key.
           </p>
         </div>
       </div>
@@ -158,7 +160,9 @@ function SetupPasswordForm() {
 
           {/* Form Header */}
           <div className="text-center mb-6 relative">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Account Setup</h2>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
+              Account Setup
+            </h2>
             <p className="text-slate-500 text-sm font-semibold tracking-wide flex items-center justify-center gap-2 uppercase">
               <span className="w-8 h-[1px] bg-slate-200" />
               MIRA Service Initialization
@@ -200,7 +204,7 @@ function SetupPasswordForm() {
 
             <div className="space-y-2 group/field">
               <label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 group-focus-within/field:text-[#0F766E] transition-colors ml-1">
-                Temporary Key
+                Temporary Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
@@ -226,7 +230,7 @@ function SetupPasswordForm() {
 
             <div className="space-y-2 group/field">
               <label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 group-focus-within/field:text-[#0F766E] transition-colors ml-1">
-                New Access Key
+                New Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
@@ -252,7 +256,7 @@ function SetupPasswordForm() {
 
             <div className="space-y-2 group/field">
               <label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 group-focus-within/field:text-[#0F766E] transition-colors ml-1">
-                Confirm Access Key
+                Confirm Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
@@ -262,7 +266,7 @@ function SetupPasswordForm() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repeat access key"
+                  placeholder="Repeat Password"
                   required
                   className="w-full bg-[#f1f5f9]/50 border border-slate-200/60 text-slate-900 rounded-2xl pl-12 pr-14 py-4 outline-none focus:border-[#0F766E]/50 focus:bg-white focus:ring-[6px] focus:ring-[#0F766E]/5 transition-all duration-300 placeholder:text-slate-400 font-semibold tracking-widest shadow-inner-sm"
                 />
@@ -313,7 +317,10 @@ export default function SetupPasswordPage() {
     <div className="min-h-screen w-full flex items-center justify-center bg-[#f8fafc] p-4 relative overflow-hidden font-sans">
       {/* Dynamic Background Auras */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-linear-to-br from-[#0F766E]/20 to-transparent rounded-full blur-[120px] animate-pulse pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-linear-to-tl from-[#0E7490]/20 to-transparent rounded-full blur-[120px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }} />
+      <div
+        className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-linear-to-tl from-[#0E7490]/20 to-transparent rounded-full blur-[120px] animate-pulse pointer-events-none"
+        style={{ animationDelay: '2s' }}
+      />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-[radial-gradient(circle,rgba(45,212,191,0.05)_0%,transparent_70%)] pointer-events-none" />
 
       <Suspense

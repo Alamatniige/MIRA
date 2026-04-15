@@ -18,6 +18,7 @@ interface EmailInviteProps {
   role: string;
   department: string;
   tempPassword?: string;
+  mobileAppDownloadUrl?: string;
 }
 
 export const EmailInvite = ({
@@ -26,8 +27,10 @@ export const EmailInvite = ({
   role = 'Staff',
   department = 'General',
   tempPassword = 'TempPassword123!',
+  mobileAppDownloadUrl,
 }: EmailInviteProps) => {
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/setup-password?email=${encodeURIComponent(email)}`;
+  const shouldShowMobileDownload = Boolean(mobileAppDownloadUrl);
 
   return (
     <Html>
@@ -71,6 +74,26 @@ export const EmailInvite = ({
                 Setup Password
               </Button>
             </Section>
+
+            {shouldShowMobileDownload ? (
+              <Section style={mobileDownloadSection}>
+                <Text style={paragraph}>
+                  You have also been invited to use the MIRA mobile application. Download the latest
+                  Android APK below, then sign in after you finish setting up your password.
+                </Text>
+
+                <Section style={secondaryButtonContainer}>
+                  <Button style={secondaryButton} href={mobileAppDownloadUrl}>
+                    Download Android App
+                  </Button>
+                </Section>
+
+                <Text style={supportingText}>
+                  If the button does not open, copy and paste this link into your browser:
+                </Text>
+                <Text style={linkText}>{mobileAppDownloadUrl}</Text>
+              </Section>
+            ) : null}
           </Section>
 
           <Hr style={hr} />
@@ -176,6 +199,12 @@ const btnContainer = {
   marginTop: '32px',
 };
 
+const mobileDownloadSection = {
+  marginTop: '28px',
+  paddingTop: '24px',
+  borderTop: '1px solid #e2e8f0',
+};
+
 const button = {
   backgroundColor: '#0f766e', // Matches --primary
   borderRadius: '8px',
@@ -186,6 +215,39 @@ const button = {
   display: 'inline-block',
   padding: '14px 32px',
   fontWeight: '600',
+};
+
+const secondaryButtonContainer = {
+  textAlign: 'center' as const,
+  marginTop: '20px',
+};
+
+const secondaryButton = {
+  backgroundColor: '#ffffff',
+  borderRadius: '8px',
+  color: '#0f766e',
+  fontSize: '15px',
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  display: 'inline-block',
+  padding: '14px 32px',
+  fontWeight: '600',
+  border: '1px solid #0f766e',
+};
+
+const supportingText = {
+  fontSize: '13px',
+  lineHeight: '1.6',
+  color: '#64748b',
+  margin: '20px 0 8px',
+};
+
+const linkText = {
+  fontSize: '13px',
+  lineHeight: '1.6',
+  color: '#0f766e',
+  margin: '0',
+  wordBreak: 'break-all' as const,
 };
 
 const hr = {
