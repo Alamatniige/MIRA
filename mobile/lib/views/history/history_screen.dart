@@ -64,7 +64,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _onSortChanged(String field) {
-    final newAscending = _controller.sortBy == field ? !_controller.sortAscending : false;
+    final newAscending = _controller.sortBy == field
+        ? !_controller.sortAscending
+        : false;
     _controller.setSort(field, newAscending);
     setState(() => _items = _controller.getFilteredAndSortedItems());
   }
@@ -111,7 +113,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   itemCount: _filters.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     final filter = _filters[index];
                     final isSelected = _selectedFilter == filter['id'];
@@ -239,7 +242,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.gray200,
         ),
         boxShadow: [
           if (!isDark)
@@ -272,7 +277,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             size: 20,
             color: Theme.of(context).colorScheme.primary,
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 0,
+            horizontal: 16,
+          ),
           isDense: false,
         ),
       ),
@@ -330,19 +338,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final item = _items[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _ActivityCard(
-              activity: item,
-              onTap: () => _openAsset(context, item),
-            ),
-          );
-        },
-        childCount: _items.length,
-      ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final item = _items[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: _ActivityCard(
+            activity: item,
+            onTap: () => _openAsset(context, item),
+          ),
+        );
+      }, childCount: _items.length),
     );
   }
 
@@ -371,7 +376,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (context.mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => AssetDetailScreen(asset: assetDto.toAsset()),
+            builder: (context) => AssetDetailScreen(
+              asset: assetDto.toAsset(),
+              viewMode: AssetDetailViewMode.browse,
+            ),
           ),
         );
       }
@@ -379,7 +387,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       // Fix M4: use formatter instead of e.toString()
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load details: ${formatErrorForUser(e)}')),
+          SnackBar(
+            content: Text('Could not load details: ${formatErrorForUser(e)}'),
+          ),
         );
       }
     }
@@ -410,10 +420,16 @@ class _SortOption extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? primaryColor.withValues(alpha: 0.1) : Colors.transparent,
+          color: isActive
+              ? primaryColor.withValues(alpha: 0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isActive ? primaryColor : (isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.gray200),
+            color: isActive
+                ? primaryColor
+                : (isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : AppColors.gray200),
           ),
         ),
         child: Row(
@@ -424,13 +440,17 @@ class _SortOption extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: isActive ? primaryColor : Theme.of(context).colorScheme.onSurfaceVariant,
+                color: isActive
+                    ? primaryColor
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             if (isActive) ...[
               const SizedBox(width: 4),
               Icon(
-                isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                isAscending
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded,
                 size: 14,
                 color: primaryColor,
               ),
@@ -460,7 +480,9 @@ class _FilterPill extends StatelessWidget {
     final backgroundColor = isSelected
         ? primaryColor
         : (isDark ? AppColors.darkSurface : Colors.white);
-    final textColor = isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant;
+    final textColor = isSelected
+        ? Colors.white
+        : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Material(
       color: Colors.transparent,
@@ -475,15 +497,21 @@ class _FilterPill extends StatelessWidget {
             color: backgroundColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isSelected ? Colors.transparent : (isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200),
+              color: isSelected
+                  ? Colors.transparent
+                  : (isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : AppColors.gray200),
             ),
-            boxShadow: isSelected ? [
-              BoxShadow(
-                color: primaryColor.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ] : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: primaryColor.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
           child: Text(
             label,
@@ -503,20 +531,22 @@ class _ActivityCard extends StatelessWidget {
   final ActivityItem activity;
   final VoidCallback onTap;
 
-  const _ActivityCard({
-    required this.activity,
-    required this.onTap,
-  });
+  const _ActivityCard({required this.activity, required this.onTap});
 
   Color _statusColor() {
     if (activity.type == 'reported') return AppColors.statusReported;
 
     switch (activity.action) {
-      case 'Assigned': return AppColors.statusActive;
-      case 'Pending': return AppColors.statusMaintenance;
-      case 'Rejected': return AppColors.statusReported;
-      case 'Returned': return AppColors.statusDisposed;
-      default: return AppColors.statusDisposed;
+      case 'Assigned':
+        return AppColors.statusActive;
+      case 'Pending':
+        return AppColors.statusMaintenance;
+      case 'Rejected':
+        return AppColors.statusReported;
+      case 'Returned':
+        return AppColors.statusDisposed;
+      default:
+        return AppColors.statusDisposed;
     }
   }
 
@@ -524,11 +554,16 @@ class _ActivityCard extends StatelessWidget {
     if (activity.type == 'reported') return Icons.warning_rounded;
 
     switch (activity.action) {
-      case 'Assigned': return Icons.check_circle_rounded;
-      case 'Pending': return Icons.hourglass_empty_rounded;
-      case 'Rejected': return Icons.cancel_rounded;
-      case 'Returned': return Icons.history_rounded;
-      default: return Icons.history_rounded;
+      case 'Assigned':
+        return Icons.check_circle_rounded;
+      case 'Pending':
+        return Icons.hourglass_empty_rounded;
+      case 'Rejected':
+        return Icons.cancel_rounded;
+      case 'Returned':
+        return Icons.history_rounded;
+      default:
+        return Icons.history_rounded;
     }
   }
 
@@ -544,7 +579,9 @@ class _ActivityCard extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : AppColors.gray200,
         ),
         boxShadow: [
           BoxShadow(
@@ -591,14 +628,19 @@ class _ActivityCard extends StatelessWidget {
                             'Status · $formattedDate',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -637,7 +679,8 @@ class _ActivityCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                if (activity.description != null && activity.description!.isNotEmpty) ...[
+                if (activity.description != null &&
+                    activity.description!.isNotEmpty) ...[
                   Text(
                     activity.description!,
                     style: TextStyle(
@@ -649,7 +692,11 @@ class _ActivityCard extends StatelessWidget {
                 ],
                 Row(
                   children: [
-                    Icon(Icons.access_time_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       '${dt.day}/${dt.month}/${dt.year} at ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}',

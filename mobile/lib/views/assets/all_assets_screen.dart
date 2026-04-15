@@ -166,6 +166,7 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
                               builder: (context) => AssetDetailScreen(
                                 asset: asset,
                                 liveAsset: dto,
+                                viewMode: AssetDetailViewMode.browse,
                               ),
                             ),
                           );

@@ -31,7 +31,12 @@ class DashboardController {
 
   void openDetails(BuildContext context, Asset asset) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => AssetDetailScreen(asset: asset)),
+      MaterialPageRoute(
+        builder: (context) => AssetDetailScreen(
+          asset: asset,
+          viewMode: AssetDetailViewMode.assignment,
+        ),
+      ),
     );
   }
 }

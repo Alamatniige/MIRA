@@ -459,6 +459,7 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 		Notes            string     `gorm:"column:notes"`
 		AssignedDate     time.Time  `gorm:"column:assignedDate"`
 		ConfirmedAt      *time.Time `gorm:"column:confirmedAt"`
+		ConfirmedByName  string     `gorm:"column:confirmedByName"`
 		RejectedAt       *time.Time `gorm:"column:rejectedAt"`
 		RejectedByUserID *string    `gorm:"column:rejectedByUserId"`
 		RejectionReason  string     `gorm:"column:rejectionReason"`
@@ -476,12 +477,14 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 			a.notes,
 			a."assignedDate",
 			a."confirmedAt",
+			COALESCE(uc."fullName", '') as "confirmedByName",
 			a."rejectedAt",
 			a."rejectedByUserId",
 			a."rejectionReason"
 		FROM "assetsAssignment" a
 		JOIN assets ast ON ast.id = a."assetId"
 		JOIN users u ON u.id = a."userId"
+		LEFT JOIN users uc ON uc.id = a."confirmedByUserId"
 		WHERE a."userId" = ?
 		  AND a."returnedDate" IS NULL
 		  AND a."rejectedAt" IS NULL
@@ -508,6 +511,7 @@ func GetMyActiveAssignments(w http.ResponseWriter, r *http.Request) {
 			Notes:            row.Notes,
 			AssignedAt:       row.AssignedDate,
 			ConfirmedAt:      row.ConfirmedAt,
+			ConfirmedByName:  row.ConfirmedByName,
 			RejectedAt:       row.RejectedAt,
 			RejectedByUserID: row.RejectedByUserID,
 			RejectionReason:  row.RejectionReason,
@@ -537,6 +541,7 @@ func GetMyPendingAssignments(w http.ResponseWriter, r *http.Request) {
 		Notes            string     `gorm:"column:notes"`
 		AssignedDate     time.Time  `gorm:"column:assignedDate"`
 		ConfirmedAt      *time.Time `gorm:"column:confirmedAt"`
+		ConfirmedByName  string     `gorm:"column:confirmedByName"`
 		RejectedAt       *time.Time `gorm:"column:rejectedAt"`
 		RejectedByUserID *string    `gorm:"column:rejectedByUserId"`
 		RejectionReason  string     `gorm:"column:rejectionReason"`
@@ -554,12 +559,14 @@ func GetMyPendingAssignments(w http.ResponseWriter, r *http.Request) {
 			a.notes,
 			a."assignedDate",
 			a."confirmedAt",
+			COALESCE(uc."fullName", '') as "confirmedByName",
 			a."rejectedAt",
 			a."rejectedByUserId",
 			a."rejectionReason"
 		FROM "assetsAssignment" a
 		JOIN assets ast ON ast.id = a."assetId"
 		JOIN users u ON u.id = a."userId"
+		LEFT JOIN users uc ON uc.id = a."confirmedByUserId"
 		WHERE a."userId" = ?
 		  AND a."returnedDate" IS NULL
 		  AND a."rejectedAt" IS NULL
@@ -586,6 +593,7 @@ func GetMyPendingAssignments(w http.ResponseWriter, r *http.Request) {
 			Notes:            row.Notes,
 			AssignedAt:       row.AssignedDate,
 			ConfirmedAt:      row.ConfirmedAt,
+			ConfirmedByName:  row.ConfirmedByName,
 			RejectedAt:       row.RejectedAt,
 			RejectedByUserID: row.RejectedByUserID,
 			RejectionReason:  row.RejectionReason,
@@ -610,6 +618,7 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 		Notes                string     `gorm:"column:notes"`
 		AssignedDate         time.Time  `gorm:"column:assignedDate"`
 		ConfirmedAt          *time.Time `gorm:"column:confirmedAt"`
+		ConfirmedByName      string     `gorm:"column:confirmedByName"`
 		ReturnedDate         *time.Time `gorm:"column:returnedDate"`
 		RejectedAt           *time.Time `gorm:"column:rejectedAt"`
 		RejectedByUserID     *string    `gorm:"column:rejectedByUserId"`
@@ -632,6 +641,7 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 			a.notes,
 			a."assignedDate",
 			a."confirmedAt",
+			COALESCE(uc."fullName", '') as "confirmedByName",
 			a."returnedDate",
 			a."rejectedAt",
 			a."rejectedByUserId",
@@ -643,6 +653,7 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 		JOIN assets ast ON ast.id = a."assetId"
 		JOIN users u ON u.id = a."userId"
 		LEFT JOIN users iu ON iu.id = a."issuedByUserId"
+		LEFT JOIN users uc ON uc.id = a."confirmedByUserId"
 		ORDER BY a."assignedDate" DESC
 	`).Scan(&rows).Error
 
@@ -675,6 +686,7 @@ func GetAllAssets(w http.ResponseWriter, r *http.Request) {
 			Notes:            r.Notes,
 			AssignedAt:       r.AssignedDate,
 			ConfirmedAt:      r.ConfirmedAt,
+			ConfirmedByName:  r.ConfirmedByName,
 			ReturnedAt:       r.ReturnedDate,
 			RejectedAt:       r.RejectedAt,
 			RejectedByUserID: r.RejectedByUserID,
@@ -723,8 +735,9 @@ func ConfirmAssignment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updates := map[string]interface{}{
-		"acknowledged": true,
-		"confirmedAt":  time.Now(),
+		"acknowledged":    true,
+		"confirmedAt":     time.Now(),
+		"confirmedByUserId": confirmedByUserID,
 	}
 
 	if assignment.IssuedByUserID == nil || strings.TrimSpace(assignment.IssuedByNameSnapshot) == "" {

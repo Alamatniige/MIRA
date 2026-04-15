@@ -156,8 +156,11 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       nav.pop(); // dismiss loading
       final result = await nav.push<bool>(
         MaterialPageRoute(
-          builder: (_) =>
-              AssetDetailScreen(asset: dto.toAsset(), liveAsset: dto),
+          builder: (_) => AssetDetailScreen(
+            asset: dto.toAsset(),
+            liveAsset: dto,
+            viewMode: AssetDetailViewMode.assignment,
+          ),
         ),
       );
 

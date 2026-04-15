@@ -113,9 +113,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to mark all as read: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to mark all as read: $e')));
     }
   }
 
@@ -175,6 +175,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               asset: assetDto.toAsset(),
               liveAsset: assetDto,
               autoScrollToApproval: true,
+              viewMode: AssetDetailViewMode.assignment,
             ),
           ),
         );
@@ -356,7 +357,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => GestureDetector(
-                        onTap: () => _handleNotificationTap(_todayNotifications[index]),
+                        onTap: () =>
+                            _handleNotificationTap(_todayNotifications[index]),
                         child: _NotificationCard(
                           notification: _todayNotifications[index],
                         ),
@@ -388,7 +390,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => GestureDetector(
-                        onTap: () => _handleNotificationTap(_earlierNotifications[index]),
+                        onTap: () => _handleNotificationTap(
+                          _earlierNotifications[index],
+                        ),
                         child: _NotificationCard(
                           notification: _earlierNotifications[index],
                         ),

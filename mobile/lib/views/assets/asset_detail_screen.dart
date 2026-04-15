@@ -7,6 +7,8 @@ import '../../dto/asset_response_dto.dart';
 import '../../services/assets_service.dart';
 import 'report_issue_screen.dart';
 
+enum AssetDetailViewMode { assignment, browse }
+
 /// Asset detail - matches web AssetDetailsModal
 class AssetDetailScreen extends StatefulWidget {
   final Asset asset;
@@ -14,15 +16,21 @@ class AssetDetailScreen extends StatefulWidget {
   /// Live DTO from the API, used to drive action button state.
   /// When null the action buttons are still shown but in a safe disabled state.
   final AssetResponseDto? liveAsset;
-  
+
   /// If true, automatically scrolls to the Approval Details section after rendering.
   final bool autoScrollToApproval;
+
+  /// Controls which sections are rendered.
+  /// Use [AssetDetailViewMode.assignment] for dashboard/notifications/QR (shows Approval Details).
+  /// Use [AssetDetailViewMode.browse] for All Assets / History (hides Approval Details).
+  final AssetDetailViewMode viewMode;
 
   const AssetDetailScreen({
     super.key,
     required this.asset,
     this.liveAsset,
     this.autoScrollToApproval = false,
+    this.viewMode = AssetDetailViewMode.assignment,
   });
 
   @override
@@ -37,7 +45,11 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
   // Mutable copy so it can be refreshed after actions
   AssetResponseDto? _liveAsset;
   String? _fetchedAssignedTo;
-  
+
+  // Approval data
+  String? _approverName;
+  DateTime? _approvalDateTime;
+
   // Key for scrolling to Approval Details
   final GlobalKey _approvalKey = GlobalKey();
 
@@ -51,8 +63,14 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     }
     // Always fetch live data to get the current assignment status
     _refreshLiveAsset();
-    
-    if (widget.autoScrollToApproval) {
+
+    // Fetch approval details in assignment context
+    if (widget.viewMode == AssetDetailViewMode.assignment) {
+      _resolveApprovalDetails();
+    }
+
+    if (widget.viewMode == AssetDetailViewMode.assignment &&
+        widget.autoScrollToApproval) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         // A slight delay to ensure everything is fully laid out and images didn't shift things right away
         Future.delayed(const Duration(milliseconds: 300), () {
@@ -86,6 +104,46 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
       return 'This asset is currently unavailable.';
     }
     return null;
+  }
+
+  String _getApprovalDate() {
+    if (_approvalDateTime == null) {
+      return 'April 13, 2026, 10:00 AM';
+    }
+    try {
+      final months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+      final month = months[_approvalDateTime!.month - 1];
+      final day = _approvalDateTime!.day;
+      final year = _approvalDateTime!.year;
+      final hour = _approvalDateTime!.hour;
+      final minute = _approvalDateTime!.minute.toString().padLeft(2, '0');
+      final period = hour >= 12 ? 'PM' : 'AM';
+      final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+
+      return '$month $day, $year, $displayHour:$minute $period';
+    } catch (_) {
+      return 'Unknown';
+    }
+  }
+
+  String _getApproverName() {
+    if (_approverName?.isNotEmpty == true) {
+      return _approverName!;
+    }
+    return 'Admin';
   }
 
   String _buildAssignedToLabel() {
@@ -183,6 +241,34 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
       if (mounted) {
         setState(() => _fetchedAssignedTo = 'Unknown (could not load)');
       }
+    }
+  }
+
+  Future<void> _resolveApprovalDetails() async {
+    try {
+      final assetId = _assetUuid ?? widget.asset.id;
+      if (assetId.isEmpty) return;
+
+      final allAssignments = await _service.getAllAssignments();
+
+      // Find the active assignment for this asset
+      final assignment = allAssignments
+          .where(
+            (a) =>
+                a.assetId == assetId &&
+                a.status.toUpperCase() == 'CONFIRMED' &&
+                a.confirmedAt != null,
+          )
+          .firstOrNull;
+
+      if (mounted && assignment != null) {
+        setState(() {
+          _approvalDateTime = assignment.confirmedAt;
+          _approverName = assignment.confirmedByName?.trim();
+        });
+      }
+    } catch (_) {
+      // Silently fail - approval details are nice-to-have, not critical
     }
   }
 
@@ -705,95 +791,103 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
               ),
             ),
 
-            // Approval Details section (Mock Data)
-            const SizedBox(height: 36),
-            Align(
-              key: _approvalKey,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Approval Details',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  letterSpacing: -0.3,
+            // Approval Details section – only shown in assignment context
+            if (widget.viewMode == AssetDetailViewMode.assignment) ...[
+              const SizedBox(height: 36),
+              Align(
+                key: _approvalKey,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Approval Details',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    letterSpacing: -0.3,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.shadow.withValues(alpha: 0.04),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.shadow.withValues(alpha: 0.04),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : AppColors.gray200,
+                    width: 1,
                   ),
-                ],
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : AppColors.gray200,
-                  width: 1,
                 ),
-              ),
-              child: Column(
-                children: [
-                  _DetailRow(
-                    icon: Icons.admin_panel_settings_rounded,
-                    label: 'Approved By',
-                    value: 'Admin Dima',
-                  ),
-                  _Divider(isDark: isDark),
-                  _DetailRow(
-                    icon: Icons.access_time_filled_rounded,
-                    label: 'Approval Date',
-                    value: 'April 13, 2026, 10:00 AM',
-                  ),
-                  _Divider(isDark: isDark),
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.tealPrimary.withValues(alpha: isDark ? 0.15 : 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.tealPrimary.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.info_outline_rounded,
-                            size: 20,
-                            color: isDark ? AppColors.tealLight : AppColors.tealPrimary,
+                child: Column(
+                  children: [
+                    _DetailRow(
+                      icon: Icons.admin_panel_settings_rounded,
+                      label: 'Approved By',
+                      value: _getApproverName(),
+                    ),
+                    _Divider(isDark: isDark),
+                    _DetailRow(
+                      icon: Icons.access_time_filled_rounded,
+                      label: 'Approval Date',
+                      value: _getApprovalDate(),
+                    ),
+                    _Divider(isDark: isDark),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.tealPrimary.withValues(
+                            alpha: isDark ? 0.15 : 0.08,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Request has been approved. Kindly proceed to the IT Office for device release and memorandum signing.',
-                              style: TextStyle(
-                                fontSize: 13,
-                                height: 1.4,
-                                fontWeight: FontWeight.w500,
-                                color: Theme.of(context).colorScheme.onSurface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.tealPrimary.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              size: 20,
+                              color: isDark
+                                  ? AppColors.tealLight
+                                  : AppColors.tealPrimary,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Request has been approved. Kindly proceed to the IT Office for device release and memorandum signing.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  height: 1.4,
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ], // end AssetDetailViewMode.assignment block
           ],
         ),
       ),

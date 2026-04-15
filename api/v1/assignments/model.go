@@ -9,6 +9,7 @@ type AssetAssignment struct {
 	IssuedByUserID       *string    `json:"issuedByUserId,omitempty" gorm:"column:issuedByUserId;type:uuid"`
 	IssuedByNameSnapshot string     `json:"issuedByNameSnapshot" gorm:"column:issuedByNameSnapshot;type:text"`
 	AssignedDate         time.Time  `json:"assignedDate" gorm:"column:assignedDate;autoCreateTime"`
+	ConfirmedByUserID    *string    `json:"confirmedByUserId,omitempty" gorm:"column:confirmedByUserId;type:uuid"`
 	ReturnedDate         *time.Time `json:"returnedDate" gorm:"column:returnedDate;type:timestamp;default:null"`
 	ConfirmedAt          *time.Time `json:"confirmedAt,omitempty" gorm:"column:confirmedAt;type:timestamp;default:null"`
 	RejectedAt           *time.Time `json:"rejectedAt,omitempty" gorm:"column:rejectedAt;type:timestamp;default:null"`
@@ -46,6 +47,7 @@ type AssignmentResponse struct {
 	Notes            string     `json:"notes"`
 	AssignedAt       time.Time  `json:"assignedAt"`
 	ConfirmedAt      *time.Time `json:"confirmedAt,omitempty"`
+	ConfirmedByName  string     `json:"confirmedByName,omitempty"`
 	ReturnedAt       *time.Time `json:"returnedAt,omitempty"`
 	RejectedAt       *time.Time `json:"rejectedAt,omitempty"`
 	RejectedByUserID *string    `json:"rejectedByUserId,omitempty"`
