@@ -56,6 +56,22 @@ adb install build/app/outputs/flutter-apk/app-release.apk
 
 ---
 
+## GitHub Release Distribution
+
+After producing a signed APK, publish it to a GitHub Release so staff invitation emails can link to it.
+
+1. Build the release APK from the `mobile/` directory.
+2. Create or update a GitHub Release for the version you want staff to install.
+3. Upload the APK asset to that release.
+4. Copy either:
+   - the direct APK asset URL, or
+   - the public GitHub Release page URL
+5. Set the web app environment variable `STAFF_MOBILE_DOWNLOAD_URL` to that public URL.
+
+The invitation email route will include this download link only for invited users whose role is `Staff`.
+
+---
+
 ## Notes
 
 - Use `API_BASE_URL=https://mira-api-jly2.onrender.com` for production builds

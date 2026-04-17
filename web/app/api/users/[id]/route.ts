@@ -33,7 +33,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json(err, { status: response.status });
     }
 
-    // Go backend returns no body on success usually, but let's handle it
+    if (response.status === 204) {
+      return new Response(null, { status: 204 });
+    }
+
     const text = await response.text();
     const data = text ? JSON.parse(text) : { message: 'Deleted successfully' };
 
@@ -46,6 +49,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     );
   }
 }
+
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authHeader = req.headers.get('authorization');
   const { id } = await params;
