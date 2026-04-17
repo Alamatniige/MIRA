@@ -64,14 +64,27 @@ export function useUsers() {
           method: 'DELETE',
           headers: getHeaders(),
         });
+
         if (!response.ok) {
           let msg = 'Failed to delete user';
-          try {
-            const body = await response.json();
-            msg = body.message || body.error || msg;
-          } catch {}
+
+          const contentType = response.headers.get('Content-Type');
+          if (contentType && contentType.includes('application/json')) {
+            try {
+              const body = await response.json();
+              msg = body.message || body.error || msg;
+            } catch {}
+          }
+
           throw new Error(msg);
         }
+
+        if (response.status !== 204) {
+          try {
+            await response.json();
+          } catch {}
+        }
+
         await fetchUsers();
       } catch (err) {
         throw err;
