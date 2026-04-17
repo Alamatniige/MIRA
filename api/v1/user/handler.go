@@ -83,13 +83,21 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		PhoneNumber: req.PhoneNumber,
 	}
 
-	// Trigger custom email invite via Next.js API asynchronously (pass plaintext password)
-	go func(u User, plainPw string) {
-		roleName := "Staff" // Default fallback
-		if u.RoleID == "1" {
-			roleName = "Admin"
+	inviteRoleName := "Staff"
+	var role Role
+	if err := db.DB.Select(`"roleName"`).Where("id = ?", newUser.RoleID).First(&role).Error; err != nil {
+		if err != gorm.ErrRecordNotFound {
+			log.Printf("failed to resolve invite role name for role ID %s: %v", newUser.RoleID, err)
 		}
+		if newUser.RoleID == "1" {
+			inviteRoleName = "Admin"
+		}
+	} else if strings.TrimSpace(role.RoleName) != "" {
+		inviteRoleName = role.RoleName
+	}
 
+	// Trigger custom email invite via Next.js API asynchronously (pass plaintext password)
+	go func(u User, roleName string, plainPw string) {
 		payload := map[string]interface{}{
 			"email":        u.Email,
 			"name":         u.FullName,
@@ -124,7 +132,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		} else {
 			fmt.Printf("Successfully triggered email invite via Next.js api\n")
 		}
-	}(newUser, tempPassword)
+	}(newUser, inviteRoleName, tempPassword)
 
 	if result := db.DB.Create(&newUser); result.Error != nil {
 		http.Error(w, "Error adding user to local DB: "+result.Error.Error(), http.StatusInternalServerError)

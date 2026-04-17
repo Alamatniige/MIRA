@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     // Send the email using SendGrid
     const msg = {
       to: email,
-      from: 'sapioruiz27@gmail.com', // Change to your verified sender email in Sendgrid
+      from: 'sapioruiz27@gmail.com',
       subject: 'You have been invited to MIRA',
       html: emailHtml,
     };
@@ -47,6 +47,7 @@ export async function POST(req: Request) {
     const response = await sgMail.send(msg);
 
     return NextResponse.json({ success: true, message: 'Email sent' });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Error sending SendGrid invite email:', error);
 

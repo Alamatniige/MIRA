@@ -22,7 +22,7 @@ type Notification struct {
 	ID          string           `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	Type        NotificationType `json:"type" gorm:"column:type;not null"`
 	RecipientID string           `json:"recipient_id" gorm:"column:recipient_id;type:uuid;not null;index"`
-	ActorID     string           `json:"actor_id" gorm:"column:actor_id;type:uuid;not null"`
+	ActorID     *string          `json:"actor_id" gorm:"column:actor_id;type:uuid"`
 	AssetID     string           `json:"asset_id" gorm:"column:asset_id;type:uuid"`
 	Title       string           `json:"title" gorm:"column:title;not null"`
 	Message     string           `json:"message" gorm:"column:message;not null"`

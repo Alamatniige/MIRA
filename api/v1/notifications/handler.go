@@ -59,9 +59,14 @@ func deliver(recipientID string, data []byte) {
 
 // Emit creates a notification record in the database and broadcasts it to the specific recipient.
 func Emit(recipientID, actorID, assetID string, notifType NotificationType, title, message string) {
+	var actorIDPtr *string
+	if actorID != "" {
+		actorIDPtr = &actorID
+	}
+
 	n := Notification{
 		RecipientID: recipientID,
-		ActorID:     actorID,
+		ActorID:     actorIDPtr,
 		AssetID:     assetID,
 		Type:        notifType,
 		Title:       title,
