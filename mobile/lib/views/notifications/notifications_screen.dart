@@ -4,6 +4,7 @@ import '../../models/notification.dart';
 import '../../services/notification_service.dart';
 import '../../services/assets_service.dart';
 import '../assets/asset_detail_screen.dart';
+import '../history/reported_issue_detail_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -184,6 +185,40 @@ class _NotificationScreenState extends State<NotificationScreen> {
         Navigator.pop(context); // Dismiss loading
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to load asset details.')),
+        );
+      }
+    } else if (notif.type == 'return_requested' && notif.assetId != null) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(color: AppColors.tealPrimary),
+        ),
+      );
+
+      try {
+        final reports = await AssetsService().getReportedIssues();
+        if (!mounted) return;
+        Navigator.pop(context); // Dismiss loading
+        
+        // Find the matching report for this asset
+        final targetReport = reports.firstWhere(
+          (r) => r.assetId == notif.assetId && (r.status == 'return_requested' || r.status == 'in_progress'),
+          orElse: () => throw Exception('Report not found'),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ReportedIssueDetailScreen(issue: targetReport),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.pop(context); // Dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load report details.')),
         );
       }
     }

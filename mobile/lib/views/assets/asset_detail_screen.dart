@@ -41,6 +41,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
   final _service = AssetsService();
   bool _isRequesting = false;
   final bool _isReporting = false;
+  bool _isResolvingApproval = false;
 
   // Mutable copy so it can be refreshed after actions
   AssetResponseDto? _liveAsset;
@@ -66,6 +67,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
 
     // Fetch approval details in assignment context
     if (widget.viewMode == AssetDetailViewMode.assignment) {
+      _isResolvingApproval = true;
       _resolveApprovalDetails();
     }
 
@@ -108,7 +110,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
 
   String _getApprovalDate() {
     if (_approvalDateTime == null) {
-      return 'April 13, 2026, 10:00 AM';
+      return 'Not Available';
     }
     try {
       final months = [
@@ -143,7 +145,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     if (_approverName?.isNotEmpty == true) {
       return _approverName!;
     }
-    return 'Admin';
+    return 'Not Available';
   }
 
   String _buildAssignedToLabel() {
@@ -269,6 +271,12 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
       }
     } catch (_) {
       // Silently fail - approval details are nice-to-have, not critical
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResolvingApproval = false;
+        });
+      }
     }
   }
 
@@ -792,7 +800,8 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
             ),
 
             // Approval Details section – only shown in assignment context
-            if (widget.viewMode == AssetDetailViewMode.assignment) ...[
+            if (widget.viewMode == AssetDetailViewMode.assignment &&
+                _liveAsset?.assignmentStatus?.toLowerCase() != 'pending') ...[
               const SizedBox(height: 36),
               Align(
                 key: _approvalKey,
@@ -808,7 +817,25 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Container(
+              if (_isResolvingApproval || _liveAsset == null)
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : AppColors.gray200,
+                      width: 1,
+                    ),
+                  ),
+                  child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              else
+                Container(
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),

@@ -10,6 +10,7 @@ type IssueReport struct {
 	Status      string    `json:"status" gorm:"not null"`
 	ReportAt    time.Time `json:"reportAt" gorm:"column:reportAt;autoCreateTime"`
 	Image       string    `json:"image" gorm:"column:image;type:text"`
+	AdminNote   string    `json:"adminNote" gorm:"column:adminNote;type:text"`
 }
 
 func (IssueReport) TableName() string {
@@ -22,4 +23,5 @@ type CreateIssueRequest struct {
 	Description string `json:"description" gorm:"not null"`
 	Status      string `json:"status" gorm:"not null"`
 	Image       string `json:"image" gorm:"column:image;type:text"`
+	AdminNote   string `json:"adminNote" gorm:"column:adminNote;type:text"`
 }

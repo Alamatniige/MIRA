@@ -156,14 +156,14 @@ export function useUpdateReportStatus() {
     };
   }, []);
 
-  const updateStatus = async (reportId: string, status: string) => {
+  const updateStatus = async (reportId: string, status: string, adminNote?: string) => {
     setIsUpdating(true);
     setUpdateError(null);
     try {
       const res = await fetch(`/api/reports/${reportId}`, {
         method: 'PUT',
         headers: getHeaders(),
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, adminNote }),
       });
 
       if (!res.ok) {

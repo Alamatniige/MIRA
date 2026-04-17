@@ -10,6 +10,7 @@ class IssueReportDto {
   final String reportAt;
 
   final String? image;
+  final String? adminNote;
 
   IssueReportDto({
     required this.id,
@@ -22,6 +23,7 @@ class IssueReportDto {
     required this.status,
     required this.reportAt,
     this.image,
+    this.adminNote,
   });
 
   factory IssueReportDto.fromJson(Map<String, dynamic> json) {
@@ -36,6 +38,7 @@ class IssueReportDto {
       status: json['status']?.toString() ?? 'open',
       reportAt: json['reportAt']?.toString() ?? DateTime.now().toIso8601String(),
       image: json['image']?.toString(),
+      adminNote: json['adminNote']?.toString(),
     );
   }
 }

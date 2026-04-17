@@ -2,14 +2,50 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../dto/issue_report_dto.dart';
 
+import '../../services/assets_service.dart';
+
 /// Reported Issue Detail - Displaying full details of a reported asset issue
-class ReportedIssueDetailScreen extends StatelessWidget {
+class ReportedIssueDetailScreen extends StatefulWidget {
   final IssueReportDto issue;
 
   const ReportedIssueDetailScreen({super.key, required this.issue});
 
   @override
+  State<ReportedIssueDetailScreen> createState() => _ReportedIssueDetailScreenState();
+}
+
+class _ReportedIssueDetailScreenState extends State<ReportedIssueDetailScreen> {
+  bool _isReturning = false;
+
+  Future<void> _handleReturnAsset() async {
+    setState(() {
+      _isReturning = true;
+    });
+
+    try {
+      await AssetsService().returnAsset(widget.issue.assetId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Asset successfully returned to IT Admin.')),
+      );
+      Navigator.of(context).pop(); // Go back after returning
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to return asset: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isReturning = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final issue = widget.issue;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dt = DateTime.tryParse(issue.reportAt) ?? DateTime.now();
     final formattedDate =
@@ -91,6 +127,53 @@ class ReportedIssueDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
+            if (issue.adminNote != null && issue.adminNote!.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.statusReported.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.statusReported.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.admin_panel_settings_rounded,
+                          size: 18,
+                          color: AppColors.statusReported,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Note from IT Admin',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.statusReported,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      issue.adminNote!,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 36),
 
             // Issue Description Section
@@ -284,6 +367,41 @@ class ReportedIssueDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
+            if (issue.status == 'return_requested') ...[
+              const SizedBox(height: 48),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _isReturning ? null : _handleReturnAsset,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.statusReported,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: _isReturning
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'RETURN ASSET',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -43,8 +43,9 @@ type Report = {
   user: string;
   date: string;
   description: string;
-  status: 'open' | 'in_progress' | 'resolved';
+  status: 'open' | 'in_progress' | 'return_requested' | 'resolved';
   images?: string[];
+  adminNote?: string;
   initials?: string;
 };
 
@@ -92,6 +93,8 @@ export function ReportAnalytics() {
   const { updateStatus, isUpdating: statusUpdating } = useUpdateReportStatus();
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [adminNote, setAdminNote] = useState('');
+  const [showNoteInput, setShowNoteInput] = useState(false);
 
   // Map API IssueReport → local Report shape
   const reports: Report[] = rawReports.map((r) => ({
@@ -103,6 +106,7 @@ export function ReportAnalytics() {
     description: r.description,
     status: r.status.toLowerCase() as Report['status'],
     images: r.image ? [r.image] : [],
+    adminNote: (r as any).adminNote,
     initials: r.userName
       ? r.userName
           .split(' ')
@@ -112,21 +116,30 @@ export function ReportAnalytics() {
       : '?',
   }));
 
-  const handleUpdateStatus = async () => {
+  const handleUpdateStatus = async (specificStatus?: Report['status']) => {
     if (!selectedReport) return;
 
-    let nextStatus: Report['status'] = 'open';
-    if (selectedReport.status === 'open') nextStatus = 'in_progress';
-    else if (selectedReport.status === 'in_progress') nextStatus = 'resolved';
-    else return; // already resolved
+    let nextStatus: Report['status'] = specificStatus || 'open';
+    if (!specificStatus) {
+      if (selectedReport.status === 'open') nextStatus = 'in_progress';
+      else if (selectedReport.status === 'in_progress' || selectedReport.status === 'return_requested') nextStatus = 'resolved';
+      else return; // already resolved
+    }
 
     try {
-      await updateStatus(selectedReport.id, nextStatus);
+      await updateStatus(selectedReport.id, nextStatus, nextStatus === 'return_requested' ? adminNote : undefined);
       const successMsg =
-        nextStatus === 'in_progress' ? 'Acknowledge: Under Maintenance' : 'Resolved: Good';
+        nextStatus === 'in_progress'
+          ? 'Acknowledge: Under Maintenance'
+          : nextStatus === 'return_requested'
+            ? 'Return Requested'
+            : 'Resolved: Good';
       toast.success(`Case #${selectedReport.id}: ${successMsg}`);
+      
+      setShowNoteInput(false);
+      setAdminNote('');
       refetch();
-      setSelectedReport((prev) => (prev ? { ...prev, status: nextStatus } : null));
+      setSelectedReport((prev) => (prev ? { ...prev, status: nextStatus, adminNote: nextStatus === 'return_requested' ? adminNote : prev.adminNote } : null));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update status');
     }
@@ -359,7 +372,7 @@ export function ReportAnalytics() {
                   variant={
                     selectedReport.status === 'open'
                       ? 'danger'
-                      : selectedReport.status === 'in_progress'
+                      : (selectedReport.status === 'in_progress' || selectedReport.status === 'return_requested')
                         ? 'warning'
                         : 'success'
                   }
@@ -462,25 +475,76 @@ export function ReportAnalytics() {
                   </div>
 
                   <div className="pt-6 border-t border-slate-200 dark:border-teal-800/15">
-                    <Button
-                      className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-teal-600 dark:hover:bg-teal-500"
-                      onClick={handleUpdateStatus}
-                      disabled={statusUpdating || selectedReport.status === 'resolved'}
-                    >
-                      {statusUpdating
-                        ? 'Updating...'
-                        : selectedReport.status === 'open'
-                          ? 'Acknowledge Case'
-                          : selectedReport.status === 'in_progress'
-                            ? 'Resolve Case'
-                            : 'Case Resolved'}
-                    </Button>
+                    {showNoteInput ? (
+                      <div className="space-y-3 mb-4 animate-in fade-in slide-in-from-top-2">
+                        <textarea
+                          placeholder="Add note for the user (e.g. 'Please surrender this device to IT for repairs')"
+                          className="w-full h-20 min-h-[80px] rounded-lg border border-slate-200 bg-white/50 p-3 text-xs outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-white/10 dark:bg-black/20 dark:text-slate-200"
+                          value={adminNote}
+                          onChange={(e) => setAdminNote(e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            className="flex-1 text-xs"
+                            onClick={() => setShowNoteInput(false)}
+                            disabled={statusUpdating}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            className="flex-1 bg-amber-600 text-white hover:bg-amber-700 text-xs"
+                            onClick={() => handleUpdateStatus('return_requested')}
+                            disabled={statusUpdating}
+                          >
+                            {statusUpdating ? 'Sending...' : 'Confirm Request'}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {selectedReport.status === 'in_progress' ? (
+                          <div className="flex gap-2">
+                            <Button
+                              className="flex-1 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-500 dark:hover:bg-amber-900/50"
+                              onClick={() => setShowNoteInput(true)}
+                              disabled={statusUpdating}
+                            >
+                              Request Return
+                            </Button>
+                            <Button
+                              className="flex-1 bg-slate-900 text-white hover:bg-slate-800 dark:bg-teal-600 dark:hover:bg-teal-500"
+                              onClick={() => handleUpdateStatus('resolved')}
+                              disabled={statusUpdating}
+                            >
+                              {statusUpdating ? 'Updating...' : 'Resolve Case'}
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-teal-600 dark:hover:bg-teal-500"
+                            onClick={() => handleUpdateStatus()}
+                            disabled={statusUpdating || selectedReport.status === 'resolved'}
+                          >
+                            {statusUpdating
+                              ? 'Updating...'
+                              : selectedReport.status === 'open'
+                                ? 'Acknowledge Case'
+                                : selectedReport.status === 'return_requested'
+                                  ? 'Resolve Case'
+                                  : 'Case Resolved'}
+                          </Button>
+                        )}
+                      </div>
+                    )}
                     <p className="mt-3 text-[10px] text-center text-slate-400 px-4 leading-tight">
                       {selectedReport.status === 'resolved'
                         ? 'The asset has been returned to Good condition.'
-                        : selectedReport.status === 'in_progress'
-                          ? 'Asset is currently Under Maintenance.'
-                          : 'Asset is currently Under Review.'}
+                        : selectedReport.status === 'return_requested'
+                          ? `Awaiting asset return. Note: ${selectedReport.adminNote || 'None'}`
+                          : selectedReport.status === 'in_progress'
+                            ? 'Asset is currently Under Maintenance.'
+                            : 'Asset is currently Under Review.'}
                     </p>
                   </div>
                 </div>

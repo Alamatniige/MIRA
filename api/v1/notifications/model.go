@@ -16,6 +16,7 @@ const (
 	TypeAssetStatusChanged NotificationType = "asset_status_changed"
 	TypeIssueAcknowledged  NotificationType = "issue_acknowledged"
 	TypeIssueResolved      NotificationType = "issue_resolved"
+	TypeReturnRequested    NotificationType = "return_requested"
 )
 
 type Notification struct {

@@ -194,6 +194,33 @@ func UpdateIssue(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
+	} else if strings.ToLower(req.Status) == "return_requested" {
+		var a assetv1.Asset
+		assetNameForNotif := issue.AssetID
+		if err := db.DB.First(&a, "id = ?", issue.AssetID).Error; err == nil {
+			assetNameForNotif = a.AssetName
+		}
+		go notifications.Emit(
+			issue.ReportedBy,
+			actorID,
+			issue.AssetID,
+			notifications.TypeReturnRequested,
+			"Return Requested",
+			fmt.Sprintf("Please return your assigned asset %s for maintenance.", assetNameForNotif),
+		)
+		var admins []userv1.User
+		if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+			for _, admin := range admins {
+				go notifications.Emit(
+					admin.ID,
+					actorID,
+					issue.AssetID,
+					notifications.TypeReturnRequested,
+					"Return Requested",
+					fmt.Sprintf("%s requested return for asset %s.", actorName, assetNameForNotif),
+				)
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

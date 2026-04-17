@@ -10,6 +10,7 @@ type Report struct {
 	Description string    `json:"description" gorm:"not null"`
 	Status      string    `json:"status" gorm:"not null"`
 	ReportAt    time.Time `json:"reportAt" gorm:"column:reportAt"`
+	AdminNote   string    `json:"adminNote" gorm:"column:adminNote"`
 }
 
 func (Report) TableName() string {
@@ -29,6 +30,7 @@ type ReportDetail struct {
 	Status      string    `json:"status"`
 	ReportAt    time.Time `json:"reportAt"`
 	Image       string    `json:"image"`
+	AdminNote   string    `json:"adminNote"`
 }
 
 // Asset maps to the assets table.

@@ -45,7 +45,8 @@ func GetIssueAndMaintenanceReport(w http.ResponseWriter, r *http.Request) {
 			ir.description,
 			ir.status,
 			ir."reportAt",
-			ir.image
+			ir.image,
+			ir."adminNote"
 		FROM "issueReports" ir
 		LEFT JOIN assets a ON a.id = ir."assetId"
 		LEFT JOIN users  u ON u.id = ir."reportedBy"
