@@ -19,6 +19,7 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   List<AssetResponseDto> _assetDtos = [];
+  String _selectedCategory = 'All';
 
   @override
   void initState() {
@@ -83,6 +84,18 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final List<String> categories = ['All'];
+    final Set<String> uniqueCategories = {};
+    for (var dto in _assetDtos) {
+      uniqueCategories.add(dto.toAsset().category);
+    }
+    final sortedCategories = uniqueCategories.toList()..sort();
+    categories.addAll(sortedCategories);
+
+    final filteredAssets = _selectedCategory == 'All'
+        ? _assetDtos
+        : _assetDtos.where((dto) => dto.toAsset().category == _selectedCategory).toList();
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.gray50,
       appBar: AppBar(
@@ -142,20 +155,69 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
             )
           : _assetDtos.isEmpty
           ? const Center(child: Text('No assets available.'))
-          : RefreshIndicator(
-              onRefresh: _loadAssets,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: 56,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      final category = categories[index];
+                      final isSelected = _selectedCategory == category;
+                      
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(category),
+                          selected: isSelected,
+                          showCheckmark: false,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedCategory = selected ? category : 'All';
+                            });
+                          },
+                          selectedColor: AppColors.tealPrimary,
+                          backgroundColor: isDark ? AppColors.darkSurfaceVariant : Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: isSelected 
+                                  ? Colors.transparent 
+                                  : (isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.gray100),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-                itemCount: _assetDtos.length,
-                itemBuilder: (context, index) {
-                  final dto = _assetDtos[index];
-                  final asset = dto.toAsset();
-                  final accent = _statusAccentColor(asset.status);
+                Expanded(
+                  child: filteredAssets.isEmpty
+                      ? const Center(child: Text('No assets match the selected category.'))
+                      : RefreshIndicator(
+                          onRefresh: _loadAssets,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.only(
+                              left: 24,
+                              right: 24,
+                              top: 8,
+                              bottom: 16,
+                            ),
+                            itemCount: filteredAssets.length,
+                            itemBuilder: (context, index) {
+                              final dto = filteredAssets[index];
+                              final asset = dto.toAsset();
+                              final accent = _statusAccentColor(asset.status);
 
-                  return Padding(
+                              return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Material(
                       color: Colors.transparent,
@@ -275,8 +337,11 @@ class _AllAssetsScreenState extends State<AllAssetsScreen> {
                       ),
                     ),
                   );
-                },
-              ),
+                            },
+                          ),
+                        ),
+                ),
+              ],
             ),
     );
   }
