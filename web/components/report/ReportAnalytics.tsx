@@ -109,10 +109,10 @@ export function ReportAnalytics() {
     adminNote: (r as any).adminNote,
     initials: r.userName
       ? r.userName
-          .split(' ')
-          .filter(Boolean)
-          .map((n) => n[0].toUpperCase())
-          .join('')
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0].toUpperCase())
+        .join('')
       : '?',
   }));
 
@@ -135,7 +135,7 @@ export function ReportAnalytics() {
             ? 'Return Requested'
             : 'Resolved: Good';
       toast.success(`Case #${selectedReport.id}: ${successMsg}`);
-      
+
       setShowNoteInput(false);
       setAdminNote('');
       refetch();
@@ -143,6 +143,40 @@ export function ReportAnalytics() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update status');
     }
+  };
+
+  const handleExport = () => {
+    if (!reports || reports.length === 0) {
+      toast.error('No reports to export');
+      return;
+    }
+
+    const headers = ['Report ID', 'Asset Tag', 'Asset Name', 'Reported By', 'Date Issued', 'Description', 'Status', 'Admin Note'];
+    const csvContent = [
+      headers.join(','),
+      ...reports.map((r) =>
+        [
+          `"${(r.id || '').replace(/"/g, '""')}"`,
+          `"${(r.assetTag || '').replace(/"/g, '""')}"`,
+          `"${(r.name || '').replace(/"/g, '""')}"`,
+          `"${(r.user || '').replace(/"/g, '""')}"`,
+          `"${r.date || ''}"`,
+          `"${(r.description || '').replace(/"/g, '""')}"`,
+          `"${r.status || ''}"`,
+          `"${(r.adminNote || '').replace(/"/g, '""')}"`,
+        ].join(',')
+      ),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Issue_Reports_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Report data exported successfully');
   };
 
   if (reportsLoading) {
@@ -178,6 +212,7 @@ export function ReportAnalytics() {
           <Button
             variant="outline"
             size="sm"
+            onClick={handleExport}
             className="h-9 rounded-full border-slate-200/60 bg-white/50 px-5 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur-md transition-all hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
           >
             <Download className="mr-2 h-3.5 w-3.5" />

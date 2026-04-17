@@ -331,11 +331,10 @@ function FilterDropdown({
     <div className={`relative ${className}`} ref={containerRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex h-8 items-center gap-2 rounded-lg border px-3 text-[11px] font-medium transition-all hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 ${
-          value
+        className={`flex h-8 items-center gap-2 rounded-lg border px-3 text-[11px] font-medium transition-all hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 ${value
             ? 'border-primary bg-primary/5 text-primary dark:border-teal-400 dark:bg-teal-400/10 dark:text-teal-400 shadow-sm shadow-primary/20'
             : 'border-slate-200 bg-white text-slate-600 dark:border-teal-800/30 dark:bg-[#09090b] dark:text-slate-400'
-        }`}
+          }`}
       >
         <Icon className={`h-3.5 w-3.5 ${value ? 'animate-in zoom-in duration-300' : ''}`} />
         <span>
@@ -360,11 +359,10 @@ function FilterDropdown({
                 onChange('');
                 setIsOpen(false);
               }}
-              className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
-                !value
+              className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${!value
                   ? 'bg-primary/5 font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-400'
                   : 'text-slate-600 dark:text-slate-300'
-              }`}
+                }`}
             >
               All {label}s
             </button>
@@ -379,11 +377,10 @@ function FilterDropdown({
                   }
                   setIsOpen(false);
                 }}
-                className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
-                  value === opt
+                className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${value === opt
                     ? 'bg-primary/5 font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-400'
                     : 'text-slate-600 dark:text-slate-300'
-                }`}
+                  }`}
               >
                 {opt}
               </button>
@@ -692,10 +689,10 @@ export function AssetRegistry() {
         setSelectedEditAsset((p) =>
           p
             ? {
-                ...p,
-                roomRel: { id: 0, name, createdAt: '' },
-                floorRel: { id: 0, name: floorName ?? '', createdAt: '' },
-              }
+              ...p,
+              roomRel: { id: 0, name, createdAt: '' },
+              floorRel: { id: 0, name: floorName ?? '', createdAt: '' },
+            }
             : p,
         );
         setLocationOpen(false);
@@ -897,23 +894,23 @@ export function AssetRegistry() {
                   categoryFilter ||
                   roomFilter ||
                   floorFilter) && (
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => {
-                      setSearch('');
-                      setAssignmentStatusFilter('');
-                      setConditionStatusFilter('');
-                      setCategoryFilter('');
-                      setRoomFilter('');
-                      setFloorFilter('');
-                    }}
-                    className="h-7 rounded-full bg-primary/5 px-3 text-[10px] font-bold text-primary hover:bg-primary/10 dark:bg-teal-400/10 dark:text-teal-400 dark:hover:bg-teal-400/20 transition-all active:scale-95"
-                  >
-                    <X className="mr-1 h-2.5 w-2.5" />
-                    Clear Filters
-                  </Button>
-                )}
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => {
+                        setSearch('');
+                        setAssignmentStatusFilter('');
+                        setConditionStatusFilter('');
+                        setCategoryFilter('');
+                        setRoomFilter('');
+                        setFloorFilter('');
+                      }}
+                      className="h-7 rounded-full bg-primary/5 px-3 text-[10px] font-bold text-primary hover:bg-primary/10 dark:bg-teal-400/10 dark:text-teal-400 dark:hover:bg-teal-400/20 transition-all active:scale-95"
+                    >
+                      <X className="mr-1 h-2.5 w-2.5" />
+                      Clear Filters
+                    </Button>
+                  )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {/* Search */}
@@ -1056,8 +1053,8 @@ export function AssetRegistry() {
                     const categoryName = asset.assetTypeRel?.name;
                     const found = categoryName
                       ? Object.entries(categoryMeta).find(
-                          ([k]) => k.toLowerCase() === categoryName.toLowerCase(),
-                        )
+                        ([k]) => k.toLowerCase() === categoryName.toLowerCase(),
+                      )
                       : undefined;
                     const cat = found ? found[1] : categoryMeta.Default;
                     const displayCategory = categoryName || 'Uncategorized';
@@ -1513,11 +1510,10 @@ export function AssetRegistry() {
             </div>
 
             <div
-              className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${
-                isDragging
+              className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${isDragging
                   ? 'border-primary bg-primary/5 dark:bg-teal-900/10'
                   : 'border-slate-200 dark:border-teal-800/30'
-              }`}
+                }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -1535,11 +1531,10 @@ export function AssetRegistry() {
                 /* Empty state */
                 <div className="flex flex-col items-center justify-center p-6 text-center">
                   <div
-                    className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${
-                      isDragging
+                    className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${isDragging
                         ? 'bg-primary/20 text-primary'
                         : 'bg-white dark:bg-slate-800 text-slate-400 shadow-sm'
-                    }`}
+                      }`}
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -2069,9 +2064,9 @@ export function AssetRegistry() {
                         setSelectedEditAsset((p) =>
                           p
                             ? {
-                                ...p,
-                                assetTypeRel: { id: 0, name: e.target.value, createdAt: '' },
-                              }
+                              ...p,
+                              assetTypeRel: { id: 0, name: e.target.value, createdAt: '' },
+                            }
                             : p,
                         );
                       }
@@ -2112,9 +2107,9 @@ export function AssetRegistry() {
                           setSelectedEditAsset((p) =>
                             p
                               ? {
-                                  ...p,
-                                  assetTypeRel: { id: 0, name: newType.trim(), createdAt: '' },
-                                }
+                                ...p,
+                                assetTypeRel: { id: 0, name: newType.trim(), createdAt: '' },
+                              }
                               : p,
                           );
                         }
@@ -2185,10 +2180,10 @@ export function AssetRegistry() {
                     setSelectedEditAsset((p) =>
                       p
                         ? {
-                            ...p,
-                            roomRel: { id: 0, name: roomName, createdAt: '' },
-                            floorRel: { id: 0, name: floorName, createdAt: '' },
-                          }
+                          ...p,
+                          roomRel: { id: 0, name: roomName, createdAt: '' },
+                          floorRel: { id: 0, name: floorName, createdAt: '' },
+                        }
                         : p,
                     )
                   }
@@ -2237,11 +2232,10 @@ export function AssetRegistry() {
               </div>
 
               <div
-                className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${
-                  isDragging
+                className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${isDragging
                     ? 'border-primary bg-primary/5 dark:bg-teal-900/10'
                     : 'border-slate-200 dark:border-teal-800/30'
-                }`}
+                  }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -2261,11 +2255,10 @@ export function AssetRegistry() {
                   /* Empty state */
                   <div className="flex flex-col items-center justify-center p-6 text-center">
                     <div
-                      className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${
-                        isDragging
+                      className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${isDragging
                           ? 'bg-primary/20 text-primary'
                           : 'bg-white dark:bg-slate-800 text-slate-400 shadow-sm'
-                      }`}
+                        }`}
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -2577,11 +2570,10 @@ export function AssetRegistry() {
                     key={idx}
                     variant="ghost"
                     onClick={() => setGalleryIndex(idx)}
-                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition-all p-0 ${
-                      idx === galleryIndex
+                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition-all p-0 ${idx === galleryIndex
                         ? 'border-primary scale-110'
                         : 'border-transparent opacity-60 hover:opacity-100'
-                    }`}
+                      }`}
                   >
                     <Image
                       src={url}
