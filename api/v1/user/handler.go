@@ -22,6 +22,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"gorm.io/gorm"
+
+	"mira-api/internal/activity"
 )
 
 const userWithAssetsCountSelect = "users.*, (SELECT COUNT(*) FROM \"assetsAssignment\" WHERE \"assetsAssignment\".\"userId\" = users.id AND \"assetsAssignment\".\"returnedDate\" IS NULL) as assetsCount"
@@ -139,6 +141,16 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	activity.RecordAuditLog(activity.AuditLog{
+		ActorID:     actorID,
+		Action:      "USER_CREATED",
+		TargetID:    newUser.ID,
+		TargetType:  "user",
+		Description: fmt.Sprintf("Created user %s (%s)", newUser.FullName, newUser.Email),
+		IPAddress:   r.RemoteAddr,
+	})
+
 	w.WriteHeader(http.StatusCreated)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -214,10 +226,20 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := db.DB.Delete(&user); result.Error != nil {
-		http.Error(w, "Error deleting user: "+result.Error.Error(), http.StatusInternalServerError)
+	if result := db.DB.Model(&user).Update("status", "inactive"); result.Error != nil {
+		http.Error(w, "Error deactivating user: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	activity.RecordAuditLog(activity.AuditLog{
+		ActorID:     actorID,
+		Action:      "USER_DEACTIVATED",
+		TargetID:    user.ID,
+		TargetType:  "user",
+		Description: fmt.Sprintf("Deactivated user %s (%s)", user.FullName, user.Email),
+		IPAddress:   r.RemoteAddr,
+	})
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -251,11 +273,43 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	delete(updateData, "id")
 	delete(updateData, "email")
 	delete(updateData, "role") // Roles should be updated via a different mechanism usually
+	delete(updateData, "roleVariant") // Frontend-only property
+	delete(updateData, "assetsCount") // Read-only derived property
+	delete(updateData, "createdAt")   // Read-only field
+	delete(updateData, "lastActive")  // Managed by backend activity tracker
 
-	if result := db.DB.Model(&user).Updates(updateData); result.Error != nil {
-		http.Error(w, "Error updating user: "+result.Error.Error(), http.StatusInternalServerError)
-		return
+	// Capture changes for descriptive logging
+	var changes []string
+	if val, ok := updateData["roleId"]; ok {
+		var roleName string
+		db.DB.Raw("SELECT \"roleName\" FROM roles WHERE id = ?", val).Scan(&roleName)
+		if roleName != "" {
+			changes = append(changes, fmt.Sprintf("role to '%s'", roleName))
+		} else {
+			changes = append(changes, fmt.Sprintf("role ID to %v", val))
+		}
 	}
+	if val, ok := updateData["status"]; ok {
+		changes = append(changes, fmt.Sprintf("status to '%v'", val))
+	}
+	if val, ok := updateData["fullName"]; ok {
+		changes = append(changes, fmt.Sprintf("name to '%v'", val))
+	}
+
+	description := fmt.Sprintf("Updated user %s (%s)", user.FullName, user.Email)
+	if len(changes) > 0 {
+		description = fmt.Sprintf("Updated user %s: changed %s", user.Email, strings.Join(changes, ", "))
+	}
+
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	activity.RecordAuditLog(activity.AuditLog{
+		ActorID:     actorID,
+		Action:      "USER_UPDATED",
+		TargetID:    user.ID,
+		TargetType:  "user",
+		Description: description,
+		IPAddress:   r.RemoteAddr,
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
@@ -469,6 +523,16 @@ func CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	activity.RecordAuditLog(activity.AuditLog{
+		ActorID:     actorID,
+		Action:      "ROLE_CREATED",
+		TargetID:    req.ID,
+		TargetType:  "role",
+		Description: fmt.Sprintf("Created role %s", req.RoleName),
+		IPAddress:   r.RemoteAddr,
+	})
+
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(req)
@@ -503,6 +567,16 @@ func UpdateRole(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error updating role: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	activity.RecordAuditLog(activity.AuditLog{
+		ActorID:     actorID,
+		Action:      "ROLE_UPDATED",
+		TargetID:    role.ID,
+		TargetType:  "role",
+		Description: fmt.Sprintf("Updated permissions/details for role '%s'", role.RoleName),
+		IPAddress:   r.RemoteAddr,
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(role)
@@ -539,6 +613,16 @@ func DeleteRole(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error deleting role: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	activity.RecordAuditLog(activity.AuditLog{
+		ActorID:     actorID,
+		Action:      "ROLE_DELETED",
+		TargetID:    role.ID,
+		TargetType:  "role",
+		Description: fmt.Sprintf("Deleted role %s", role.RoleName),
+		IPAddress:   r.RemoteAddr,
+	})
 
 	w.WriteHeader(http.StatusNoContent)
 }

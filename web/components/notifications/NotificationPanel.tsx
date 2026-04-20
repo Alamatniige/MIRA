@@ -68,19 +68,6 @@ export function NotificationPanel({
           ))
         )}
       </div>
-
-      {/* Footer */}
-      <div className="border-t border-slate-100 dark:border-slate-800 px-4 py-2.5">
-        <Button
-          variant="ghost"
-          asChild
-          className="w-full rounded-lg py-1.5 text-xs font-medium text-[#0F766E] dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 transition-colors"
-        >
-          <Link href="/activity-logs" onClick={onClose}>
-            View all activity
-          </Link>
-        </Button>
-      </div>
     </div>
   );
 }

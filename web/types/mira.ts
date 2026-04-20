@@ -174,3 +174,28 @@ export interface Notification {
   is_read: boolean;
   created_at: string;
 }
+
+export interface AuditLog {
+  id: string;
+  actorId: string;
+  actorName?: string;
+  action: string;
+  targetId?: string;
+  targetType?: string;
+  description: string;
+  metadata?: any;
+  ipAddress: string;
+  createdAt: string;
+}
+
+export interface AssetLog {
+  id: string;
+  assetId: string;
+  assetName?: string;
+  assetTag?: string;
+  actorId: string;
+  actorName?: string;
+  action: string;
+  description: string;
+  timestamp: string;
+}

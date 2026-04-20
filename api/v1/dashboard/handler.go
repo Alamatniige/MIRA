@@ -115,7 +115,7 @@ func GetDashboardActivity(w http.ResponseWriter, r *http.Request) {
 		FROM "assetsAssignment" aa
 		JOIN assets a ON a.id = aa."assetId"
 		JOIN users u ON u.id = aa."userId"
-		WHERE aa."confirmedAt" IS NOT NULL AND aa."returnedAt" IS NULL)
+		WHERE aa."confirmedAt" IS NOT NULL AND aa."returnedDate" IS NULL)
 		UNION ALL
 		(SELECT 
 			ash.id as id,

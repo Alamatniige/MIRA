@@ -29,10 +29,6 @@ import {
   ArrowUpRight,
   ChevronDown,
   X,
-  Filter,
-  Tag,
-  Box,
-  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRef } from 'react';
@@ -99,11 +95,10 @@ function FilterDropdown({
     <div className={`relative ${className}`} ref={containerRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex h-8 items-center gap-2 rounded-lg border px-3 text-[11px] font-medium transition-all hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 ${
-          value && value !== 'all'
+        className={`flex h-8 items-center gap-2 rounded-lg border px-3 text-[11px] font-medium transition-all hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 ${value && value !== 'all'
             ? 'border-primary bg-primary/5 text-primary dark:border-teal-400 dark:bg-teal-400/10 dark:text-teal-400 shadow-sm shadow-primary/20'
             : 'border-slate-200 bg-white text-slate-600 dark:border-white/10 dark:bg-[#09090b] dark:text-slate-400'
-        }`}
+          }`}
       >
         <Icon
           className={`h-3.5 w-3.5 ${value && value !== 'all' ? 'animate-in zoom-in duration-300' : ''}`}
@@ -130,11 +125,10 @@ function FilterDropdown({
                 onChange('all');
                 setIsOpen(false);
               }}
-              className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
-                value === 'all' || !value
+              className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${value === 'all' || !value
                   ? 'bg-primary/5 font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-400'
                   : 'text-slate-600 dark:text-slate-300'
-              }`}
+                }`}
             >
               All {label}s
             </button>
@@ -145,11 +139,10 @@ function FilterDropdown({
                   onChange(opt);
                   setIsOpen(false);
                 }}
-                className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
-                  value === opt
+                className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${value === opt
                     ? 'bg-primary/5 font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-400'
                     : 'text-slate-600 dark:text-slate-300'
-                }`}
+                  }`}
               >
                 {opt}
               </button>
@@ -222,6 +215,9 @@ export function UsersContent() {
     try {
       await updateUser(editUser.id, editFormData);
       setEditUser(null);
+      toast.success('User updated successfully', {
+        description: `${editFormData.fullName}'s profile has been updated.`,
+      });
     } catch (err) {
       toast.error('Failed to update user', {
         description: err instanceof Error ? err.message : 'Please check your inputs.',
@@ -238,8 +234,28 @@ export function UsersContent() {
       await removeUser(deleteUser.id);
       setDeleteUser(null);
       setViewUser(null);
+      toast.success('Successfully deactivated', {
+        description: `${deleteUser.fullName} has been set to inactive.`,
+      });
     } catch (err) {
-      toast.error('Failed to delete user', {
+      toast.error('Failed to deactivate user', {
+        description: err instanceof Error ? err.message : 'Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleActivateUser = async (user: DisplayUser) => {
+    setIsSubmitting(true);
+    try {
+      await updateUser(user.id, { status: 'active' });
+      setViewUser(null);
+      toast.success('Successfully activated', {
+        description: `${user.fullName} has been set back to active.`,
+      });
+    } catch (err) {
+      toast.error('Failed to activate user', {
         description: err instanceof Error ? err.message : 'Please try again.',
       });
     } finally {
@@ -269,6 +285,9 @@ export function UsersContent() {
     try {
       await addUser(addFormData);
       setAddOpen(false);
+      toast.success('User created', {
+        description: `${addFormData.fullName} has been added to the system.`,
+      });
       setAddFormData({
         fullName: '',
         email: '',
@@ -437,21 +456,21 @@ export function UsersContent() {
                 roleFilter !== 'all' ||
                 statusFilter !== 'all' ||
                 deptFilter !== 'all') && (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => {
-                    setSearch('');
-                    setRoleFilter('all');
-                    setStatusFilter('all');
-                    setDeptFilter('all');
-                  }}
-                  className="h-7 rounded-full bg-primary/5 px-3 text-[10px] font-bold text-primary hover:bg-primary/10 dark:bg-teal-400/10 dark:text-teal-400 dark:hover:bg-teal-400/20 transition-all active:scale-95"
-                >
-                  <X className="mr-1 h-2.5 w-2.5" />
-                  Clear Filters
-                </Button>
-              )}
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => {
+                      setSearch('');
+                      setRoleFilter('all');
+                      setStatusFilter('all');
+                      setDeptFilter('all');
+                    }}
+                    className="h-7 rounded-full bg-primary/5 px-3 text-[10px] font-bold text-primary hover:bg-primary/10 dark:bg-teal-400/10 dark:text-teal-400 dark:hover:bg-teal-400/20 transition-all active:scale-95"
+                  >
+                    <X className="mr-1 h-2.5 w-2.5" />
+                    Clear Filters
+                  </Button>
+                )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {/* Search */}
@@ -838,19 +857,31 @@ export function UsersContent() {
             </div>
 
             <div className="flex items-center justify-between mt-4">
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                disabled={isSubmitting}
-                className="h-8 rounded-full px-4 text-[11px] font-semibold bg-rose-600 hover:bg-rose-700 text-white"
-                onClick={() => {
-                  setDeleteUser(viewUser);
-                  setViewUser(null);
-                }}
-              >
-                Delete
-              </Button>
+              {viewUser.status === 'inactive' ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={isSubmitting}
+                  className="h-8 rounded-full px-4 text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => handleActivateUser(viewUser)}
+                >
+                  Activate
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={isSubmitting}
+                  className="h-8 rounded-full px-4 text-[11px] font-semibold bg-rose-600 hover:bg-rose-700 text-white"
+                  onClick={() => {
+                    setDeleteUser(viewUser);
+                    setViewUser(null);
+                  }}
+                >
+                  Deactivate
+                </Button>
+              )}
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
@@ -995,8 +1026,8 @@ export function UsersContent() {
         <Modal
           open={!!deleteUser}
           onClose={() => setDeleteUser(null)}
-          title="Delete User Account"
-          description={`Are you sure you want to delete ${deleteUser.fullName}? This action cannot be undone.`}
+          title="Deactivate User Account"
+          description={`Are you sure you want to deactivate ${deleteUser.fullName}? This will revoke their system access immediately, but preserve their historical asset assignment records.`}
         >
           <div className="flex items-center justify-end gap-2 mt-4">
             <Button
@@ -1017,7 +1048,7 @@ export function UsersContent() {
               className="h-8 rounded-full bg-rose-600 hover:bg-rose-700 px-4 text-[11px] font-semibold text-white"
               onClick={handleDeleteUser}
             >
-              {isSubmitting ? 'Deleting...' : 'Confirm Delete'}
+              {isSubmitting ? 'Deactivating...' : 'Confirm Deactivate'}
             </Button>
           </div>
         </Modal>

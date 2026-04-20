@@ -21,6 +21,7 @@ import (
 	report "mira-api/v1/reports"
 	"mira-api/v1/supabase"
 	"mira-api/v1/user"
+	"mira-api/internal/activity"
 
 	mux "github.com/gorilla/mux"
 )
@@ -54,6 +55,8 @@ func main() {
 		&issues.IssueReport{},
 		&qr.QrCode{},
 		&notifications.Notification{},
+		&activity.AuditLog{},
+		&activity.AssetLog{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)

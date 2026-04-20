@@ -17,6 +17,8 @@ import {
   Loader2,
   Activity,
   Info,
+  ShieldCheck,
+  History,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '../ui/button';
@@ -29,7 +31,8 @@ const NAV_ITEMS = [
   { label: 'Assignments', href: '/assignment', icon: ClipboardList },
   { label: 'Reports', href: '/report', icon: BarChart3 },
   { label: 'Users', href: '/users', icon: User },
-  { label: 'Activity Logs', href: '/activity-logs', icon: Activity },
+  { label: 'Asset Logs', href: '/asset-logs', icon: History },
+  { label: 'Audit Logs', href: '/audit-logs', icon: ShieldCheck },
 ];
 
 const SETTINGS_ITEM = { label: 'Settings', href: '/settings', icon: Settings };
@@ -99,7 +102,15 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-6 space-y-2">
         {NAV_ITEMS.map((item) => {
-          const isPermitted = user?.role?.name === 'Admin' || (user?.role?.permittedPages?.includes(item.label) ?? false);
+          let isPermitted = user?.role?.name === 'Admin' || (user?.role?.permittedPages?.includes(item.label) ?? false);
+          
+          // Strict overrides for the new logging system
+          if (item.label === 'Audit Logs') {
+            isPermitted = user?.role?.name === 'Admin';
+          } else if (item.label === 'Asset Logs') {
+            isPermitted = user?.role?.name !== 'Staff';
+          }
+
           if (!isPermitted) return null;
 
           const isActive =

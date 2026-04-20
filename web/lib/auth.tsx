@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               localStorage.setItem('mira_user', JSON.stringify(freshUser));
             }
           })
-          .catch(() => {}); // silent fail — stale data is fine
+          .catch(() => { }); // silent fail — stale data is fine
       } catch (e) {
         console.error('Failed to parse saved user', e);
         logout();
@@ -90,14 +90,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const permitted = userData.role?.permittedPages || [];
         if (!permitted.includes('Dashboard')) {
           const routeReverseMap: Record<string, string> = {
-             'Assets': '/asset',
-             'Assignments': '/assignment',
-             'Reports': '/report',
-             'Users': '/users'
+            'Assets': '/asset',
+            'Assignments': '/assignment',
+            'Reports': '/report',
+            'Users': '/users'
           };
           const firstPermitted = permitted.find(p => routeReverseMap[p]);
           if (firstPermitted) {
-             redirectPath = routeReverseMap[firstPermitted];
+            redirectPath = routeReverseMap[firstPermitted];
           }
         }
       }
@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (token) {
         // Call the backend logout API, we ignore errors since we're clearing local state anyway
-        await apiClient('/logout', { method: 'POST' }).catch(() => {});
+        await apiClient('/logout', { method: 'POST' }).catch(() => { });
       } else {
         // Just to give the UI a tiny moment to show the spinner if there's no backend request
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -167,25 +167,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         '/assignment': 'Assignments',
         '/report': 'Reports',
         '/users': 'Users',
+        '/audit-logs': 'Audit Logs',
+        '/asset-logs': 'Asset Logs',
       };
 
-      const activeModule = Object.keys(pathMap).find(p => pathname === p || pathname.startsWith(p + '/'));
-      
-      const getFallbackPath = () => {
+      const getFallbackPathInternal = () => {
         const routeReverseMap: Record<string, string> = {
           'Dashboard': '/dashboard',
           'Assets': '/asset',
           'Assignments': '/assignment',
           'Reports': '/report',
-          'Users': '/users'
+          'Users': '/users',
+          'Audit Logs': '/audit-logs',
+          'Asset Logs': '/asset-logs'
         };
         const firstPermitted = user.role?.permittedPages?.find(p => routeReverseMap[p]);
         return firstPermitted ? routeReverseMap[firstPermitted] : '/login'; // Or some ultimate fallback
       };
 
+      if (pathname.startsWith('/audit-logs')) {
+        if (user.role?.name === 'Admin') return;
+        router.push(getFallbackPathInternal());
+        return;
+      }
+
+      if (pathname.startsWith('/asset-logs')) {
+        if (user.role?.name !== 'Staff') return;
+        router.push(getFallbackPathInternal());
+        return;
+      }
+
+      const activeModule = Object.keys(pathMap).find(p => pathname === p || pathname.startsWith(p + '/'));
+
       // Also handle root pathname specifically if not admin and they hit '/'
       if (pathname === '/' && !user.role?.permittedPages?.includes('Dashboard')) {
-        router.push(getFallbackPath());
+        router.push(getFallbackPathInternal());
         return;
       }
 
@@ -193,13 +209,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const requiredPerm = pathMap[activeModule];
         const isPermitted = user.role?.permittedPages?.includes(requiredPerm);
         if (!isPermitted) {
-          router.push(getFallbackPath());
+          router.push(getFallbackPathInternal());
           return;
         }
       }
 
       if (pathname.startsWith('/settings')) {
-        router.push(getFallbackPath());
+        router.push(getFallbackPathInternal());
       }
     }
   }, [isLoading, token, pathname, isPublicRoute, router, user]);

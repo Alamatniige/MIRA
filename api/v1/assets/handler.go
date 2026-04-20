@@ -23,6 +23,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/skip2/go-qrcode"
 	"gorm.io/gorm"
+
+	"mira-api/internal/activity"
 )
 
 func normalizeStatusToken(value string) string {
@@ -289,6 +291,13 @@ func AddAsset(w http.ResponseWriter, r *http.Request) {
 			)
 		}
 	}
+
+	activity.RecordAssetLog(activity.AssetLog{
+		AssetID:     newAsset.ID,
+		ActorID:     actorID,
+		Action:      "REGISTERED",
+		Description: fmt.Sprintf("Asset registered: %s (%s)", newAsset.AssetName, newAsset.Tag),
+	})
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -577,6 +586,10 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 
 	removedImagePaths := removedAssetImageObjectPaths(asset.Image, req.Image)
 
+	oldStatus := asset.CurrentStatus
+	oldName := asset.AssetName
+	oldRoom := asset.Room
+
 	asset.AssetName = req.AssetName
 	asset.AssetType = req.AssetType
 	asset.SerialNumber = req.SerialNumber
@@ -593,6 +606,42 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 
 	if err := deleteAssetStorageObjects(removedImagePaths); err != nil {
 		log.Printf("asset %s updated but failed to clean removed images from storage: %v", asset.ID, err)
+	}
+
+	// Capture changes for descriptive logging
+	var changes []string
+	if oldName != asset.AssetName {
+		changes = append(changes, fmt.Sprintf("name from '%s' to '%s'", oldName, asset.AssetName))
+	}
+	if oldStatus != asset.CurrentStatus {
+		changes = append(changes, fmt.Sprintf("status from '%s' to '%s'", oldStatus, asset.CurrentStatus))
+	}
+
+	// Safe pointer comparison for Room
+	roomChanged := false
+	if (oldRoom == nil && asset.Room != nil) || (oldRoom != nil && asset.Room == nil) {
+		roomChanged = true
+	} else if oldRoom != nil && asset.Room != nil && *oldRoom != *asset.Room {
+		roomChanged = true
+	}
+
+	if roomChanged {
+		if asset.Room != nil {
+			var roomName string
+			db.DB.Raw("SELECT name FROM \"assetRoom\" WHERE id = ?", *asset.Room).Scan(&roomName)
+			if roomName != "" {
+				changes = append(changes, fmt.Sprintf("room to '%s'", roomName))
+			} else {
+				changes = append(changes, fmt.Sprintf("room ID to %d", *asset.Room))
+			}
+		} else {
+			changes = append(changes, "room removed")
+		}
+	}
+
+	description := fmt.Sprintf("Updated asset %s", asset.Tag)
+	if len(changes) > 0 {
+		description = fmt.Sprintf("Updated %s: %s", asset.Tag, strings.Join(changes, ", "))
 	}
 
 	// Notify all admins about the updated asset
@@ -617,6 +666,13 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 			)
 		}
 	}
+
+	activity.RecordAssetLog(activity.AssetLog{
+		AssetID:     asset.ID,
+		ActorID:     actorID,
+		Action:      "UPDATED",
+		Description: description,
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)
@@ -643,6 +699,7 @@ func UpdateAssetStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	oldStatus := asset.CurrentStatus
 	normalizedStatus := canonicalizeCurrentStatus(req.CurrentStatus)
 
 	statusUpdates := map[string]interface{}{
@@ -708,6 +765,13 @@ func UpdateAssetStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	activity.RecordAssetLog(activity.AssetLog{
+		AssetID:     asset.ID,
+		ActorID:     actorID,
+		Action:      "STATUS_CHANGED",
+		Description: fmt.Sprintf("Changed status of %s from '%s' to '%s'", asset.Tag, oldStatus, normalizedStatus),
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)
 }
@@ -772,6 +836,13 @@ func DeleteAsset(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error deleting asset: "+result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	activity.RecordAssetLog(activity.AssetLog{
+		AssetID:     asset.ID,
+		ActorID:     actorID,
+		Action:      "DELETED",
+		Description: fmt.Sprintf("Asset deleted: %s (%s)", asset.AssetName, asset.Tag),
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)

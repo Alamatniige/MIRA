@@ -55,6 +55,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if targetUser.Status == "inactive" {
+		http.Error(w, "Access denied. Your account is inactive.", http.StatusForbidden)
+		return
+	}
+
 	// 2. Verify password against stored bcrypt hash
 	if err := bcrypt.CompareHashAndPassword([]byte(targetUser.Password), []byte(req.Password)); err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
@@ -80,6 +85,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 		return
 	}
+
+	activity.RecordAuditLog(activity.AuditLog{
+		ActorID:     targetUser.ID,
+		Action:      "LOGIN",
+		TargetID:    targetUser.ID,
+		TargetType:  "user",
+		Description: fmt.Sprintf("User %s logged in", targetUser.Email),
+		IPAddress:   r.RemoteAddr,
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

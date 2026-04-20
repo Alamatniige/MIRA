@@ -2,6 +2,7 @@ package history
 
 import (
 	"encoding/json"
+	activity "mira-api/internal/activity"
 	"mira-api/internal/db"
 	"mira-api/middleware"
 	"net/http"
@@ -126,4 +127,91 @@ func GetMyHistoryReported(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(items)
+}
+
+// GetAuditLogs returns all system-wide administrative actions (Admin only).
+func GetAuditLogs(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Verify Admin role
+	var userRole string
+	err := db.DB.Raw(`
+		SELECT r."roleName" 
+		FROM users u 
+		JOIN roles r ON r.id = u."roleId" 
+		WHERE u.id = ?
+	`, userID).Scan(&userRole).Error
+	if err != nil || userRole != "Admin" {
+		http.Error(w, "Access denied. Admin role required.", http.StatusForbidden)
+		return
+	}
+
+	logs := make([]struct {
+		activity.AuditLog
+		ActorName string `json:"actorName"`
+	}, 0)
+
+	err = db.DB.Raw(`
+		SELECT al.*, u."fullName" as actor_name
+		FROM "auditLogs" al
+		LEFT JOIN users u ON u.id = al."actorId"::uuid
+		ORDER BY al."createdAt" DESC
+	`).Scan(&logs).Error
+
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(logs)
+}
+
+// GetAllAssetLogs returns all asset lifecycle events (Admin only).
+func GetAllAssetLogs(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Verify Administrative role (any role except Staff)
+	var userRole string
+	err := db.DB.Raw(`
+		SELECT r."roleName" 
+		FROM users u 
+		JOIN roles r ON r.id = u."roleId" 
+		WHERE u.id = ?
+	`, userID).Scan(&userRole).Error
+	if err != nil || userRole == "Staff" {
+		http.Error(w, "Access denied. Administrative role required.", http.StatusForbidden)
+		return
+	}
+
+	logs := make([]struct {
+		activity.AssetLog
+		ActorName string `json:"actorName"`
+		AssetName string `json:"assetName"`
+		AssetTag  string `json:"assetTag"`
+	}, 0)
+
+	err = db.DB.Raw(`
+		SELECT al.*, u."fullName" as actor_name, a."assetName", a.tag as asset_tag
+		FROM "assetLogs" al
+		LEFT JOIN users u ON u.id = al."actorId"::uuid
+		LEFT JOIN assets a ON a.id = al."assetId"::uuid
+		ORDER BY al."timestamp" DESC
+	`).Scan(&logs).Error
+
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(logs)
 }

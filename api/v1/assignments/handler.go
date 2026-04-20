@@ -16,6 +16,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
+
+	"mira-api/internal/activity"
 )
 
 func authenticatedUserIDFromContext(r *http.Request) (string, bool) {
@@ -144,6 +146,23 @@ func AssignAsset(w http.ResponseWriter, r *http.Request) {
 		"Asset Assigned",
 		fmt.Sprintf("%s assigned %s (%s).", issuer.FullName, asset.AssetName, asset.Tag),
 	)
+
+	var recipient userv1.User
+	if err := db.DB.Select(`"fullName"`).First(&recipient, "id = ?", req.UserID).Error; err == nil && strings.TrimSpace(recipient.FullName) != "" {
+		activity.RecordAssetLog(activity.AssetLog{
+			AssetID:     req.AssetID,
+			ActorID:     issuerID,
+			Action:      "ASSIGNED",
+			Description: fmt.Sprintf("Assigned '%s' (%s) to %s", asset.AssetName, asset.Tag, recipient.FullName),
+		})
+	} else {
+		activity.RecordAssetLog(activity.AssetLog{
+			AssetID:     req.AssetID,
+			ActorID:     issuerID,
+			Action:      "ASSIGNED",
+			Description: fmt.Sprintf("Assigned '%s' (%s) to user %s", asset.AssetName, asset.Tag, req.UserID),
+		})
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(assignment)
@@ -306,6 +325,13 @@ func ReturnAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	activity.RecordAssetLog(activity.AssetLog{
+		AssetID:     req.AssetID,
+		ActorID:     userID,
+		Action:      "RETURNED",
+		Description: fmt.Sprintf("Returned '%s' (%s)", asset.AssetName, asset.Tag),
+	})
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message":      "Asset returned successfully",
@@ -430,6 +456,13 @@ func RejectAssignment(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
+
+	activity.RecordAssetLog(activity.AssetLog{
+		AssetID:     assignment.AssetID,
+		ActorID:     rejectedByUserID,
+		Action:      "REJECTED",
+		Description: fmt.Sprintf("Assignment rejected. Reason: %s", reason),
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -796,6 +829,13 @@ func ConfirmAssignment(w http.ResponseWriter, r *http.Request) {
 	if err := db.DB.Model(&asset.Asset{}).Where("id = ?", assignment.AssetID).Update("assignmentStatus", "Unavailable").Error; err != nil {
 		log.Printf("assignment %s confirmed but failed to update asset assignmentStatus: %v", assignment.ID, err)
 	}
+
+	activity.RecordAssetLog(activity.AssetLog{
+		AssetID:     assignment.AssetID,
+		ActorID:     confirmedByUserID,
+		Action:      "CONFIRMED",
+		Description: "Assignment confirmed by admin",
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
