@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"mira-api/internal/activity"
+	"mira-api/internal/db"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -19,8 +20,9 @@ const UserIDKey contextKey = "userID"
 
 // JWTClaims mirrors the struct in v1/auth — kept here to avoid import cycles.
 type JWTClaims struct {
-	UserID string `json:"user_id"`
-	Email  string `json:"email"`
+	UserID    string `json:"user_id"`
+	Email     string `json:"email"`
+	SessionID string `json:"session_id"`
 	jwt.RegisteredClaims
 }
 
@@ -61,6 +63,24 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
 			return
 		}
+
+		// --- Single Session Enforcement Check ---
+		if claims.SessionID != "" {
+			var result struct {
+				CurrentSessionID *string `gorm:"column:currentSessionId"`
+			}
+			// Use .Table("users") to avoid dependency on user.User model
+			if err := db.DB.Table("users").Select("currentSessionId").Where("id = ?", claims.UserID).First(&result).Error; err != nil {
+				http.Error(w, "User not found or database error", http.StatusUnauthorized)
+				return
+			}
+
+			if result.CurrentSessionID == nil || *result.CurrentSessionID != claims.SessionID {
+				http.Error(w, "Session invalidated. You have been logged in on another device.", http.StatusUnauthorized)
+				return
+			}
+		}
+		// ----------------------------------------
 
 		if err := activity.TouchUserLastActive(claims.UserID, time.Now().UTC()); err != nil {
 			fmt.Printf("failed to update lastActive for user %s: %v\n", claims.UserID, err)

@@ -20,15 +20,16 @@ import (
 )
 
 // generateToken creates a signed JWT for the given user.
-func generateToken(u user.User) (string, error) {
+func generateToken(u user.User, sessionID string) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		secret = "change-me-in-production-at-least-32-chars"
 	}
 
 	claims := JWTClaims{
-		UserID: u.ID,
-		Email:  u.Email,
+		UserID:    u.ID,
+		Email:     u.Email,
+		SessionID: sessionID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
@@ -79,8 +80,16 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 	targetUser.LastActive = &now
 
-	// 3. Issue a self-signed JWT
-	tokenStr, err := generateToken(targetUser)
+	// 3. Generate a unique session ID and update the user record
+	sessionID := uuid.New().String()
+	if err := db.DB.Model(&targetUser).Update("currentSessionId", sessionID).Error; err != nil {
+		http.Error(w, "Failed to update session", http.StatusInternalServerError)
+		return
+	}
+	targetUser.CurrentSessionID = &sessionID
+
+	// 4. Issue a self-signed JWT
+	tokenStr, err := generateToken(targetUser, sessionID)
 	if err != nil {
 		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 		return
@@ -170,8 +179,16 @@ func SetupPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	targetUser.LastActive = &now
 
-	// 5. Generate a JWT token to log them in automatically (if needed by the frontend)
-	tokenStr, err := generateToken(targetUser)
+	// 5. Generate a unique session ID and update the user record
+	sessionID := uuid.New().String()
+	if err := db.DB.Model(&targetUser).Update("currentSessionId", sessionID).Error; err != nil {
+		http.Error(w, "Failed to update session during password setup", http.StatusInternalServerError)
+		return
+	}
+	targetUser.CurrentSessionID = &sessionID
+
+	// 6. Generate a JWT token to log them in automatically (if needed by the frontend)
+	tokenStr, err := generateToken(targetUser, sessionID)
 	if err != nil {
 		http.Error(w, "Password updated, but failed to generate login token", http.StatusInternalServerError)
 		return

@@ -18,8 +18,9 @@ type LoginResponse struct {
 
 // JWTClaims holds the payload embedded in every issued token.
 type JWTClaims struct {
-	UserID string `json:"user_id"`
-	Email  string `json:"email"`
+	UserID    string `json:"user_id"`
+	Email     string `json:"email"`
+	SessionID string `json:"session_id"`
 	jwt.RegisteredClaims
 }
 
