@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../services/toast_service.dart';
 import '../../dto/issue_report_dto.dart';
 
 import '../../services/assets_service.dart';
+import '../../services/toast_service.dart';
 
 /// Reported Issue Detail - Displaying full details of a reported asset issue
 class ReportedIssueDetailScreen extends StatefulWidget {
@@ -25,15 +27,11 @@ class _ReportedIssueDetailScreenState extends State<ReportedIssueDetailScreen> {
     try {
       await AssetsService().returnAsset(widget.issue.assetId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Asset successfully returned to IT Admin.')),
-      );
+      ToastService.showSuccess(context, 'Asset successfully returned to IT Admin.');
       Navigator.of(context).pop(); // Go back after returning
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to return asset: $e')),
-      );
+      ToastService.showError(context, 'Failed to return asset: $e');
     } finally {
       if (mounted) {
         setState(() {
