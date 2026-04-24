@@ -54,13 +54,16 @@ export function ProfileContent() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    const toastId = toast.loading('Saving changes...');
     try {
       await updateUser(formData.id, formData);
       setSaved(true);
       setIsEditing(false);
+      toast.success('Profile updated successfully', { id: toastId });
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       toast.error('Failed to save profile', {
+        id: toastId,
         description: error instanceof Error ? error.message : 'Please try again.',
       });
     } finally {
@@ -152,8 +155,10 @@ export function ProfileContent() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditing(false)}
-                className="px-4 py-2 text-sm font-medium border-border hover:bg-accent hover:text-accent-foreground transition-colors h-auto"
+                disabled={isSaving}
+                className="px-4 py-2 text-sm font-medium border-border hover:bg-accent hover:text-accent-foreground transition-colors h-auto flex items-center gap-2"
               >
+                {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Cancel
               </Button>
               <Button
@@ -163,8 +168,17 @@ export function ProfileContent() {
                 disabled={isSaving}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all shadow-sm shadow-primary/20 h-auto disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <Save className="w-4 h-4" />
-                {isSaving ? 'Saving...' : 'Save Changes'}
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                  </>
+                )}
               </Button>
             </div>
           ) : (
@@ -271,7 +285,7 @@ export function ProfileContent() {
                   className={cn(
                     'w-full px-4 py-2.5 rounded-xl border text-sm transition-all outline-none',
                     isEditing
-                      ? 'border-border bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/10'
+                      ? 'border-primary/40 bg-primary/5 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm'
                       : 'border-transparent bg-muted/30 text-muted-foreground',
                   )}
                 />
@@ -304,7 +318,7 @@ export function ProfileContent() {
                   className={cn(
                     'w-full px-4 py-2.5 rounded-xl border text-sm transition-all outline-none',
                     isEditing
-                      ? 'border-border bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/10'
+                      ? 'border-primary/40 bg-primary/5 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm'
                       : 'border-transparent bg-muted/30 text-muted-foreground',
                   )}
                 />
@@ -346,7 +360,7 @@ export function ProfileContent() {
                   className={cn(
                     'w-full px-4 py-2.5 rounded-xl border text-sm transition-all outline-none',
                     isEditing
-                      ? 'border-border bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/10'
+                      ? 'border-primary/40 bg-primary/5 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm'
                       : 'border-transparent bg-muted/30 text-muted-foreground',
                   )}
                 />
