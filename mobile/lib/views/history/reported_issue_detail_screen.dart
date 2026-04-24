@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/toast_service.dart';
 import '../../dto/issue_report_dto.dart';
-
 import '../../services/assets_service.dart';
-import '../../services/toast_service.dart';
+import '../../core/config/app_config.dart';
 
 /// Reported Issue Detail - Displaying full details of a reported asset issue
 class ReportedIssueDetailScreen extends StatefulWidget {
@@ -316,7 +315,7 @@ class _ReportedIssueDetailScreenState extends State<ReportedIssueDetailScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '0',
+                      issue.image != null ? '1' : '0',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -328,43 +327,107 @@ class _ReportedIssueDetailScreenState extends State<ReportedIssueDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Container(
-              height: 160,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceVariant.withValues(alpha: 0.3)
-                    : AppColors.gray100,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : AppColors.gray200,
-                  style: BorderStyle.solid,
+            if (issue.image != null)
+              Container(
+                height: 220,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.image_not_supported_outlined,
-                    size: 40,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'No photos attached to this report',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    child: Image.network(
+                      issue.image!.startsWith('http')
+                          ? issue.image!
+                          : '${AppConfig.normalizedBaseUrl}${issue.image!}',
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.broken_image_rounded,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant
+                                    .withValues(alpha: 0.5),
+                                size: 48,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Failed to load image',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
-                ],
+                ),
+              )
+            else
+              Container(
+                height: 160,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                      : AppColors.gray100,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : AppColors.gray200,
+                    style: BorderStyle.solid,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.image_not_supported_outlined,
+                      size: 40,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No photos attached to this report',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
             if (issue.status == 'return_requested') ...[
               const SizedBox(height: 48),
               SizedBox(
