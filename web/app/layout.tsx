@@ -3,6 +3,7 @@ import { Poppins } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/lib/auth';
 import { Toaster } from '@/components/ui/sonner';
+import { SessionInvalidatedDialog } from '@/components/auth/SessionInvalidatedDialog';
 import '../styles/globals.css';
 
 const poppins = Poppins({
@@ -25,6 +26,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${poppins.variable} antialiased bg-background`}>
         <AuthProvider>
+          <SessionInvalidatedDialog />
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

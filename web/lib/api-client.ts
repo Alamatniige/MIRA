@@ -36,6 +36,16 @@ export async function apiClient<T>(
                 // Read body as text ONCE, then try to parse as JSON
                 const rawText = await response.text();
                 if (rawText) {
+                    if (
+                        response.status === 401 &&
+                        rawText.toLowerCase().includes('session invalidated') &&
+                        typeof window !== 'undefined'
+                    ) {
+                        window.dispatchEvent(
+                            new CustomEvent('mira:session-invalidated', { detail: 'api' })
+                        );
+                    }
+
                     try {
                         const error = JSON.parse(rawText);
                         errorMessage = error.message || error.error || errorMessage;

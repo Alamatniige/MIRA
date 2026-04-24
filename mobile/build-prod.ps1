@@ -6,17 +6,32 @@ $ErrorActionPreference = "Stop"
 $apiBaseUrl = "https://mira-api-jly2.onrender.com"
 $outputDir = "build/app/outputs/flutter-apk"
 
+function Get-AutoBuildNumber {
+    $file = ".buildnumber"
+
+    if (Test-Path $file) {
+        $num = Get-Content $file | Select-Object -First 1
+        if ($num -match "^\d+$") {
+            $num = [int]$num + 1
+        } else {
+            $num = 1
+        }
+    } else {
+        $num = 1
+    }
+
+    Set-Content $file $num
+    return $num
+}
+
 function Get-VersionInput {
     $versionName = Read-Host "Version name (e.g. 1.2.0)"
     if ([string]::IsNullOrWhiteSpace($versionName)) {
         $versionName = "1.0.0"
     }
 
-    $buildNumber = Read-Host "Build number (integer, e.g. 12)"
-    if ([string]::IsNullOrWhiteSpace($buildNumber)) {
-        $buildNumber = "1"
-    }
-
+    $buildNumber = Get-AutoBuildNumber
+Write-Host "Auto build number: $buildNumber" -ForegroundColor Yellow
     if ($buildNumber -notmatch "^\d+$") {
         Write-Host "ERROR: Build number must be an integer." -ForegroundColor Red
         exit 1
@@ -28,6 +43,7 @@ function Get-VersionInput {
         VersionTag  = "v$versionName+$buildNumber"
     }
 }
+
 
 Write-Host "MIRA Flutter Production Build" -ForegroundColor Cyan
 Write-Host "============================" -ForegroundColor Cyan

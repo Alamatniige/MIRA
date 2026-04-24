@@ -22,6 +22,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   isLoading: boolean;
+  sessionInvalidated: boolean;
+  clearSessionInvalidated: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,11 +32,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sessionInvalidated, setSessionInvalidated] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    // Hydrate from localStorage
+    const handler = () => setSessionInvalidated(true);
+    window.addEventListener('mira:session-invalidated', handler);
+    return () => window.removeEventListener('mira:session-invalidated', handler);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // 1) Hydrate from localStorage
     const savedToken = localStorage.getItem('mira_token');
     const savedUser = localStorage.getItem('mira_user');
 
@@ -65,6 +76,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     setIsLoading(false);
+
+    // 2) Global fetch interceptor to catch any hook that bypasses apiClient
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      try {
+        const response = await originalFetch(...args);
+        if (response.status === 401) {
+          const clone = response.clone();
+          try {
+            const text = await clone.text();
+            if (text.toLowerCase().includes('session invalidated')) {
+              window.dispatchEvent(new CustomEvent('mira:session-invalidated', { detail: 'global-fetch' }));
+            }
+          } catch (e) {
+            // ignore clone errors
+          }
+        }
+        return response;
+      } catch (err) {
+        throw err;
+      }
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -148,6 +185,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const clearSessionInvalidated = () => setSessionInvalidated(false);
+
   // Public routes that don't require authentication
   const publicRoutes = ['/login', '/forgot-password', '/setup-password'];
   const isPublicRoute = publicRoutes.includes(pathname);
@@ -221,7 +260,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isLoading, token, pathname, isPublicRoute, router, user]);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isLoading, sessionInvalidated, clearSessionInvalidated }}>
       {children}
     </AuthContext.Provider>
   );
