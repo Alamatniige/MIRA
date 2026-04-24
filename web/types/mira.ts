@@ -161,7 +161,9 @@ export type NotificationType =
   | 'asset_deleted'
   | 'asset_status_changed'
   | 'issue_acknowledged'
-  | 'issue_resolved';
+  | 'issue_resolved'
+  | 'return_requested'
+  | 'asset_returned';
 
 export interface Notification {
   id: string;
@@ -169,7 +171,7 @@ export interface Notification {
   title: string;
   message: string;
   recipient_id: string;
-  actor_id: string;
+  actor_id: string | null;
   asset_id?: string;
   is_read: boolean;
   created_at: string;

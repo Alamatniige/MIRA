@@ -332,6 +332,38 @@ func ReturnAsset(w http.ResponseWriter, r *http.Request) {
 		Description: fmt.Sprintf("Returned '%s' (%s)", asset.AssetName, asset.Tag),
 	})
 
+	// Notify the user that their return was registered
+	go notifications.Emit(
+		userID,
+		"",
+		req.AssetID,
+		notifications.TypeAssetReturned,
+		"Asset Return Confirmed",
+		fmt.Sprintf("You have successfully returned %s (%s).", asset.AssetName, asset.Tag),
+	)
+
+	// Notify all admins that an asset has been returned
+	go func() {
+		returnerName := userID
+		var returner userv1.User
+		if err := db.DB.Select("id", `"fullName"`).First(&returner, "id = ?", userID).Error; err == nil && strings.TrimSpace(returner.FullName) != "" {
+			returnerName = returner.FullName
+		}
+		var admins []userv1.User
+		if err := db.DB.Where(`"roleId" = ?`, "1").Find(&admins).Error; err == nil {
+			for _, admin := range admins {
+				notifications.Emit(
+					admin.ID,
+					userID,
+					req.AssetID,
+					notifications.TypeAssetReturned,
+					"Asset Returned",
+					fmt.Sprintf("%s returned %s (%s).", returnerName, asset.AssetName, asset.Tag),
+				)
+			}
+		}
+	}()
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message":      "Asset returned successfully",
