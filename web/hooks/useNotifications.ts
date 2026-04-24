@@ -52,7 +52,13 @@ export function useNotifications() {
           signal: controller.signal,
         });
 
-        if (!response.ok) throw new Error('SSE connection failed');
+        if (!response.ok) {
+          if (response.status === 401) {
+            window.dispatchEvent(new CustomEvent('mira:session-invalidated', { detail: 'sse' }));
+            return;
+          }
+          throw new Error('SSE connection failed');
+        }
         const reader = response.body?.getReader();
         if (!reader) return;
 
