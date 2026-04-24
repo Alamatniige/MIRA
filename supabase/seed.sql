@@ -4,7 +4,7 @@ SET session_replication_role = replica;
 -- PostgreSQL database dump
 --
 
--- \restrict tGTHqUtsbQPDvsry7WD8hjqPiJCVMYY5Ncg1LEC4wKxTOkhzvReIdT2MoeaOJ3v
+-- \restrict CIWfjVYfkltkf95p5sWzMvME18zt4C0qpm23y8mxyIaajIY3iLc1KtV1xRuRRXI
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -113,9 +113,9 @@ INSERT INTO "public"."roles" ("id", "roleName", "permittedPages") VALUES
 --
 
 INSERT INTO "public"."users" ("id", "email", "fullName", "password", "department", "createdAt", "roleId", "phoneNumber", "status", "lastActive", "assetsCount", "avatarUrl", "currentSessionId") VALUES
-	('4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'admin@mira.com', 'Ruiz Miguel Sapio', '$2a$12$/a6xn3N1t9tUvCz4LS.kqOe56QPhDkE8AwBOl.c.MpFsiEVpemDAG', 'IT', '2026-03-09 05:46:11.392635', 3, '09000000000', 'active', '2026-04-20 01:34:39.762414+00', 0, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/4d78e3c2-8361-4a0e-8360-a717e2ed6d76/03fa0534-f11a-4502-ac24-6adae6e52edf.JPG', NULL),
+	('4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'admin@mira.com', 'Ruiz Miguel Sapio', '$2a$12$/a6xn3N1t9tUvCz4LS.kqOe56QPhDkE8AwBOl.c.MpFsiEVpemDAG', 'IT', '2026-03-09 05:46:11.392635', 3, '09000000000', 'active', '2026-04-23 12:57:36.296931+00', 0, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/4d78e3c2-8361-4a0e-8360-a717e2ed6d76/03fa0534-f11a-4502-ac24-6adae6e52edf.JPG', 'b31b2357-aab9-4a28-8407-76b33e2188bd'),
 	('81d00583-cba3-4c64-a63e-3520042fea75', 'dimaandalrim@gmail.com', 'Rim Vernoinks', '$2a$10$mJ0146uSjVfJMLi.eyh6NOhb8Oks01vaanTc.lhr9n1xY3DRlfDvm', 'Developer', '2026-04-17 00:33:23.222974', 3, '123123123123', 'active', '2026-04-17 00:35:13.222089+00', NULL, NULL, NULL),
-	('0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'sapioruiz27@gmail.com', 'Rupert Dimagiba', '$2a$10$/DqbLYi6lUxL9rKwvvrfSOycJeltAOJSsRdc4/V9UDIgVVWM4iTlK', 'Head Office', '2026-04-01 05:29:54.055852', 1, '123123123123', 'active', '2026-04-23 04:14:16.180248+00', NULL, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/0b84b3d5-7a19-4749-a4f7-ece889fb9653/02bbb378-ed02-4218-b782-41fed8c59e8e.jpg', '7134928b-6530-4418-a394-c40a8eaaab23'),
+	('0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'sapioruiz27@gmail.com', 'Rupert Dimagiba', '$2a$10$/DqbLYi6lUxL9rKwvvrfSOycJeltAOJSsRdc4/V9UDIgVVWM4iTlK', 'Head Office', '2026-04-01 05:29:54.055852', 1, '123123123123', 'active', '2026-04-24 00:35:28.325588+00', NULL, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/0b84b3d5-7a19-4749-a4f7-ece889fb9653/02bbb378-ed02-4218-b782-41fed8c59e8e.jpg', '40485d8f-dd65-487c-8ca7-8fc2f5b62aac'),
 	('37a8f454-8797-4aa9-b530-8c692c5695b4', 'sapioruiz23@gmail.com', 'John Doe', '$2a$10$PL.Bv3aFPv6Qkwf2IATF7u5dpmmyh62excrVjEGHsm0F5NnHBC9du', 'Project Management', '2026-03-09 06:09:53.265658', 2, '+639927240717', 'active', '2026-04-17 07:27:05.889488+00', 3, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/37a8f454-8797-4aa9-b530-8c692c5695b4/388f85c8-f98e-4451-b65f-3c84bf0a7f32.jpg', NULL),
 	('dffb7e87-412c-42f8-a505-85ad81c6b07e', 'rimvernondimaandal011@gmail.com', 'Rim Vernon M. Dimaandal', '$2a$10$nwbYw/0H1RnDm.rYwlBtKen0kcCpnuCsL6XIiIHqlH4dKflxZKn4.', 'Head Office', '2026-03-24 15:13:12.175907', 2, '123123123123', 'active', '2026-04-17 05:07:07.944687+00', NULL, 'https://efdhhuibnmebekqkjjom.supabase.co/storage/v1/object/public/avatar/dffb7e87-412c-42f8-a505-85ad81c6b07e/0645394a-a1ac-4248-b334-d6647bd8f722.jpg', NULL);
 
@@ -171,7 +171,10 @@ INSERT INTO "public"."auditLogs" ("id", "actorId", "action", "targetId", "target
 	('6ea6f621-8de6-4b02-8679-6240e1da1c03', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'LOGIN', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'user', 'User sapioruiz27@gmail.com logged in', NULL, '[::1]:57107', '2026-04-20 01:34:49.800414+00'),
 	('3e39e159-72ec-4f1c-817a-ffab15246e58', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'LOGIN', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'user', 'User sapioruiz27@gmail.com logged in', NULL, '[::1]:48002', '2026-04-22 00:23:55.885565+00'),
 	('a12518e7-d532-48f9-943d-da9aff581484', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'LOGIN', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'user', 'User sapioruiz27@gmail.com logged in', NULL, '[::1]:51810', '2026-04-23 04:12:55.259545+00'),
-	('1d1bcc48-a9e0-4070-af63-cb9db41c9237', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'LOGIN', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'user', 'User sapioruiz27@gmail.com logged in', NULL, '[::1]:50089', '2026-04-23 04:13:32.093433+00');
+	('1d1bcc48-a9e0-4070-af63-cb9db41c9237', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'LOGIN', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'user', 'User sapioruiz27@gmail.com logged in', NULL, '[::1]:50089', '2026-04-23 04:13:32.093433+00'),
+	('ae3be0aa-de58-4372-a41a-8f3e470fa2ec', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'LOGIN', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', 'user', 'User admin@mira.com logged in', NULL, '[::1]:44498', '2026-04-23 12:57:05.013247+00'),
+	('dca57f60-f512-452a-b96f-429f927a5049', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'LOGIN', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'user', 'User sapioruiz27@gmail.com logged in', NULL, '[::1]:60438', '2026-04-23 12:58:09.504617+00'),
+	('9818c6be-dc0a-4a36-8ad8-0728de5a50b1', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'LOGIN', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', 'user', 'User sapioruiz27@gmail.com logged in', NULL, '[::1]:46592', '2026-04-24 00:23:20.792453+00');
 
 
 --
@@ -225,8 +228,8 @@ INSERT INTO "public"."notifications" ("id", "type", "title", "message", "is_read
 	('bdb2c93d-02ba-451c-bbce-fe2b3f1b2909', 'asset_updated', 'Asset Updated', 'Rupert Dimagiba updated asset Asus Desktop (AS-13).', true, '2026-04-20 00:52:08.616702+00', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', '0b3ae9bd-104d-4875-9753-d8bdd27ecc95'),
 	('867745e7-10c7-4dea-8523-c674a4952787', 'REPORT_SUBMITTED', 'New Issue Reported', 'John Doe reported an issue for asset 0e8dd72c-bc7a-4cb7-9c9d-58d6d4bd1929.', true, '2026-04-17 03:11:20.796072+00', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', '37a8f454-8797-4aa9-b530-8c692c5695b4', '0e8dd72c-bc7a-4cb7-9c9d-58d6d4bd1929'),
 	('1462528e-66aa-4326-8c7f-1f3b164d1a0e', 'asset_updated', 'Asset Updated', 'Rupert Dimagiba updated asset HP Desktop (AS-12).', true, '2026-04-20 00:52:23.252746+00', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', '0e8dd72c-bc7a-4cb7-9c9d-58d6d4bd1929'),
-	('0a589d32-34ec-4d94-b8b0-f583a8ff2d80', 'asset_updated', 'Asset Updated', 'Ruiz Miguel Sapio updated asset Asus Desktop PC (AS-13).', false, '2026-04-20 01:31:42.671546+00', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', '0b3ae9bd-104d-4875-9753-d8bdd27ecc95'),
-	('f23c884a-af75-4960-a27a-a15d3ac79911', 'asset_updated', 'Asset Updated', 'Ruiz Miguel Sapio updated asset HP Desktop PC (AS-12).', false, '2026-04-20 01:31:56.641256+00', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', '0e8dd72c-bc7a-4cb7-9c9d-58d6d4bd1929'),
+	('0a589d32-34ec-4d94-b8b0-f583a8ff2d80', 'asset_updated', 'Asset Updated', 'Ruiz Miguel Sapio updated asset Asus Desktop PC (AS-13).', true, '2026-04-20 01:31:42.671546+00', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', '0b3ae9bd-104d-4875-9753-d8bdd27ecc95'),
+	('f23c884a-af75-4960-a27a-a15d3ac79911', 'asset_updated', 'Asset Updated', 'Ruiz Miguel Sapio updated asset HP Desktop PC (AS-12).', true, '2026-04-20 01:31:56.641256+00', '0b84b3d5-7a19-4749-a4f7-ece889fb9653', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', '0e8dd72c-bc7a-4cb7-9c9d-58d6d4bd1929'),
 	('d9fd339a-b6f6-4371-af27-762844ff1304', 'REQUEST_ACCEPTED', 'Asset Request Approved', 'Rim Vernon Dimaandal approved asset request for Razer (AS-10).', true, '2026-04-06 12:42:14.554963+00', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', NULL, '8200d6d6-6c03-4a8e-be1c-9aad180e0400'),
 	('de80b29f-a694-4c5f-be29-8fd4a85eb24f', 'REQUEST_ACCEPTED', 'Asset Request Approved', 'Your request for Razer has been approved.', true, '2026-04-06 12:42:14.688906+00', 'dffb7e87-412c-42f8-a505-85ad81c6b07e', NULL, '8200d6d6-6c03-4a8e-be1c-9aad180e0400'),
 	('8c49dc77-c298-4ccc-8746-51946dbdb7df', 'REQUEST_ACCEPTED', 'Asset Request Approved', 'Rim Vernon Dimaandal approved asset request for Razer (AS-10).', true, '2026-04-06 12:42:16.430272+00', '4d78e3c2-8361-4a0e-8360-a717e2ed6d76', NULL, '8200d6d6-6c03-4a8e-be1c-9aad180e0400'),
@@ -378,6 +381,6 @@ SELECT pg_catalog.setval('"public"."roles_id_seq"', 9, true);
 -- PostgreSQL database dump complete
 --
 
--- \unrestrict tGTHqUtsbQPDvsry7WD8hjqPiJCVMYY5Ncg1LEC4wKxTOkhzvReIdT2MoeaOJ3v
+-- \unrestrict CIWfjVYfkltkf95p5sWzMvME18zt4C0qpm23y8mxyIaajIY3iLc1KtV1xRuRRXI
 
 RESET ALL;
