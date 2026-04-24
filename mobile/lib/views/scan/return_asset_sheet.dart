@@ -4,6 +4,7 @@ import '../../core/network/error_formatter.dart';
 import '../../services/assets_service.dart';
 import '../../dto/return_qr_scan_dto.dart';
 import '../../theme/app_theme.dart';
+import '../../services/toast_service.dart';
 
 enum _ReturnSheetState { loading, empty, list, confirming, success, error }
 
@@ -52,16 +53,16 @@ class _ReturnAssetSheetState extends State<ReturnAssetSheet> {
     setState(() => _state = _ReturnSheetState.confirming);
     try {
       await _service.returnAsset(item.assetId);
+      if (mounted) {
+        ToastService.showSuccess(context, 'Asset returned successfully!');
+      }
       setState(() => _state = _ReturnSheetState.success);
     } catch (e) {
       setState(() => _state = _ReturnSheetState.list);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            // Fix 4: formatted message, not raw e.toString()
-            content: Text('Failed to return asset: ${formatErrorForUser(e)}'),
-            backgroundColor: AppColors.statusReported,
-          ),
+        ToastService.showError(
+          context,
+          'Failed to return asset: ${formatErrorForUser(e)}',
         );
       }
     }
