@@ -343,6 +343,7 @@ class _MainShellState extends State<MainShell> {
                     ),
                   );
                 },
+                onSessionExpired: widget.onLogout,
               ),
               if (_currentIndex == 1)
                 QrScannerScreen(onBack: () => _onTabTapped(0))

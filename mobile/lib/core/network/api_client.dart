@@ -157,12 +157,14 @@ class ApiClient {
     bool requiresAuth = true,
   }) async {
     final uri = _buildUri(path);
-    final h = await _headers(headers: headers, requiresAuth: requiresAuth);
+    // Build headers first, then strip Content-Type so that MultipartRequest
+    // can set its own multipart/form-data boundary automatically.
+    final h = await _headers(headers: headers, requiresAuth: requiresAuth)
+      ..remove('Content-Type');
 
     try {
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(h);
-      request.headers.remove('Content-Type');
 
       if (fields != null) {
         request.fields.addAll(fields);
@@ -171,7 +173,11 @@ class ApiClient {
       final multipartFile = await http.MultipartFile.fromPath(fileField, file.path);
       request.files.add(multipartFile);
 
-      final streamedResponse = await _http.send(request).timeout(AppConfig.receiveTimeout);
+      // Use a longer timeout for file uploads: the image travels mobile → API → Supabase,
+      // so 20 s (the default receiveTimeout) is too tight on slow connections.
+      final streamedResponse = await _http
+          .send(request)
+          .timeout(const Duration(seconds: 60));
       final response = await http.Response.fromStream(streamedResponse);
       return _handleResponse(response);
     } on TimeoutException catch (e) {

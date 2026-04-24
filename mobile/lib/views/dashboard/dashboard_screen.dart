@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../controllers/dashboard_controller.dart';
+import '../../core/network/api_exception.dart';
 import '../../core/network/error_formatter.dart';
 import '../../models/asset.dart';
 import '../../models/dashboard_data.dart';
@@ -15,8 +16,15 @@ import '../notifications/notifications_screen.dart';
 /// Premium Dashboard - modern design with glassmorphism, refined cards, premium FAB
 class DashboardScreen extends StatefulWidget {
   final Future<void> Function() onProfileTap;
+  /// Called when the server returns 401/403 — clears the session and sends
+  /// the user back to the login screen.
+  final Future<void> Function()? onSessionExpired;
 
-  const DashboardScreen({super.key, required this.onProfileTap});
+  const DashboardScreen({
+    super.key,
+    required this.onProfileTap,
+    this.onSessionExpired,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -26,6 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final DashboardController _controller = DashboardController();
   DashboardData? _dashboardData;
   String? _errorMessage;
+  bool _isSessionError = false;
   bool _isLoading = true;
 
   @override
@@ -39,27 +48,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
+        _isSessionError = false;
       });
     }
 
     try {
       final dashboardData = await _controller.loadDashboard();
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         _dashboardData = dashboardData;
         _isLoading = false;
       });
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
+
+      final isSession = error is ApiException &&
+          (error.statusCode == 401 || error.statusCode == 403);
 
       setState(() {
-        // Fix 4: use formatter — no raw exception class names shown to the user
         _errorMessage = formatErrorForUser(error);
+        _isSessionError = isSession;
         _isLoading = false;
       });
     }
@@ -78,7 +87,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             : _errorMessage != null && dashboard == null
             ? _DashboardErrorState(
                 message: _errorMessage!,
+                isSessionError: _isSessionError,
                 onRetry: _loadDashboard,
+                onLogout: widget.onSessionExpired,
               )
             : RefreshIndicator(
                 onRefresh: _loadDashboard,
@@ -505,42 +516,116 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 class _DashboardErrorState extends StatelessWidget {
-  const _DashboardErrorState({required this.message, required this.onRetry});
+  const _DashboardErrorState({
+    required this.message,
+    required this.onRetry,
+    this.isSessionError = false,
+    this.onLogout,
+  });
 
   final String message;
   final Future<void> Function() onRetry;
+  final bool isSessionError;
+  final Future<void> Function()? onLogout;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isSessionError
+        ? AppColors.statusReported
+        : Theme.of(context).colorScheme.onSurfaceVariant;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.cloud_off_rounded,
-              size: 52,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            // Icon bubble
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isSessionError
+                    ? Icons.lock_person_rounded
+                    : Icons.cloud_off_rounded,
+                size: 48,
+                color: iconColor,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
+
+            // Title
             Text(
-              'Failed to load dashboard',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              isSessionError ? 'Session Expired' : 'Failed to Load Dashboard',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    letterSpacing: -0.3,
+                  ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
+
+            // Message
             Text(
-              message,
+              isSessionError
+                  ? 'Your session is no longer valid. Please log out and sign in again to continue.'
+                  : message,
               style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+            const SizedBox(height: 28),
+
+            // Action buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Retry / Refresh button (always shown)
+                OutlinedButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Retry'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+
+                // Logout button — only for session errors
+                if (isSessionError && onLogout != null) ...
+                  [
+                    const SizedBox(width: 12),
+                    FilledButton.icon(
+                      onPressed: onLogout,
+                      icon: const Icon(Icons.logout_rounded, size: 18),
+                      label: const Text('Log Out'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.statusReported,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ],
+              ],
+            ),
           ],
         ),
       ),
