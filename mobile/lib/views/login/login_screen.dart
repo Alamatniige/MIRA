@@ -29,6 +29,9 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _rememberMe = false;
   String? _error;
+  // True when the server returns 403 + inactive account — shows a dedicated
+  // banner with admin contact guidance instead of the generic error.
+  bool _isAccountDeactivated = false;
 
   @override
   void initState() {
@@ -64,6 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     setState(() {
       _error = null;
+      _isAccountDeactivated = false;
       _isLoading = true;
     });
 
@@ -112,12 +116,12 @@ class _LoginScreenState extends State<LoginScreen> {
       debugPrint(
         '[LoginScreen] ApiException status=${e.statusCode} message=${e.message} cause=${e.cause}',
       );
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
+      final mappedError = _mapLoginError(e);
       setState(() {
-        _error = _mapLoginError(e);
+        _error = mappedError;
+        _isAccountDeactivated = mappedError == null && e.statusCode == 403;
         _isLoading = false;
       });
     } catch (_) {
@@ -133,7 +137,17 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  String _mapLoginError(ApiException error) {
+  /// Maps a caught [ApiException] to a user-friendly string.
+  /// Returns [null] for the deactivated-account case so the caller can show
+  /// a dedicated banner instead.
+  String? _mapLoginError(ApiException error) {
+    // Deactivated account: 403 + server message containing 'inactive'.
+    // Return null so _handleLogin can set _isAccountDeactivated = true.
+    if (error.statusCode == 403 &&
+        error.message.toLowerCase().contains('inactive')) {
+      return null;
+    }
+
     // Check status codes first — they produce deterministic, friendly messages.
     // Never show the raw server body for auth failures; it can be ambiguous or
     // developer-facing (e.g. "Unauthorized", "Bad credentials").
@@ -156,9 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // For all other cases, use the server message if it looks user-friendly,
     // otherwise fall back to the generic message.
     final message = error.message.trim();
-    if (message.isNotEmpty) {
-      return message;
-    }
+    if (message.isNotEmpty) return message;
 
     return 'Unable to sign in right now. Please try again.';
   }
@@ -464,6 +476,65 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
 
+                // ── Deactivated account banner ────────────────────────────
+                if (_isAccountDeactivated) ...[
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.lock_person_rounded,
+                            color: Color(0xFFB45309),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Account Deactivated',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: const Color(0xFF92400E),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Your account has been deactivated. Please contact your IT administrator to restore access.',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: const Color(0xFFB45309),
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.45,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // ── Generic error banner ──────────────────────────────────
                 if (_error != null) ...[
                   const SizedBox(height: 24),
                   Container(
@@ -480,13 +551,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
                           Icons.error_outline_rounded,
                           color: AppColors.statusReported,
                           size: 18,
                         ),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             _error!,

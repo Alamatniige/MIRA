@@ -19,63 +19,73 @@ import {
 import { Notification, NotificationType } from '@/types/mira';
 
 const ICON_MAP: Record<NotificationType, { icon: LucideIcon; iconColor: string; iconBg: string }> =
-  {
-    REPORT_SUBMITTED: {
-      icon: AlertCircle,
-      iconColor: 'text-amber-500',
-      iconBg: 'bg-amber-50 dark:bg-amber-500/10',
-    },
-    REQUEST_PENDING: {
-      icon: Package,
-      iconColor: 'text-blue-500',
-      iconBg: 'bg-blue-50 dark:bg-blue-500/10',
-    },
-    REQUEST_ACCEPTED: {
-      icon: CheckCircle2,
-      iconColor: 'text-emerald-500',
-      iconBg: 'bg-emerald-50 dark:bg-emerald-500/10',
-    },
-    REQUEST_REJECTED: {
-      icon: XCircle,
-      iconColor: 'text-rose-500',
-      iconBg: 'bg-rose-50 dark:bg-rose-500/10',
-    },
-    asset_assigned: {
-      icon: UserCheck,
-      iconColor: 'text-emerald-500',
-      iconBg: 'bg-emerald-50 dark:bg-emerald-500/10',
-    },
-    asset_registered: {
-      icon: PackagePlus,
-      iconColor: 'text-blue-500',
-      iconBg: 'bg-blue-50 dark:bg-blue-500/10',
-    },
-    asset_updated: {
-      icon: PencilLine,
-      iconColor: 'text-violet-500',
-      iconBg: 'bg-violet-50 dark:bg-violet-500/10',
-    },
-    asset_deleted: {
-      icon: Trash2,
-      iconColor: 'text-rose-500',
-      iconBg: 'bg-rose-50 dark:bg-rose-500/10',
-    },
-    asset_status_changed: {
-      icon: RefreshCw,
-      iconColor: 'text-orange-500',
-      iconBg: 'bg-orange-50 dark:bg-orange-500/10',
-    },
-    issue_acknowledged: {
-      icon: ClipboardCheck,
-      iconColor: 'text-blue-500',
-      iconBg: 'bg-blue-50 dark:bg-blue-500/10',
-    },
-    issue_resolved: {
-      icon: ShieldCheck,
-      iconColor: 'text-emerald-500',
-      iconBg: 'bg-emerald-50 dark:bg-emerald-500/10',
-    },
-  };
+{
+  REPORT_SUBMITTED: {
+    icon: AlertCircle,
+    iconColor: 'text-amber-500',
+    iconBg: 'bg-amber-50 dark:bg-amber-500/10',
+  },
+  REQUEST_PENDING: {
+    icon: Package,
+    iconColor: 'text-blue-500',
+    iconBg: 'bg-blue-50 dark:bg-blue-500/10',
+  },
+  REQUEST_ACCEPTED: {
+    icon: CheckCircle2,
+    iconColor: 'text-emerald-500',
+    iconBg: 'bg-emerald-50 dark:bg-emerald-500/10',
+  },
+  REQUEST_REJECTED: {
+    icon: XCircle,
+    iconColor: 'text-rose-500',
+    iconBg: 'bg-rose-50 dark:bg-rose-500/10',
+  },
+  asset_assigned: {
+    icon: UserCheck,
+    iconColor: 'text-emerald-500',
+    iconBg: 'bg-emerald-50 dark:bg-emerald-500/10',
+  },
+  asset_registered: {
+    icon: PackagePlus,
+    iconColor: 'text-blue-500',
+    iconBg: 'bg-blue-50 dark:bg-blue-500/10',
+  },
+  asset_updated: {
+    icon: PencilLine,
+    iconColor: 'text-violet-500',
+    iconBg: 'bg-violet-50 dark:bg-violet-500/10',
+  },
+  asset_deleted: {
+    icon: Trash2,
+    iconColor: 'text-rose-500',
+    iconBg: 'bg-rose-50 dark:bg-rose-500/10',
+  },
+  asset_status_changed: {
+    icon: RefreshCw,
+    iconColor: 'text-orange-500',
+    iconBg: 'bg-orange-50 dark:bg-orange-500/10',
+  },
+  issue_acknowledged: {
+    icon: ClipboardCheck,
+    iconColor: 'text-blue-500',
+    iconBg: 'bg-blue-50 dark:bg-blue-500/10',
+  },
+  issue_resolved: {
+    icon: ShieldCheck,
+    iconColor: 'text-emerald-500',
+    iconBg: 'bg-emerald-50 dark:bg-emerald-500/10',
+  },
+  return_requested: {
+    icon: RefreshCw,
+    iconColor: 'text-orange-500',
+    iconBg: 'bg-orange-50 dark:bg-orange-500/10',
+  },
+  asset_returned: {
+    icon: CheckCircle2,
+    iconColor: 'text-emerald-500',
+    iconBg: 'bg-emerald-50 dark:bg-emerald-500/10',
+  },
+};
 
 function formatTime(createdAt: string): string {
   const now = new Date();
