@@ -4,6 +4,7 @@ import '../../core/network/api_exception.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/mira_gradient_button.dart';
 import 'forgot_password_screen.dart';
+import '../../services/toast_service.dart';
 
 /// Login screen - fully redesigned with premium inputs, glowing centerpiece, and beautiful gradients
 class LoginScreen extends StatefulWidget {
@@ -74,6 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _error = 'Please enter your email address.';
         _isLoading = false;
       });
+      ToastService.showError(context, 'Please enter your email address.');
       return;
     }
     // Fix 8: client-side email format validation before any network call
@@ -104,6 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       setState(() => _isLoading = false);
+      ToastService.showSuccess(context, 'Logged in successfully!');
       widget.onLoginSuccess();
     } on ApiException catch (e) {
       debugPrint(

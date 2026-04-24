@@ -30,6 +30,7 @@ export function ForgotPasswordForm() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -262,13 +263,20 @@ export function ForgotPasswordForm() {
                       <Lock className="h-5 w-5 text-slate-400" />
                     </div>
                     <input
-                      type="password"
+                      type={showConfirmPassword ? 'text' : 'password'}
                       placeholder="••••••••"
                       required
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="w-full bg-[#f1f5f9]/50 border border-slate-200/60 text-slate-900 rounded-2xl pl-12 pr-4 py-4 outline-none focus:border-[#0F766E]/50 focus:bg-white focus:ring-[6px] focus:ring-[#0F766E]/5 transition-all"
+                      className="w-full bg-[#f1f5f9]/50 border border-slate-200/60 text-slate-900 rounded-2xl pl-12 pr-14 py-4 outline-none focus:border-[#0F766E]/50 focus:bg-white focus:ring-[6px] focus:ring-[#0F766E]/5 transition-all"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-4 text-slate-400 hover:text-[#0F766E]"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
                   </div>
                 </div>
 

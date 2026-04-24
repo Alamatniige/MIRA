@@ -31,6 +31,7 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
+  Loader2,
 } from 'lucide-react';
 
 import { useAssignments } from '@/hooks/useAssignments';
@@ -213,7 +214,9 @@ export function AssignmentView() {
     assignee: string;
   } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [isRejectReasonOpen, setIsRejectReasonOpen] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [viewingAssignment, setViewingAssignment] = useState<{
     asset: string;
     name: string;
@@ -487,6 +490,7 @@ export function AssignmentView() {
 
   const handleFinalConfirm = async () => {
     if (!assignmentToConfirm) return;
+    setIsConfirming(true);
     try {
       await confirmAssignment(assignmentToConfirm.id);
       setIsConfirmModalOpen(false);
@@ -495,6 +499,8 @@ export function AssignmentView() {
       toast.error('Failed to confirm assignment', {
         description: err instanceof Error ? err.message : 'Please try again.',
       });
+    } finally {
+      setIsConfirming(false);
     }
   };
 
@@ -1297,10 +1303,18 @@ export function AssignmentView() {
               </Button>
               <Button
                 size="sm"
-                className="flex-1 h-10 rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-6 text-[11px] font-semibold text-white shadow-md hover:opacity-90 active:scale-95 transition-all"
+                className="flex-1 h-10 rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-6 text-[11px] font-semibold text-white shadow-md hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                 onClick={handleFinalConfirm}
+                disabled={isConfirming}
               >
-                Confirm Now
+                {isConfirming ? (
+                  <>
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    Confirming...
+                  </>
+                ) : (
+                  'Confirm Now'
+                )}
               </Button>
             </div>
           </div>

@@ -8,6 +8,7 @@ import '../../core/network/error_formatter.dart';
 import '../../models/types.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/theme_mode_scope.dart';
+import '../../services/toast_service.dart';
 
 /// Profile - stunning premium layout matching the dashboard and history pages
 class ProfileScreen extends StatefulWidget {
@@ -82,56 +83,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _loadProfile();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Profile picture updated successfully!'),
-          backgroundColor: AppColors.tealPrimary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      ToastService.showSuccess(context, 'Profile picture updated successfully!');
     } on PlatformException catch (e) {
       // Fix 5: friendly permission denial messages
       if (!mounted) return;
       final message = e.code == 'camera_access_denied'
           ? 'Camera access denied. Please allow access in Settings.'
           : 'Could not access your photos. Please try again.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: AppColors.statusReported,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      ToastService.showError(context, message);
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: AppColors.statusReported,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      ToastService.showError(context, e.message);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(formatErrorForUser(e)),
-          backgroundColor: AppColors.statusReported,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      ToastService.showError(context, formatErrorForUser(e));
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }

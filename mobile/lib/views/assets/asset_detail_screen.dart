@@ -6,6 +6,7 @@ import '../../widgets/status_badge.dart';
 import '../../dto/asset_response_dto.dart';
 import '../../services/assets_service.dart';
 import 'report_issue_screen.dart';
+import '../../services/toast_service.dart';
 
 enum AssetDetailViewMode { assignment, browse }
 
@@ -181,17 +182,9 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     } catch (e) {
       // Fix 6: non-intrusive SnackBar so user knows the data may be stale
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Asset status could not be refreshed. Some actions may be unavailable.',
-            ),
-            behavior: SnackBarBehavior.floating,
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: _refreshLiveAsset,
-            ),
-          ),
+        ToastService.showWarning(
+          context,
+          'Asset status could not be refreshed. Some actions may be unavailable.',
         );
       }
     }
@@ -318,12 +311,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
         notes: notesController.text.trim(),
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Assignment request submitted successfully.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      ToastService.showSuccess(context, 'Assignment request submitted successfully.');
       // Navigate back to dashboard to show the asset in pending requests
       if (!mounted) return;
       Navigator.of(context).pop(true); // Return true to signal success
@@ -336,13 +324,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
           ? 'This asset is no longer available for request.'
           : formatErrorForUser(e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.statusReported,
-        ),
-      );
+      ToastService.showError(context, message);
     } finally {
       if (mounted) setState(() => _isRequesting = false);
     }
