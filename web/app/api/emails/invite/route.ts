@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     // Send the email using SendGrid
     const msg = {
       to: email,
-      from: 'sapioruiz27@gmail.com',
+      from: 'bogaratats@outlook.com',
       subject: 'You have been invited to MIRA',
       html: emailHtml,
     };

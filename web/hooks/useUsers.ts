@@ -124,8 +124,9 @@ export function useUsers() {
           } catch {}
           throw new Error(msg);
         }
+        const data = await response.json();
         await fetchUsers();
-        return await response.json();
+        return data;
       } catch (err) {
         throw err;
       }

@@ -301,6 +301,18 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		description = fmt.Sprintf("Updated user %s: changed %s", user.Email, strings.Join(changes, ", "))
 	}
 
+	// Persist the changes to the database
+	if result := db.DB.Model(&user).Updates(updateData); result.Error != nil {
+		http.Error(w, "Error updating user: "+result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Re-fetch the updated user so the response reflects the new state
+	db.DB.Model(&User{}).
+		Select(userWithAssetsCountSelect).
+		Preload("Role").
+		First(&user, "id = ?", id)
+
 	actorID, _ := r.Context().Value(middleware.UserIDKey).(string)
 	activity.RecordAuditLog(activity.AuditLog{
 		ActorID:     actorID,
