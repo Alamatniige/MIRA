@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 import {
   Package,
   Wrench,
@@ -105,9 +106,47 @@ function formatTime(createdAt: string): string {
 interface NotificationItemProps {
   notification: Notification;
   onClick?: (id: string) => void;
+  onClose?: () => void;
 }
 
-export function NotificationItem({ notification, onClick }: NotificationItemProps) {
+export function NotificationItem({ notification, onClick, onClose }: NotificationItemProps) {
+  const router = useRouter();
+
+  const handleNavigation = () => {
+    if (!notification.is_read) {
+      onClick?.(notification.id);
+    }
+    
+    onClose?.();
+
+    let path = '';
+    switch (notification.type) {
+      case 'REPORT_SUBMITTED':
+      case 'issue_acknowledged':
+      case 'issue_resolved':
+        path = '/report';
+        break;
+      case 'asset_registered':
+      case 'asset_updated':
+      case 'asset_deleted':
+      case 'asset_status_changed':
+        path = '/asset';
+        break;
+      case 'REQUEST_PENDING':
+      case 'REQUEST_ACCEPTED':
+      case 'REQUEST_REJECTED':
+      case 'asset_assigned':
+      case 'return_requested':
+      case 'asset_returned':
+        path = '/assignment';
+        break;
+    }
+
+    if (path) {
+      router.push(path);
+    }
+  };
+
   const {
     icon: Icon,
     iconColor,
@@ -120,7 +159,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
 
   return (
     <div
-      onClick={() => onClick?.(notification.id)}
+      onClick={handleNavigation}
       className={cn(
         'flex items-start gap-3 px-4 py-3.5 transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50',
         !notification.is_read && 'bg-blue-50/40 dark:bg-blue-500/5',

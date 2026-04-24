@@ -64,7 +64,7 @@ export function NotificationPanel({
           </p>
         ) : (
           notifications.map((n) => (
-            <NotificationItem key={n.id} notification={n} onClick={onMarkRead} />
+            <NotificationItem key={n.id} notification={n} onClick={onMarkRead} onClose={onClose} />
           ))
         )}
       </div>
