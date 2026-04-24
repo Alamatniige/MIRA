@@ -118,7 +118,7 @@ export function useIssueReports() {
   }, []);
 
   const fetchReports = useCallback(async () => {
-    setIsLoading(true);
+    if (reports.length === 0) setIsLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/reports', { headers: getHeaders() });
@@ -131,7 +131,7 @@ export function useIssueReports() {
     } finally {
       setIsLoading(false);
     }
-  }, [getHeaders]);
+  }, [getHeaders, reports.length]);
 
   useEffect(() => {
     fetchReports();
