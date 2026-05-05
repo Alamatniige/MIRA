@@ -1,10 +1,16 @@
 import { EmailInvite } from '@/lib/email-templates/email-invite';
 import { NextResponse } from 'next/server';
-import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 import { render } from '@react-email/render';
 
-// Initialize SendGrid with the API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
+// Initialize Gmail SMTP transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER as string,
+    pass: process.env.GMAIL_APP_PASSWORD as string,
+  },
+});
 
 const staffMobileDownloadUrl =
   process.env.STAFF_MOBILE_DOWNLOAD_URL?.trim() ||
@@ -36,25 +42,21 @@ export async function POST(req: Request) {
       }),
     );
 
-    // Send the email using SendGrid
+    // Send the email using Gmail SMTP
     const msg = {
       to: email,
-      from: 'bogaratats@outlook.com',
+      from: process.env.GMAIL_USER as string,
       subject: 'You have been invited to MIRA',
       html: emailHtml,
     };
 
-    const response = await sgMail.send(msg);
+    await transporter.sendMail(msg);
 
     return NextResponse.json({ success: true, message: 'Email sent' });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    console.error('Error sending SendGrid invite email:', error);
+    console.error('Error sending Gmail SMTP invite email:', error);
 
-    // SendGrid specific error handling
-    if (error.response) {
-      console.error(error.response.body);
-    }
 
     return NextResponse.json(
       { error: 'Failed to send email', details: error.message },

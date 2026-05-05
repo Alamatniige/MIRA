@@ -1,9 +1,16 @@
 import { EmailResetPassword } from '@/lib/email-templates/email-reset-password';
 import { NextResponse } from 'next/server';
-import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 import { render } from '@react-email/render';
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
+// Initialize Gmail SMTP transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER as string,
+    pass: process.env.GMAIL_APP_PASSWORD as string,
+  },
+});
 
 export async function POST(req: Request) {
   try {
@@ -18,16 +25,16 @@ export async function POST(req: Request) {
 
     const msg = {
       to: email,
-      from: 'bogaratats@outlook.com',
+      from: process.env.GMAIL_USER as string,
       subject: 'Your MIRA Password Reset Code',
       html: emailHtml,
     };
 
-    await sgMail.send(msg);
+    await transporter.sendMail(msg);
 
     return NextResponse.json({ success: true, message: 'Reset code sent' });
   } catch (error: unknown) {
-    console.error('Error sending reset-password email:', error);
+    console.error('Error sending Gmail SMTP reset-password email:', error);
     if (error instanceof Error) {
       console.error(error.message);
     }
