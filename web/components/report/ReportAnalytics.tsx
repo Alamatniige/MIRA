@@ -179,7 +179,7 @@ export function ReportAnalytics() {
     toast.success('Report data exported successfully');
   };
 
-  if (reportsLoading) {
+  if (reportsLoading && reports.length === 0) {
     return <FullPageLoader label="Loading reports..." />;
   }
 
@@ -509,7 +509,7 @@ export function ReportAnalytics() {
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-slate-200 dark:border-teal-800/15">
+                  <div className="pt-6 border-t border-slate-200 dark:border-teal-800/15 min-h-[140px] flex flex-col justify-start">
                     {showNoteInput ? (
                       <div className="space-y-3 mb-4 animate-in fade-in slide-in-from-top-2">
                         <textarea
