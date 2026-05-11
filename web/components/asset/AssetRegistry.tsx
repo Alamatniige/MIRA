@@ -33,6 +33,7 @@ import {
   Box,
   Layers,
   SlidersHorizontal,
+  RefreshCw,
 } from 'lucide-react';
 
 /* ──────────────────────────────── helpers ──────────────────────────────── */
@@ -605,6 +606,8 @@ export function AssetRegistry() {
     }
   };
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const {
     assets,
     assetsTypes,
@@ -623,7 +626,17 @@ export function AssetRegistry() {
     generateNextTag,
     getAssignmentStatus,
     getConditionStatus,
+    refresh,
   } = useAssets();
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const safeTotal = total || 0;
   const safeAssigned = assigned || 0;
@@ -909,6 +922,17 @@ export function AssetRegistry() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 rounded-full px-4 text-xs font-semibold"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Refresh asset list"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
             <Button
               size="sm"
               variant="outline"

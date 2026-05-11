@@ -30,6 +30,7 @@ import {
   Search,
   Download,
   Eye,
+  RefreshCw,
 } from 'lucide-react';
 import Image from 'next/image';
 import { BuildingFloorMap } from './BuildingFloorMap';
@@ -95,6 +96,16 @@ export function ReportAnalytics() {
   const [searchQuery, setSearchQuery] = useState('');
   const [adminNote, setAdminNote] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Map API IssueReport → local Report shape
   const reports: Report[] = rawReports.map((r) => ({
@@ -209,6 +220,17 @@ export function ReportAnalytics() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            title="Refresh reports"
+            className="h-9 rounded-full border-slate-200/60 bg-white/50 px-4 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur-md transition-all hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+          >
+            <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
           <Button
             variant="outline"
             size="sm"

@@ -32,6 +32,7 @@ import {
   XCircle,
   Calendar,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 
 import { useAssignments } from '@/hooks/useAssignments';
@@ -257,9 +258,21 @@ export function AssignmentView() {
     confirmAssignment,
     rejectAssignment,
     getGlobalReturnQr,
+    refresh: refreshAssignments,
   } = useAssignments();
   const { availableAssets, refresh: refreshAssets } = useAssets();
   const { getCurrentUser } = useUsers();
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshAssignments();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const { user: currentUser } = useAuth();
 
@@ -575,6 +588,17 @@ export function AssignmentView() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 self-start rounded-full px-4 text-xs font-semibold md:self-auto"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                title="Refresh assignments"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </Button>
               <Button
                 size="sm"
                 className="h-9 self-start rounded-full bg-linear-to-r from-[#0F766E] to-[#0E7490] px-5 text-xs font-semibold text-white shadow-md hover:opacity-90 md:self-auto"
