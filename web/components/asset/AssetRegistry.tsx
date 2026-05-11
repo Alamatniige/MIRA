@@ -23,7 +23,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import { AddLocationModal } from './modals/AddLocationModal';
 import { LocationSelect } from '@/components/ui/location-select';
-import { MapPin, Search, Filter, X, ChevronDown, Tag, Box, Layers } from 'lucide-react';
+import { MapPin, Search, Filter, X, ChevronDown, Tag, Box, Layers, SlidersHorizontal } from 'lucide-react';
 
 /* ──────────────────────────────── helpers ──────────────────────────────── */
 
@@ -411,6 +411,7 @@ export function AssetRegistry() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [roomFilter, setRoomFilter] = useState('');
   const [floorFilter, setFloorFilter] = useState('');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -823,7 +824,7 @@ export function AssetRegistry() {
     <>
       <div className="space-y-6 print:hidden">
         {/* ── Page header ── */}
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Asset Registry
@@ -832,7 +833,7 @@ export function AssetRegistry() {
               Centralized view of all IT hardware assets managed by the department.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
               variant="outline"
@@ -857,7 +858,7 @@ export function AssetRegistry() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {statCards.map((card) => (
             <div
               key={card.label}
@@ -883,7 +884,115 @@ export function AssetRegistry() {
         <Card className="overflow-hidden shadow-sm">
           {/* Filter bar */}
           <CardHeader className="border-b border-slate-100 dark:border-teal-800/25 bg-white dark:bg-[#09090b] pb-3 pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+
+            {/* ── Mobile / Tablet Filter Bar (hidden on desktop) ── */}
+            <div className="flex flex-col gap-2 lg:hidden">
+              {/* Row: Title + Search + Filter Icon */}
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-100 shrink-0">
+                  Asset Inventory
+                </CardTitle>
+                <div className="flex-1" />
+                {/* Search */}
+                <div className="relative group/search">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none transition-colors group-focus-within/search:text-primary dark:group-focus-within/search:text-teal-500" />
+                  <Input
+                    placeholder="Search assets…"
+                    className="h-8 w-36 sm:w-48 pl-8 pr-7 text-[11px] bg-slate-50/50 border-slate-200/60 focus:bg-white dark:bg-white/5 dark:border-teal-800/20 dark:focus:bg-[#09090b] transition-all duration-200 rounded-lg placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  )}
+                </div>
+                {/* Filter toggle icon */}
+                <button
+                  type="button"
+                  onClick={() => setShowMobileFilters((v) => !v)}
+                  className={`relative flex h-8 w-8 items-center justify-center rounded-lg border transition-all active:scale-95 ${
+                    showMobileFilters
+                      ? 'border-primary bg-primary/10 text-primary dark:border-teal-400 dark:bg-teal-400/10 dark:text-teal-400'
+                      : 'border-slate-200 bg-slate-50 text-slate-500 dark:border-teal-800/30 dark:bg-[#09090b] dark:text-slate-400'
+                  }`}
+                  title="Toggle filters"
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  {/* Active filter badge */}
+                  {(assignmentStatusFilter || conditionStatusFilter || categoryFilter || roomFilter || floorFilter) && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary dark:bg-teal-400" />
+                  )}
+                </button>
+              </div>
+
+              {/* Collapsible filter section */}
+              {showMobileFilters && (
+                <div className="flex flex-col gap-2 pt-1 animate-in slide-in-from-top-2 duration-200">
+                  <div className="flex flex-wrap gap-2">
+                    <FilterDropdown
+                      label="Assignment"
+                      icon={Tag}
+                      options={filterOptions.assignmentStatuses}
+                      value={assignmentStatusFilter}
+                      onChange={setAssignmentStatusFilter}
+                    />
+                    <FilterDropdown
+                      label="Condition"
+                      icon={Filter}
+                      options={filterOptions.conditionStatuses}
+                      value={conditionStatusFilter}
+                      onChange={setConditionStatusFilter}
+                    />
+                    <FilterDropdown
+                      label="Category"
+                      icon={Box}
+                      options={filterOptions.categories}
+                      value={categoryFilter}
+                      onChange={setCategoryFilter}
+                    />
+                    <FilterDropdown
+                      label="Room"
+                      icon={MapPin}
+                      options={filterOptions.rooms}
+                      value={roomFilter}
+                      onChange={setRoomFilter}
+                    />
+                    <FilterDropdown
+                      label="Floor"
+                      icon={Layers}
+                      options={filterOptions.floors}
+                      value={floorFilter}
+                      onChange={setFloorFilter}
+                    />
+                  </div>
+                  {(assignmentStatusFilter || conditionStatusFilter || categoryFilter || roomFilter || floorFilter) && (
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => {
+                        setAssignmentStatusFilter('');
+                        setConditionStatusFilter('');
+                        setCategoryFilter('');
+                        setRoomFilter('');
+                        setFloorFilter('');
+                      }}
+                      className="h-7 self-start rounded-full bg-primary/5 px-3 text-[10px] font-bold text-primary hover:bg-primary/10 dark:bg-teal-400/10 dark:text-teal-400 dark:hover:bg-teal-400/20 transition-all active:scale-95"
+                    >
+                      <X className="mr-1 h-2.5 w-2.5" />
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* ── Desktop Filter Bar (hidden on mobile/tablet) ── */}
+            <div className="hidden lg:flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <CardTitle className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-100">
                   Asset Inventory
@@ -991,10 +1100,133 @@ export function AssetRegistry() {
                 </Button>
               </div>
             </div>
+
           </CardHeader>
 
           <CardContent className="p-0">
-            <Table className="table-fixed w-full">
+
+            {/* ── Mobile / Tablet Card View (hidden on desktop) ── */}
+            <div className="lg:hidden">
+              {filtered.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-16">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-8 w-8 text-slate-300">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                  </svg>
+                  <p className="text-xs text-slate-400">No assets match your search.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 dark:divide-teal-800/20">
+                  {filtered.map((asset) => {
+                    const categoryName = asset.assetTypeRel?.name;
+                    const found = categoryName
+                      ? Object.entries(categoryMeta).find(([k]) => k.toLowerCase() === categoryName.toLowerCase())
+                      : undefined;
+                    const cat = found ? found[1] : categoryMeta.Default;
+                    const displayCategory = categoryName || 'Uncategorized';
+                    return (
+                      <div key={asset.tag} className="flex items-start gap-3 px-4 py-3.5 hover:bg-slate-50/70 dark:hover:bg-teal-900/10 transition-colors">
+                        {/* Left: category color bar */}
+                        <div className={`mt-1 h-9 w-1 shrink-0 rounded-full ${cat.bg.replace('/10', '/60').replace('/20', '')}`} />
+
+                        {/* Main content */}
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          {/* Row 1: Asset tag + condition badge */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-600 dark:text-slate-300 tracking-wide">
+                              {asset.tag}
+                            </span>
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${conditionBadge[getConditionStatus(asset)] || conditionBadge.Unknown}`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${statusDot[getConditionStatus(asset)] || 'bg-slate-400'}`} />
+                              {getConditionStatus(asset)}
+                            </span>
+                          </div>
+
+                          {/* Row 2: Asset name + serial */}
+                          <div>
+                            <p className="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 leading-tight truncate">
+                              {asset.assetName}
+                            </p>
+                            {asset.serialNumber && (
+                              <p className="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{asset.serialNumber}</p>
+                            )}
+                          </div>
+
+                          {/* Row 3: Category + Location */}
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${cat.bg} ${cat.text}`}>
+                              {cat.icon}
+                              {displayCategory}
+                            </span>
+                            {(asset.roomRel?.name || asset.floorRel?.name) && (
+                              <span className="inline-flex items-center gap-1 text-[10.5px] text-slate-500 dark:text-slate-400">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3 w-3 shrink-0">
+                                  <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+                                  <circle cx="12" cy="10" r="3" />
+                                </svg>
+                                {asset.roomRel?.name}{asset.floorRel ? ` – ${asset.floorRel.name}` : ''}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Right: Action buttons */}
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          {/* View */}
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            title="View"
+                            onClick={() => { setSelectedViewAsset(asset); setViewOpen(true); }}
+                            className="h-8 w-8 text-primary hover:bg-primary/10 transition-colors"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                          </Button>
+                          {/* Edit */}
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            title="Edit"
+                            onClick={() => {
+                              setEditImageFiles([]); setEditImagePreviews([]); setIsAddingType(false);
+                              setNewType(''); setGallerySource(null); setEditModal(true); setSelectedEditAsset(asset);
+                            }}
+                            className="h-8 w-8 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                          </Button>
+                          {/* Delete */}
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            title="Delete"
+                            onClick={() => { setDeleteModal(true); setSelectedDeleteAsset(asset); }}
+                            className="h-8 w-8 text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 transition-colors"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                              <path d="M10 11v6M14 11v6" />
+                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                            </svg>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* ── Desktop Table View (hidden on mobile/tablet) ── */}
+            <div className="hidden lg:block overflow-x-auto">
+            <Table className="table-auto w-full min-w-[1000px]">
               <colgroup>
                 <col style={{ width: '12%' }} />
                 {/* Asset Tag */}
@@ -1205,6 +1437,8 @@ export function AssetRegistry() {
                 )}
               </TableBody>
             </Table>
+            </div>
+
 
             {/* Pagination footer */}
             <div className="flex items-center justify-between border-t border-slate-100 dark:border-teal-800/25 bg-white dark:bg-[#09090b] px-5 py-3">
@@ -1334,6 +1568,7 @@ export function AssetRegistry() {
             : ''
         } // Remove double overlay
         className={qrOpen ? 'pointer-events-auto -translate-x-[52%]' : ''} // Shift to the left if QR modal is open
+        mobileBottomSheet={true}
       >
         <form className="space-y-4 text-xs flex flex-col">
           {/* Row 1: Tag + Name + Category */}
@@ -1699,6 +1934,7 @@ export function AssetRegistry() {
         description="Detailed information and QR code for this asset."
         className="w-full max-w-3xl"
         contentClassName="p-0"
+        mobileBottomSheet={true}
       >
         {selectedViewAsset && (
           <div className="text-xs flex flex-col">
@@ -1982,6 +2218,7 @@ export function AssetRegistry() {
         description="Update asset details"
         className="w-full max-w-150 flex flex-col max-h-[90dvh]" // Make it slightly wider since there are more fields
         contentClassName="flex-1 overflow-y-auto p-0"
+        mobileBottomSheet={true}
       >
         {selectedEditAsset && (
           <div className="flex flex-col gap-5 p-5">

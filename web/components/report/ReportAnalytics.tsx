@@ -222,12 +222,12 @@ export function ReportAnalytics() {
       </div>
 
       {/* Building Map Visualization */}
-      <div className="-mt-6">
+      <div className="-mt-6 hidden md:block">
         <BuildingFloorMap />
       </div>
 
       {/* KPI Section */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4 md:mt-0 mt-2">
         {reportKpis.map((kpi) => (
           <div
             key={kpi.label}
@@ -276,99 +276,164 @@ export function ReportAnalytics() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-100/30 dark:bg-teal-950/20">
-              <TableRow className="border-slate-100 dark:border-teal-800/20">
-                <TableHead className="w-30 px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
-                  Asset Tag
-                </TableHead>
-                <TableHead className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
-                  Name
-                </TableHead>
-                <TableHead className="w-45 px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
-                  User
-                </TableHead>
-                <TableHead className="w-35 px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
-                  Date of Reported
-                </TableHead>
-                <TableHead className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
-                  Description
-                </TableHead>
-                <TableHead className="w-25 px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60 text-right">
-                  Action
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredReports.map((report) => (
-                <TableRow
-                  key={report.id}
-                  className="group cursor-pointer border-b border-slate-50 transition-all hover:bg-slate-100/40 dark:border-teal-800/10 dark:hover:bg-teal-900/10"
-                  onClick={() => setSelectedReport(report)}
-                >
-                  <TableCell className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 dark:bg-teal-900/30">
-                        <Box className="h-3.5 w-3.5 text-slate-500 dark:text-teal-400" />
-                      </div>
-                      <span className="font-mono text-xs font-bold text-slate-700 dark:text-teal-300">
-                        {report.assetTag}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-6 py-4">
-                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {report.name}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-teal-500 to-emerald-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
-                        {report.initials}
-                      </div>
-                      <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                        {report.user}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-                      <Calendar className="h-3 w-3" />
-                      {report.date}
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-6 py-4">
-                    <span className="line-clamp-1 text-xs text-slate-600 dark:text-slate-400">
-                      {report.description}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-right">
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      className="h-8 w-8 rounded-full border-slate-200 bg-white p-0 hover:bg-teal-50 hover:text-teal-600 dark:border-white/10 dark:bg-white/5 dark:hover:bg-teal-500/10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedReport(report);
-                      }}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </Button>
-                  </TableCell>
+          {/* Desktop Table - Hidden on Mobile */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader className="bg-slate-100/30 dark:bg-teal-950/20">
+                <TableRow className="border-slate-100 dark:border-teal-800/20">
+                  <TableHead className="w-[120px] px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                    Asset Tag
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                    Name
+                  </TableHead>
+                  <TableHead className="w-[180px] px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                    User
+                  </TableHead>
+                  <TableHead className="w-[140px] px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                    Date Reported
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                    Description
+                  </TableHead>
+                  <TableHead className="w-[100px] px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-teal-400/60">
+                    Action
+                  </TableHead>
                 </TableRow>
-              ))}
-              {filteredReports.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-32 text-center text-sm text-slate-500 dark:text-slate-400"
+              </TableHeader>
+              <TableBody>
+                {filteredReports.map((report) => (
+                  <TableRow
+                    key={report.id}
+                    className="group cursor-pointer border-b border-slate-50 transition-all hover:bg-slate-100/40 dark:border-teal-800/10 dark:hover:bg-teal-900/10"
+                    onClick={() => setSelectedReport(report)}
                   >
-                    No cases match your filter.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                    <TableCell className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-slate-100 dark:bg-teal-900/30">
+                          <Box className="h-3.5 w-3.5 text-slate-500 dark:text-teal-400" />
+                        </div>
+                        <span className="font-mono text-xs font-bold text-slate-700 dark:text-teal-300">
+                          {report.assetTag}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-1">
+                        {report.name}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
+                          {report.initials}
+                        </div>
+                        <span className="text-xs font-medium text-slate-700 dark:text-slate-200 line-clamp-1">
+                          {report.user}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                        <Calendar className="h-3 w-3" />
+                        {report.date}
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <span className="line-clamp-1 text-xs text-slate-600 dark:text-slate-400">
+                        {report.description}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-center">
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        className="h-8 w-8 rounded-full border-slate-200 bg-white p-0 hover:bg-teal-50 hover:text-teal-600 dark:border-white/10 dark:bg-white/5 dark:hover:bg-teal-500/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedReport(report);
+                        }}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredReports.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="h-32 text-center text-sm text-slate-500 dark:text-slate-400"
+                    >
+                      No cases match your filter.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile View - Card List */}
+          <div className="md:hidden divide-y divide-slate-100 dark:divide-teal-800/10">
+            {filteredReports.map((report) => (
+              <div
+                key={report.id}
+                className="p-4 active:bg-slate-50 dark:active:bg-teal-900/5 transition-colors"
+                onClick={() => setSelectedReport(report)}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-slate-100 dark:bg-teal-900/30">
+                      <Box className="h-3.5 w-3.5 text-slate-500 dark:text-teal-400" />
+                    </div>
+                    <span className="font-mono text-[10px] font-bold text-slate-700 dark:text-teal-300">
+                      {report.assetTag}
+                    </span>
+                  </div>
+                  <Badge
+                    variant={
+                      report.status === 'open'
+                        ? 'danger'
+                        : (report.status === 'in_progress' || report.status === 'return_requested')
+                          ? 'warning'
+                          : 'success'
+                    }
+                    className="px-2 py-0.5 text-[9px] font-bold uppercase"
+                  >
+                    {report.status.replace('_', ' ')}
+                  </Badge>
+                </div>
+                
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">
+                  {report.name}
+                </h4>
+                
+                <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">
+                  {report.description}
+                </p>
+
+                <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100/50 dark:border-teal-800/5">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 text-[9px] font-bold text-white shadow-sm">
+                      {report.initials}
+                    </div>
+                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                      {report.user}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                    <Calendar className="h-3 w-3" />
+                    {report.date}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {filteredReports.length === 0 && (
+              <div className="h-32 flex items-center justify-center text-center text-sm text-slate-500 dark:text-slate-400">
+                No cases match your filter.
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -378,13 +443,14 @@ export function ReportAnalytics() {
         onClose={() => setSelectedReport(null)}
         title={selectedReport ? 'Incident Investigation' : ''}
         description={selectedReport ? `Overview of Case #${selectedReport.id}` : ''}
-        className="max-w-4xl"
+        className="md:max-w-4xl sm:max-w-2xl"
         contentClassName="px-0 py-0"
+        mobileBottomSheet={true}
       >
         {selectedReport && (
-          <div className="flex flex-col bg-slate-50/50 dark:bg-[#020617]">
+          <div className="flex flex-col bg-slate-50/50 dark:bg-[#020617] h-full sm:h-auto overflow-y-auto sm:overflow-visible">
             {/* Modal Header/Subheader */}
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-teal-800/15 bg-white dark:bg-[#09090b]">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-teal-800/15 bg-white dark:bg-[#09090b] sticky top-0 z-10 sm:relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-500/10 dark:bg-teal-500/20">

@@ -123,7 +123,7 @@ export function AssetLogsContent() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <History className="h-8 w-8 text-teal-600 dark:text-teal-400" />
@@ -133,39 +133,42 @@ export function AssetLogsContent() {
             A chronological timeline of asset lifecycle events, conditions, and ownership transfers.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button 
             variant="outline" 
+            size="sm"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              "shadow-sm transition-all border-slate-200 dark:border-slate-800",
+              "h-9 flex-1 sm:flex-none sm:px-5 rounded-full shadow-sm transition-all border-slate-200 dark:border-slate-800 text-xs font-semibold",
               showFilters && "bg-teal-50 border-teal-200 text-teal-600 dark:bg-teal-900/20 dark:border-teal-500/50"
             )}
           >
-            <FilterX className="mr-2 h-4 w-4" />
-            {showFilters ? "Hide Filters" : "Advanced Filters"}
+            <FilterX className="mr-2 h-3.5 w-3.5" />
+            {showFilters ? "Hide" : "Filters"}
           </Button>
           <Button 
             variant="outline" 
+            size="sm"
             onClick={handleExportCSV}
-            className="shadow-sm border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
+            className="h-9 flex-1 sm:flex-none sm:px-5 rounded-full shadow-sm border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold"
           >
-            <Download className="mr-2 h-4 w-4 text-teal-500" />
+            <Download className="mr-2 h-3.5 w-3.5 text-teal-500" />
             Export
           </Button>
           <Button 
             variant="ghost" 
+            size="sm"
             onClick={refresh}
-            className="p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-full"
+            className="h-9 w-9 p-0 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-full shrink-0"
           >
-            <RefreshCw className={cn("h-5 w-5 text-teal-600", isLoading && "animate-spin")} />
+            <RefreshCw className={cn("h-4 w-4 text-teal-600", isLoading && "animate-spin")} />
           </Button>
         </div>
       </div>
 
       {showFilters && (
-        <Card className="border-teal-500/10 bg-teal-50/30 dark:bg-teal-900/5 backdrop-blur-sm shadow-inner animate-in slide-in-from-top-4 duration-300">
-          <CardContent className="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="border-teal-500/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl shadow-sm animate-in slide-in-from-top-4 duration-300 overflow-hidden rounded-2xl">
+          <CardContent className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Search Assets</label>
               <div className="relative">
@@ -246,76 +249,66 @@ export function AssetLogsContent() {
         <div className="space-y-12">
           {Object.entries(groupedLogs).map(([date, logs]) => (
             <div key={date} className="relative">
-              <div className="sticky top-20 z-10 py-2 flex items-center gap-4 bg-transparent backdrop-blur-sm -mx-4 px-4 overflow-hidden">
+              <div className="sticky top-16 sm:top-20 z-10 py-2 flex items-center gap-3 sm:gap-4 bg-transparent backdrop-blur-sm -mx-2 sm:-mx-4 px-2 sm:px-4 overflow-hidden">
                 <div className="h-px flex-1 bg-teal-500/20"></div>
-                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 bg-white/50 dark:bg-slate-900/50 px-4 py-1.5 rounded-full border border-teal-500/10 shadow-sm">
+                <h2 className="text-[10px] sm:text-sm font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-teal-600 dark:text-teal-400 bg-white/80 dark:bg-slate-900/80 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-teal-500/10 shadow-sm whitespace-nowrap">
                   {date}
                 </h2>
                 <div className="h-px flex-1 bg-teal-500/20"></div>
               </div>
 
-              <div className="mt-8 relative ml-4 sm:ml-12 border-l-2 border-teal-500/20 pl-8 space-y-10 pb-4">
+              <div className="mt-6 sm:mt-8 relative ml-2 sm:ml-12 border-l-2 border-teal-500/20 pl-6 sm:pl-8 space-y-8 sm:space-y-10 pb-4">
                 {logs.map((log, index) => (
                   <div key={log.id} className={cn(
-                    "relative group animate-in slide-in-from-left-4 duration-500",
-                    `delay-[${index * 50}ms]`
+                    "relative group animate-in slide-in-from-left-4 duration-500"
                   )}>
                     {/* Timeline Node */}
-                    <div className="absolute -left-[45px] top-1 h-8 w-8 rounded-full border-4 border-white dark:border-slate-900 bg-teal-500 shadow-lg shadow-teal-500/40 flex items-center justify-center z-10 group-hover:scale-110 transition-transform">
-                      <div className="h-2 w-2 rounded-full bg-white animate-pulse"></div>
+                    <div className="absolute -left-[35px] sm:-left-[45px] top-1 h-6 w-6 sm:h-8 sm:w-8 rounded-full border-4 border-white dark:border-slate-900 bg-teal-500 shadow-lg shadow-teal-500/40 flex items-center justify-center z-10 group-hover:scale-110 transition-transform">
+                      <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-white"></div>
                     </div>
 
-                    <Card className="overflow-hidden border-slate-200/60 bg-white shadow-sm hover:shadow-xl hover:shadow-teal-500/5 dark:border-teal-500/10 dark:bg-[#09090b] transition-all transform hover:-translate-y-1">
-                      <div className="p-5 sm:p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                          <div className="flex items-center gap-3">
+                    <Card className="overflow-hidden border-slate-200/60 bg-white/80 dark:bg-[#09090b]/80 shadow-sm hover:shadow-md dark:border-teal-500/10 transition-all">
+                      <div className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex items-start sm:items-center gap-3">
                             <div className={cn(
-                              "p-2 rounded-xl border flex items-center justify-center shadow-inner",
+                              "p-2 rounded-xl border flex items-center justify-center shadow-inner shrink-0",
                               getActionStyles(log.action)
                             )}>
                               {getActionIcon(log.action)}
                             </div>
-                            <div>
-                              <div className="text-xs font-bold uppercase tracking-tighter text-slate-400 mb-0.5">
+                            <div className="min-w-0">
+                              <div className="text-[10px] font-bold uppercase tracking-tighter text-slate-400 mb-0.5">
                                 {log.action.replace(/_/g, ' ')}
                               </div>
-                              <div className="text-xs text-teal-500 font-medium flex items-center gap-1.5">
+                              <div className="text-[10px] text-teal-500 font-medium flex items-center gap-1.5">
                                 <Clock className="h-3 w-3" />
                                 {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-2">
-                             <div className="flex flex-col items-end">
-                               <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest leading-none mb-1 text-right">Asset Reference</span>
-                               <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1 rounded-lg">
-                                  <Package className="h-3.5 w-3.5 text-teal-500" />
-                                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{log.assetName || "Unknown"}</span>
-                                  <span className="text-[10px] bg-teal-500 text-white px-1.5 py-0.5 rounded font-black">{log.assetTag || "---"}</span>
+                          <div className="flex items-center gap-2 sm:self-center">
+                             <div className="flex flex-col items-start sm:items-end w-full sm:w-auto">
+                               <span className="text-[9px] text-slate-400 uppercase font-bold tracking-widest leading-none mb-1.5">Asset Reference</span>
+                               <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-2.5 py-1.5 rounded-lg w-full sm:w-auto">
+                                  <Package className="h-3.5 w-3.5 text-teal-500 shrink-0" />
+                                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate max-w-[120px] sm:max-w-none">{log.assetName || "Unknown"}</span>
+                                  <span className="text-[9px] bg-teal-500 text-white px-1.5 py-0.5 rounded font-black shrink-0">{log.assetTag || "---"}</span>
                                </div>
                              </div>
                           </div>
                         </div>
 
-                        <p className="text-lg font-semibold text-slate-900 dark:text-white mb-2 leading-tight">
-                          {log.description}
-                        </p>
-
-                        <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-6">
-                          <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-xl bg-teal-600/10 border border-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-sm font-bold">
-                              {log.actorName ? log.actorName.charAt(0).toUpperCase() : 'S'}
-                            </div>
-                            <div>
-                               <div className="text-[10px] text-slate-400 font-bold uppercase leading-none">Performed By</div>
-                               <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{log.actorName || "Global System"}</div>
-                            </div>
-                          </div>
-
-                          <div className="ml-auto">
-                             <div className="h-10 w-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-300 group-hover:text-teal-500 transition-colors border border-slate-100 dark:border-slate-800">
-                                <Activity className="h-5 w-5" />
+                        <div className="mt-4 border-t border-slate-100 dark:border-white/5 pt-4">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                            &quot;{log.description}&quot;
+                          </p>
+                          
+                          <div className="mt-4 flex flex-wrap items-center gap-4 text-[10px] text-slate-400">
+                             <div className="flex items-center gap-1.5">
+                                <User className="h-3 w-3" />
+                                <span className="font-medium">Action by: <span className="text-slate-700 dark:text-slate-300">{log.actorName || "System"}</span></span>
                              </div>
                           </div>
                         </div>

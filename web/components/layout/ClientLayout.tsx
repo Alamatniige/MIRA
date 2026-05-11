@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
@@ -9,7 +10,13 @@ import { Loader2 } from 'lucide-react';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isLoading, token } = useAuth();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   if (isLoading) {
     return (
@@ -26,7 +33,19 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <div className="print:hidden">
-        <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+        {/* Mobile backdrop */}
+        {isMobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm transition-opacity" 
+            onClick={() => setIsMobileMenuOpen(false)} 
+          />
+        )}
+        <Sidebar 
+          isCollapsed={isCollapsed} 
+          setIsCollapsed={setIsCollapsed} 
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+        />
       </div>
       <div
         className={cn(
@@ -35,7 +54,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="print:hidden">
-          <Header />
+          <Header onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
         </div>
         <main className="flex-1 bg-linear-to-b from-slate-50 to-slate-100/70 dark:from-[#041112] dark:to-[#020809] px-4 md:px-6 pb-8 pt-6 overflow-x-hidden">
           <div className="mx-auto max-w-6xl space-y-6">{children}</div>

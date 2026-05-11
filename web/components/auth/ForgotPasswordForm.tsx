@@ -82,16 +82,16 @@ export function ForgotPasswordForm() {
   const isExpired = expirySeconds <= 0;
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#f8fafc] p-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#f8fafc] sm:p-4 relative overflow-hidden font-sans">
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-linear-to-br from-[#0F766E]/20 to-transparent rounded-full blur-[120px] animate-pulse pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-linear-to-tl from-[#0E7490]/20 to-transparent rounded-full blur-[120px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }} />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-[radial-gradient(circle,rgba(45,212,191,0.05)_0%,transparent_70%)] pointer-events-none" />
 
-      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center justify-center gap-8">
-        <div className="w-full">
-          <div className="bg-white/70 backdrop-blur-3xl border border-white/40 p-8 rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(15,118,110,0.12)] relative group transition-all duration-500 hover:shadow-[0_48px_80px_-20px_rgba(15,118,110,0.18)] overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-linear-to-r from-[#0F766E] via-[#2DD4BF] to-[#0E7490] rounded-t-[2.5rem]" />
-            <div className="absolute inset-0 rounded-[2.5rem] bg-linear-to-br from-white/40 to-transparent pointer-events-none" />
+      <div className="w-full sm:max-w-md h-full sm:h-auto relative z-10 animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center justify-center sm:gap-8">
+        <div className="w-full h-full sm:h-auto">
+          <div className="bg-white/70 backdrop-blur-3xl border-none sm:border sm:border-white/40 p-6 sm:p-8 rounded-none sm:rounded-[2.5rem] shadow-none sm:shadow-[0_32px_64px_-16px_rgba(15,118,110,0.12)] relative group transition-all duration-500 hover:sm:shadow-[0_48px_80px_-20px_rgba(15,118,110,0.18)] overflow-hidden h-full sm:h-auto flex flex-col justify-center">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-linear-to-r from-[#0F766E] via-[#2DD4BF] to-[#0E7490] sm:rounded-t-[2.5rem]" />
+            <div className="absolute inset-0 sm:rounded-[2.5rem] bg-linear-to-br from-white/40 to-transparent pointer-events-none" />
 
             <div className="flex items-center justify-center gap-2 mb-6 relative -translate-x-2">
               <div className="relative group/logo">

@@ -241,6 +241,7 @@ export function AddLocationModal({
       title="Manage Locations"
       description="Add, edit, or delete floors and rooms used for asset placement."
       className="max-w-2xl"
+      mobileBottomSheet
     >
       {/* Tab bar */}
       <div className="flex gap-0 border-b border-slate-100 dark:border-white/10 mb-4 -mt-1">
@@ -264,7 +265,7 @@ export function AddLocationModal({
       {activeTab === 'floors' && (
         <div className="space-y-4">
           {/* Add-new form */}
-          <div className="flex gap-2 items-end">
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
             <div className="flex-1">
               <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
                 Floor name
@@ -278,7 +279,7 @@ export function AddLocationModal({
                 }}
               />
             </div>
-            <div className="w-28">
+            <div className="w-full sm:w-28">
               <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
                 Level (opt.)
               </label>
@@ -395,7 +396,7 @@ export function AddLocationModal({
         <div className="space-y-4">
           {/* Add-new form */}
           <div className="space-y-2 border border-slate-100 dark:border-white/10 rounded-xl p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-            <div className="flex gap-2 items-end">
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
               <div className="flex-1">
                 <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
                   Room name
@@ -409,7 +410,7 @@ export function AddLocationModal({
                   }}
                 />
               </div>
-              <div className="w-44">
+              <div className="w-full sm:w-44">
                 <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
                   Floor (optional)
                 </label>

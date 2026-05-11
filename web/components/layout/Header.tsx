@@ -2,13 +2,17 @@
 
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Menu } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { Button } from '../ui/button';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { Avatar } from '../ui/avatar';
 
-export function Header() {
+export interface HeaderProps {
+  onMenuToggle?: () => void;
+}
+
+export function Header({ onMenuToggle }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { user: currentUser } = useAuth();
 
@@ -27,9 +31,18 @@ export function Header() {
       <div className="absolute top-0 left-0 right-0 h-3px bg-linear-to-r from-[#0F766E] to-[#0E7490]" />
 
       {/* Left Section */}
-      <div className="flex items-center gap-8" />
+      <div className="flex items-center gap-8">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onMenuToggle}
+          className="md:hidden text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
+      </div>
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-5">
         {/* Theme Toggle */}
         <Button
           variant="outline"

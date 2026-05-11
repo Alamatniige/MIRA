@@ -40,9 +40,11 @@ const SETTINGS_ITEM = { label: 'Settings', href: '/settings', icon: Settings };
 export interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: (open: boolean) => void;
 }
 
-export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
+export function Sidebar({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -53,7 +55,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         'fixed inset-y-0 left-0 z-40 flex flex-col transition-all duration-300 ease-in-out',
         'bg-white dark:bg-[#000000] border-r border-teal-100 dark:border-white/10 shadow-[4px_0_24px_rgba(15,118,110,0.03)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.8)]',
         'backdrop-blur-xl',
-        isCollapsed ? 'w-20' : 'w-64',
+        // Width sizing: Always 64 on mobile, variable on desktop
+        isCollapsed ? 'w-64 md:w-20' : 'w-64 md:w-64',
+        // Mobile drawer slide logic
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
       )}
     >
       {/* Top Gradient Accent */}
@@ -71,16 +76,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               className="w-8 h-8 object-contain"
             />
           </div>
-          {!isCollapsed && (
-            <div className="flex flex-col animate-in fade-in duration-300 whitespace-nowrap">
-              <span className="text-slate-900 dark:text-white font-bold tracking-wider text-xl leading-tight">
-                MIRA
-              </span>
-              <span className="text-[10px] text-[#0F766E] dark:text-teal-400/80 font-medium uppercase tracking-widest mt-0.5">
-                IT Admin Portal
-              </span>
-            </div>
-          )}
+          <div className={cn("flex-col animate-in fade-in duration-300 whitespace-nowrap", isCollapsed ? "flex md:hidden" : "flex")}>
+            <span className="text-slate-900 dark:text-white font-bold tracking-wider text-xl leading-tight">
+              MIRA
+            </span>
+            <span className="text-[10px] text-[#0F766E] dark:text-teal-400/80 font-medium uppercase tracking-widest mt-0.5">
+              IT Admin Portal
+            </span>
+          </div>
         </div>
       </div>
 
@@ -89,7 +92,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         variant="ghost"
         size="icon-xs"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-24 z-50 flex items-center justify-center w-6 h-6 rounded-full bg-teal-50 dark:bg-[#0F766E] text-teal-700 dark:text-white border border-teal-200 dark:border-[#041112] hover:bg-teal-100 dark:hover:bg-[#0E7490] hover:text-[#0F766E] dark:hover:text-white hover:scale-110 transition-all shadow-sm dark:shadow-[0_0_10px_rgba(15,118,110,0.5)]"
+        className="hidden md:flex absolute -right-3 top-24 z-50 items-center justify-center w-6 h-6 rounded-full bg-teal-50 dark:bg-[#0F766E] text-teal-700 dark:text-white border border-teal-200 dark:border-[#041112] hover:bg-teal-100 dark:hover:bg-[#0E7490] hover:text-[#0F766E] dark:hover:text-white hover:scale-110 transition-all shadow-sm dark:shadow-[0_0_10px_rgba(15,118,110,0.5)]"
         aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {isCollapsed ? (
@@ -97,6 +100,17 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         ) : (
           <ChevronLeft className="w-3.5 h-3.5 mr-0.5" />
         )}
+      </Button>
+
+      {/* Mobile Close Toggle */}
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        onClick={() => setIsMobileMenuOpen?.(false)}
+        className="md:hidden absolute right-4 top-6 z-50 flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+        aria-label="Close sidebar"
+      >
+        <ChevronLeft className="w-5 h-5" />
       </Button>
 
       {/* Navigation */}
@@ -138,13 +152,13 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 )}
               />
 
-              {!isCollapsed && (
-                <span className="font-medium text-sm whitespace-nowrap">{item.label}</span>
-              )}
+              <span className={cn("font-medium text-sm whitespace-nowrap", isCollapsed ? "block md:hidden" : "block")}>
+                {item.label}
+              </span>
 
               {/* Tooltip for collapsed state */}
               {isCollapsed && (
-                <div className="absolute left-full ml-4 px-2.5 py-1.5 bg-[#0F766E] text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+                <div className="hidden md:block absolute left-full ml-4 px-2.5 py-1.5 bg-[#0F766E] text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
                   {item.label}
                   {/* Tooltip Arrow */}
                   <div className="absolute top-1/2 -left-1 -mt-1 border-t-4 border-t-transparent border-r-4 border-r-[#0F766E] border-b-4 border-b-transparent"></div>
@@ -177,12 +191,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                   : 'text-slate-400 group-hover:text-[#0F766E] dark:group-hover:text-teal-400',
               )}
             />
-            {!isCollapsed && (
-              <span className="font-medium text-sm whitespace-nowrap">{SETTINGS_ITEM.label}</span>
-            )}
+            <span className={cn("font-medium text-sm whitespace-nowrap", isCollapsed ? "block md:hidden" : "block")}>
+              {SETTINGS_ITEM.label}
+            </span>
 
             {isCollapsed && (
-              <div className="absolute left-full ml-4 px-2.5 py-1.5 bg-[#0F766E] text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+              <div className="hidden md:block absolute left-full ml-4 px-2.5 py-1.5 bg-[#0F766E] text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
                 {SETTINGS_ITEM.label}
                 <div className="absolute top-1/2 -left-1 -mt-1 border-t-4 border-t-transparent border-r-4 border-r-[#0F766E] border-b-4 border-b-transparent"></div>
               </div>
@@ -226,14 +240,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               )}
             />
           )}
-          {!isCollapsed && (
-            <span className="font-medium text-sm whitespace-nowrap">
-              {isLoggingOut ? 'Logging out...' : 'Log Out'}
-            </span>
-          )}
+          <span className={cn("font-medium text-sm whitespace-nowrap", isCollapsed ? "block md:hidden" : "block")}>
+            {isLoggingOut ? 'Logging out...' : 'Log Out'}
+          </span>
 
           {isCollapsed && (
-            <div className="absolute left-full ml-4 px-2.5 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+            <div className="hidden md:block absolute left-full ml-4 px-2.5 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
               {isLoggingOut ? 'Logging out...' : 'Log Out'}
               <div className="absolute top-1/2 -left-1 -mt-1 border-t-4 border-t-transparent border-r-4 border-r-rose-600 border-b-4 border-b-transparent"></div>
             </div>

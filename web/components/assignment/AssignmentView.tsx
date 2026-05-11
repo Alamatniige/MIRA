@@ -621,7 +621,7 @@ export function AssignmentView() {
             {/* Assignment History */}
             <Card className="w-full overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#09090b]">
               <CardHeader className="relative border-b border-slate-100 pb-4 dark:border-white/5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pr-32">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:pr-32">
                   <div>
                     <CardTitle className="text-base">Assignment History</CardTitle>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -633,7 +633,7 @@ export function AssignmentView() {
                     <input
                       type="text"
                       placeholder="Search history..."
-                      className="h-8 w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-9 pr-3 text-[11px] outline-none transition-all focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                      className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-9 pr-3 text-[11px] outline-none transition-all focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10 dark:border-white/10 dark:bg-white/5 dark:text-white"
                       value={searchQuery}
                       onChange={(e) => {
                         setSearchQuery(e.target.value);
@@ -647,7 +647,7 @@ export function AssignmentView() {
                   size="sm"
                   type="button"
                   onClick={() => setViewTimeline((v) => !v)}
-                  className="absolute right-6 top-5 flex items-center gap-1 text-xs font-semibold text-[#0F766E] transition-colors hover:text-[#0E7490] dark:text-teal-400 dark:hover:text-teal-300 h-auto p-0"
+                  className="mt-2 sm:mt-0 sm:absolute sm:right-6 sm:top-5 flex items-center gap-1 text-xs font-semibold text-[#0F766E] transition-colors hover:text-[#0E7490] dark:text-teal-400 dark:hover:text-teal-300 h-auto p-0"
                 >
                   {viewTimeline ? 'View as table' : 'View as timeline'}
                   <ChevronRight className="h-3 w-3" />
@@ -852,7 +852,134 @@ export function AssignmentView() {
                 ) : (
                   /* Table View */
                   <div className="overflow-x-auto">
-                    <Table>
+                    {/* Mobile Card View (hidden on desktop) */}
+                    <div className="block sm:hidden divide-y divide-slate-100 dark:divide-white/5">
+                      {paginatedAssignments.length > 0 ? (
+                        paginatedAssignments.map((a) => {
+                          const variant = statusVariant(a.status);
+                          const label = statusLabel(a.status);
+                          const initials = getInitials(a.assignee);
+                          return (
+                            <div key={a.id} className="p-4 space-y-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-mono text-[10px] font-medium text-slate-400 dark:text-slate-500">
+                                    {a.assetTag}
+                                  </p>
+                                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                    {a.assetName}
+                                  </p>
+                                </div>
+                                <Badge
+                                  variant={variant}
+                                  className={`text-[10px] shadow-sm ${badgeStyles[variant]}`}
+                                >
+                                  {label}
+                                </Badge>
+                              </div>
+
+                              <div className="flex items-center gap-2.5">
+                                <div className="flex h-7 w-7 items-center justify-center rounded-full overflow-hidden bg-linear-to-br from-slate-100 to-slate-200 shadow-sm dark:from-slate-700 dark:to-slate-800">
+                                  {getAssigneeAvatar(a.assignee) ? (
+                                    <img
+                                      src={getAssigneeAvatar(a.assignee)}
+                                      alt={a.assignee}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                      {initials}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                                    {a.assignee}
+                                  </p>
+                                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                    {a.department}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between pt-2">
+                                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatDate(a.assignedAt)}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {a.status === 'PENDING' && (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          setAssignmentToConfirm({
+                                            id: a.id,
+                                            asset: a.assetTag,
+                                            name: a.assetName,
+                                            assignee: a.assignee,
+                                            initials,
+                                            department: a.department,
+                                          });
+                                          setIsConfirmModalOpen(true);
+                                        }}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600/10 text-teal-700"
+                                      >
+                                        <Check className="h-4 w-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setAssignmentToReject({
+                                            id: a.id,
+                                            asset: a.assetTag,
+                                            name: a.assetName,
+                                            assignee: a.assignee,
+                                          });
+                                          setRejectReason('');
+                                          setIsRejectModalOpen(true);
+                                        }}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600/10 text-red-700"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </button>
+                                    </>
+                                  )}
+                                  <button
+                                    onClick={() => {
+                                      setViewingAssignment({
+                                        asset: a.assetTag,
+                                        name: a.assetName,
+                                        assignee: a.assignee,
+                                        issuerName: resolveMorIssuerName(a),
+                                        initials,
+                                        department: a.department,
+                                        date: formatDate(a.assignedAt),
+                                        documentDate: a.assignedAt,
+                                        status: label,
+                                        statusVariant: variant,
+                                        notes: a.notes,
+                                        rejectionReason: a.rejectionReason,
+                                        confirmedAt: a.confirmedAt,
+                                        returnedAt: a.returnedAt,
+                                        rejectedAt: a.rejectedAt,
+                                        avatarUrl: getAssigneeAvatar(a.assignee),
+                                      });
+                                      setIsViewModalOpen(true);
+                                    }}
+                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="p-8 text-center text-sm text-slate-500">No assignments found.</div>
+                      )}
+                    </div>
+
+                    <Table className="hidden sm:table">
                       <TableHeader className="bg-slate-50/50 dark:bg-black/50">
                         <TableRow className="border-slate-100 hover:bg-transparent dark:border-white/5">
                           <TableHead className="p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:p-4">
@@ -1045,10 +1172,10 @@ export function AssignmentView() {
                     {totalPages > 1 && (
                       <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 dark:border-white/5">
                         <div className="text-[11px] text-slate-500">
-                          Page <span className="font-semibold">{currentPage}</span> of{' '}
-                          <span className="font-semibold">{totalPages}</span>
+                          <span className="hidden sm:inline">Page</span> 
+                          <span className="font-semibold">{currentPage}</span> / {totalPages}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <Button
                             variant="outline"
                             size="sm"
@@ -1058,7 +1185,7 @@ export function AssignmentView() {
                           >
                             <ChevronLeft className="h-4 w-4" />
                           </Button>
-                          <div className="flex items-center gap-1">
+                          <div className="hidden sm:flex items-center gap-1">
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                               <Button
                                 key={page}
@@ -1100,6 +1227,7 @@ export function AssignmentView() {
           onClose={resetAssignmentForm}
           title="New Asset Assignment"
           description="Capture a new asset assignment or reassignment."
+          mobileBottomSheet={true}
         >
           <form className="space-y-5 py-2" onSubmit={handleConfirmAssignment}>
             {/* Select Asset */}
@@ -1251,6 +1379,7 @@ export function AssignmentView() {
           title="Confirm Assignment"
           description="Please verify the details before confirming."
           className="max-w-sm"
+          mobileBottomSheet={true}
         >
           <div className="space-y-6 pt-2">
             {assignmentToConfirm && (
@@ -1326,10 +1455,12 @@ export function AssignmentView() {
           onClose={() => setIsViewModalOpen(false)}
           title="Assignment Details"
           description="Full documentation of this asset movement."
-          className="max-w-2xl"
+          className="max-w-2xl px-0 sm:px-5"
+          contentClassName="px-0 sm:px-0"
+          mobileBottomSheet={true}
         >
           {viewingAssignment && (
-            <div className="space-y-4">
+            <div className="space-y-4 px-5 pb-5 sm:px-0 sm:pb-0">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/5">
                 <Badge
                   variant={viewingAssignment.statusVariant}
@@ -1503,6 +1634,7 @@ export function AssignmentView() {
           onClose={() => setIsReturnQrOpen(false)}
           title="Return QR Code"
           description="Scan the QR code below to start the return flow."
+          mobileBottomSheet={true}
         >
           <div className="flex flex-col items-center gap-6 py-8">
             <div className="p-4 bg-white rounded-xl border border-slate-100 dark:bg-zinc-900/50 dark:border-zinc-800">
@@ -1544,6 +1676,7 @@ export function AssignmentView() {
           title="Reject Assignment"
           description="Provide a reason before rejecting this request."
           className="max-w-sm"
+          mobileBottomSheet={true}
         >
           <div className="space-y-4 pt-2">
             {assignmentToReject && (

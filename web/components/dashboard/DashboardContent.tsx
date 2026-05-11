@@ -109,7 +109,7 @@ export function DashboardContent() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -122,11 +122,11 @@ export function DashboardContent() {
       </div>
 
       {/* KPI Section */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         {kpis.map((kpi) => (
           <div
             key={kpi.label}
-            className={`flex flex-col gap-2 rounded-xl border bg-gradient-to-br p-4 transition-all hover:shadow-md dark:hover:shadow-teal-900/30 dark:bg-[#09090b] ${kpi.color}`}
+            className={`flex flex-col gap-2 rounded-xl border bg-gradient-to-br p-3 sm:p-4 transition-all hover:shadow-md dark:hover:shadow-teal-900/30 dark:bg-[#09090b] ${kpi.color}`}
           >
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold opacity-75 dark:opacity-90">{kpi.label}</span>
@@ -203,15 +203,15 @@ export function DashboardContent() {
                 </div>
               </div>
             </div>
-            <div className="mt-2 grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 dark:border-teal-500/15 dark:bg-teal-900/10">
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+              <div className="flex items-center gap-3 sm:gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:p-2 dark:border-teal-500/15 dark:bg-teal-900/10">
                 <div className="h-3 w-3 rounded-full bg-gradient-to-br from-emerald-400 to-sky-500 shadow-sm" />
                 <div className="flex flex-col">
                   <span className="text-[10px] font-medium text-slate-500 dark:text-teal-300/70">Active</span>
                   <span className="text-xs font-semibold text-slate-900 dark:text-teal-100">{stats?.activeAssets.toLocaleString()}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 dark:border-teal-500/15 dark:bg-teal-900/10">
+              <div className="flex items-center gap-3 sm:gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:p-2 dark:border-teal-500/15 dark:bg-teal-900/10">
                 <div className="h-3 w-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 shadow-sm" />
                 <div className="flex flex-col">
                   <span className="text-[10px] font-medium text-slate-500 dark:text-teal-300/70">Assigned</span>

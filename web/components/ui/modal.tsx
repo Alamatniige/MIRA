@@ -13,6 +13,7 @@ interface ModalProps {
   overlayClassName?: string; // For the darkened background wrapper
   showCloseButton?: boolean; // Option to hide the X button
   contentClassName?: string; // Option to override body padding
+  mobileBottomSheet?: boolean; // Option to display as a bottom sheet on mobile
 }
 
 export function Modal({
@@ -25,6 +26,7 @@ export function Modal({
   overlayClassName,
   showCloseButton = true,
   contentClassName,
+  mobileBottomSheet = false,
 }: ModalProps) {
   if (!open) return null;
 
@@ -38,14 +40,18 @@ export function Modal({
   return (
     <div
       className={cn(
-        'fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm dark:bg-[#000000]/80 h-100dvh w-screen print:hidden',
+        'fixed inset-0 z-[100] flex bg-black/60 backdrop-blur-sm dark:bg-[#000000]/80 print:hidden overflow-hidden transition-all duration-300',
+        mobileBottomSheet ? 'items-end sm:items-center justify-center' : 'items-center justify-center',
         overlayClassName,
       )}
       onClick={handleBackdropClick}
     >
       <div
         className={cn(
-          'w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 dark:border-white/10 dark:bg-[#09090b] dark:shadow-black/50 transition-all',
+          'w-full bg-white shadow-xl shadow-slate-900/10 dark:bg-[#09090b] dark:shadow-black/50 transition-all flex flex-col',
+          mobileBottomSheet
+            ? 'rounded-t-[2rem] rounded-b-none border-x-0 border-b-0 animate-in slide-in-from-bottom-full duration-500 ease-out max-h-[92dvh] w-full pb-[env(safe-area-inset-bottom)] m-0 sm:max-w-lg sm:rounded-2xl sm:border sm:border-slate-200 sm:mb-0 sm:slide-in-from-bottom-0 sm:fade-in sm:zoom-in-95'
+            : 'max-w-lg border border-slate-200 rounded-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]',
           className,
         )}
       >
@@ -72,7 +78,7 @@ export function Modal({
             ) : null}
           </div>
         )}
-        <div className={cn('px-5 py-4', contentClassName)}>{children}</div>
+        <div className={cn('px-5 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-teal-800/40', contentClassName)}>{children}</div>
       </div>
     </div>
   );
