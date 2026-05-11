@@ -23,7 +23,17 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import { AddLocationModal } from './modals/AddLocationModal';
 import { LocationSelect } from '@/components/ui/location-select';
-import { MapPin, Search, Filter, X, ChevronDown, Tag, Box, Layers, SlidersHorizontal } from 'lucide-react';
+import {
+  MapPin,
+  Search,
+  Filter,
+  X,
+  ChevronDown,
+  Tag,
+  Box,
+  Layers,
+  SlidersHorizontal,
+} from 'lucide-react';
 
 /* ──────────────────────────────── helpers ──────────────────────────────── */
 
@@ -107,6 +117,26 @@ const statCards = [
     color:
       'from-amber-500/10 to-amber-600/10 text-amber-700 border-amber-200/60 dark:from-amber-500/15 dark:to-amber-400/5 dark:text-amber-300 dark:border-amber-400/20',
     valueColor: 'text-amber-800 dark:text-amber-200',
+  },
+  {
+    label: 'Unavailable',
+    value: '0',
+    sub: 'Locked or restricted',
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        className="h-5 w-5"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+      </svg>
+    ),
+    color:
+      'from-rose-500/10 to-rose-600/10 text-rose-700 border-rose-200/60 dark:from-rose-500/15 dark:to-rose-400/5 dark:text-rose-300 dark:border-rose-400/20',
+    valueColor: 'text-rose-800 dark:text-rose-200',
   },
 ];
 
@@ -331,10 +361,11 @@ function FilterDropdown({
     <div className={`relative ${className}`} ref={containerRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex h-8 items-center gap-2 rounded-lg border px-3 text-[11px] font-medium transition-all hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 ${value
+        className={`flex h-8 items-center gap-2 rounded-lg border px-3 text-[11px] font-medium transition-all hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 ${
+          value
             ? 'border-primary bg-primary/5 text-primary dark:border-teal-400 dark:bg-teal-400/10 dark:text-teal-400 shadow-sm shadow-primary/20'
             : 'border-slate-200 bg-white text-slate-600 dark:border-teal-800/30 dark:bg-[#09090b] dark:text-slate-400'
-          }`}
+        }`}
       >
         <Icon className={`h-3.5 w-3.5 ${value ? 'animate-in zoom-in duration-300' : ''}`} />
         <span>
@@ -359,10 +390,11 @@ function FilterDropdown({
                 onChange('');
                 setIsOpen(false);
               }}
-              className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${!value
+              className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
+                !value
                   ? 'bg-primary/5 font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-400'
                   : 'text-slate-600 dark:text-slate-300'
-                }`}
+              }`}
             >
               All {label}s
             </button>
@@ -377,10 +409,11 @@ function FilterDropdown({
                   }
                   setIsOpen(false);
                 }}
-                className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${value === opt
+                className={`flex w-full items-center px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
+                  value === opt
                     ? 'bg-primary/5 font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-400'
                     : 'text-slate-600 dark:text-slate-300'
-                  }`}
+                }`}
               >
                 {opt}
               </button>
@@ -581,6 +614,7 @@ export function AssetRegistry() {
     total,
     assigned,
     unassigned,
+    unavailable,
     underMaintenance,
     createAsset,
     updateAsset,
@@ -594,6 +628,7 @@ export function AssetRegistry() {
   const safeTotal = total || 0;
   const safeAssigned = assigned || 0;
   const safeUnassigned = unassigned || 0;
+  const safeUnavailable = unavailable || 0;
   const safeUnderMaintenance = underMaintenance || 0;
   const statCardValues: Record<string, { value: string; sub: string }> = {
     'Total Assets': {
@@ -612,6 +647,46 @@ export function AssetRegistry() {
       value: safeUnderMaintenance.toLocaleString(),
       sub: safeUnderMaintenance > 0 ? 'Needs attention' : 'No maintenance pending',
     },
+    Unavailable: {
+      value: safeUnavailable.toLocaleString(),
+      sub: safeUnavailable > 0 ? 'Locked or restricted' : 'No unavailable assets',
+    },
+  };
+
+  // Maps each stat card label to the filter state it controls
+  const statCardFilter: Record<string, { type: 'assignment' | 'condition' | 'clear'; value: string }> = {
+    'Total Assets': { type: 'clear', value: '' },
+    Assigned: { type: 'assignment', value: 'Assigned' },
+    Unassigned: { type: 'assignment', value: 'Unassigned' },
+    'Under Maintenance': { type: 'condition', value: 'Under Maintenance' },
+    Unavailable: { type: 'assignment', value: 'Unavailable' },
+  };
+
+  const handleStatCardClick = (label: string) => {
+    const entry = statCardFilter[label];
+    if (!entry) return;
+
+    if (entry.type === 'clear') {
+      setAssignmentStatusFilter('');
+      setConditionStatusFilter('');
+      return;
+    }
+
+    if (entry.type === 'assignment') {
+      // Toggle: clicking the active card clears the filter
+      setAssignmentStatusFilter((prev) => (prev === entry.value ? '' : entry.value));
+      setConditionStatusFilter('');
+    } else {
+      setConditionStatusFilter((prev) => (prev === entry.value ? '' : entry.value));
+      setAssignmentStatusFilter('');
+    }
+  };
+
+  const getStatCardActive = (label: string): boolean => {
+    const entry = statCardFilter[label];
+    if (!entry || entry.type === 'clear') return false;
+    if (entry.type === 'assignment') return assignmentStatusFilter === entry.value;
+    return conditionStatusFilter === entry.value;
   };
 
   // Handle setting incrementing Tag when Modal opens
@@ -690,10 +765,10 @@ export function AssetRegistry() {
         setSelectedEditAsset((p) =>
           p
             ? {
-              ...p,
-              roomRel: { id: 0, name, createdAt: '' },
-              floorRel: { id: 0, name: floorName ?? '', createdAt: '' },
-            }
+                ...p,
+                roomRel: { id: 0, name, createdAt: '' },
+                floorRel: { id: 0, name: floorName ?? '', createdAt: '' },
+              }
             : p,
         );
         setLocationOpen(false);
@@ -858,33 +933,42 @@ export function AssetRegistry() {
           </div>
         </div>
 
-        <div className="flex w-full overflow-x-auto pb-4 gap-3 no-scrollbar sm:grid sm:grid-cols-4 sm:pb-0 sm:overflow-x-visible">
-          {statCards.map((card) => (
-            <div
-              key={card.label}
-              className={`flex flex-col gap-2 rounded-xl border bg-linear-to-br p-4 transition-all hover:shadow-md dark:hover:shadow-teal-900/30 dark:bg-[#09090b] min-w-[150px] sm:min-w-0 flex-shrink-0 sm:flex-shrink ${card.color}`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold opacity-75 dark:opacity-90">
-                  {card.label}
-                </span>
-                <span className="opacity-60 dark:opacity-80">{card.icon}</span>
-              </div>
-              <p className={`text-2xl font-bold tracking-tight ${card.valueColor}`}>
-                {statCardValues[card.label]?.value ?? '0'}
-              </p>
-              <p className="text-[10px] font-medium opacity-55 dark:opacity-70">
-                {statCardValues[card.label]?.sub ?? 'N/A'}
-              </p>
-            </div>
-          ))}
+        <div className="flex w-full overflow-x-auto pb-4 gap-3 no-scrollbar sm:grid sm:grid-cols-5 sm:pb-0 sm:overflow-x-visible">
+          {statCards.map((card) => {
+            const isActive = getStatCardActive(card.label);
+            return (
+              <button
+                key={card.label}
+                type="button"
+                onClick={() => handleStatCardClick(card.label)}
+                title={card.label === 'Total Assets' ? 'Show all assets' : `Filter by: ${card.label}`}
+                className={`flex flex-col gap-2 rounded-xl border bg-linear-to-br p-4 transition-all text-left min-w-[150px] sm:min-w-0 flex-shrink-0 sm:flex-shrink dark:bg-[#09090b] cursor-pointer active:scale-[0.97] ${
+                  isActive
+                    ? `${card.color} ring-2 ring-inset ring-current shadow-md`
+                    : `${card.color} hover:shadow-md dark:hover:shadow-teal-900/30`
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold opacity-75 dark:opacity-90">
+                    {card.label}
+                  </span>
+                  <span className={`transition-opacity ${isActive ? 'opacity-100' : 'opacity-60 dark:opacity-80'}`}>{card.icon}</span>
+                </div>
+                <p className={`text-2xl font-bold tracking-tight ${card.valueColor}`}>
+                  {statCardValues[card.label]?.value ?? '0'}
+                </p>
+                <p className="text-[10px] font-medium opacity-55 dark:opacity-70">
+                  {isActive ? '✕ Click to clear filter' : statCardValues[card.label]?.sub ?? 'N/A'}
+                </p>
+              </button>
+            );
+          })}
         </div>
 
         {/* ── Main table card ── */}
         <Card className="overflow-hidden shadow-sm">
           {/* Filter bar */}
           <CardHeader className="border-b border-slate-100 dark:border-teal-800/25 bg-white dark:bg-[#09090b] pb-3 pt-4">
-
             {/* ── Mobile / Tablet Filter Bar (hidden on desktop) ── */}
             <div className="flex flex-col gap-2 lg:hidden">
               {/* Row: Title + Search + Filter Icon */}
@@ -924,7 +1008,11 @@ export function AssetRegistry() {
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5" />
                   {/* Active filter badge */}
-                  {(assignmentStatusFilter || conditionStatusFilter || categoryFilter || roomFilter || floorFilter) && (
+                  {(assignmentStatusFilter ||
+                    conditionStatusFilter ||
+                    categoryFilter ||
+                    roomFilter ||
+                    floorFilter) && (
                     <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary dark:bg-teal-400" />
                   )}
                 </button>
@@ -970,7 +1058,11 @@ export function AssetRegistry() {
                       onChange={setFloorFilter}
                     />
                   </div>
-                  {(assignmentStatusFilter || conditionStatusFilter || categoryFilter || roomFilter || floorFilter) && (
+                  {(assignmentStatusFilter ||
+                    conditionStatusFilter ||
+                    categoryFilter ||
+                    roomFilter ||
+                    floorFilter) && (
                     <Button
                       variant="ghost"
                       size="xs"
@@ -1003,23 +1095,23 @@ export function AssetRegistry() {
                   categoryFilter ||
                   roomFilter ||
                   floorFilter) && (
-                    <Button
-                      variant="ghost"
-                      size="xs"
-                      onClick={() => {
-                        setSearch('');
-                        setAssignmentStatusFilter('');
-                        setConditionStatusFilter('');
-                        setCategoryFilter('');
-                        setRoomFilter('');
-                        setFloorFilter('');
-                      }}
-                      className="h-7 rounded-full bg-primary/5 px-3 text-[10px] font-bold text-primary hover:bg-primary/10 dark:bg-teal-400/10 dark:text-teal-400 dark:hover:bg-teal-400/20 transition-all active:scale-95"
-                    >
-                      <X className="mr-1 h-2.5 w-2.5" />
-                      Clear Filters
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => {
+                      setSearch('');
+                      setAssignmentStatusFilter('');
+                      setConditionStatusFilter('');
+                      setCategoryFilter('');
+                      setRoomFilter('');
+                      setFloorFilter('');
+                    }}
+                    className="h-7 rounded-full bg-primary/5 px-3 text-[10px] font-bold text-primary hover:bg-primary/10 dark:bg-teal-400/10 dark:text-teal-400 dark:hover:bg-teal-400/20 transition-all active:scale-95"
+                  >
+                    <X className="mr-1 h-2.5 w-2.5" />
+                    Clear Filters
+                  </Button>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {/* Search */}
@@ -1100,16 +1192,20 @@ export function AssetRegistry() {
                 </Button>
               </div>
             </div>
-
           </CardHeader>
 
           <CardContent className="p-0">
-
             {/* ── Mobile / Tablet Card View (hidden on desktop) ── */}
             <div className="lg:hidden">
               {filtered.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 py-16">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-8 w-8 text-slate-300">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    className="h-8 w-8 text-slate-300"
+                  >
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.35-4.35" />
                   </svg>
@@ -1120,14 +1216,21 @@ export function AssetRegistry() {
                   {filtered.map((asset) => {
                     const categoryName = asset.assetTypeRel?.name;
                     const found = categoryName
-                      ? Object.entries(categoryMeta).find(([k]) => k.toLowerCase() === categoryName.toLowerCase())
+                      ? Object.entries(categoryMeta).find(
+                          ([k]) => k.toLowerCase() === categoryName.toLowerCase(),
+                        )
                       : undefined;
                     const cat = found ? found[1] : categoryMeta.Default;
                     const displayCategory = categoryName || 'Uncategorized';
                     return (
-                      <div key={asset.tag} className="flex items-start gap-3 px-4 py-3.5 hover:bg-slate-50/70 dark:hover:bg-teal-900/10 transition-colors">
+                      <div
+                        key={asset.tag}
+                        className="flex items-start gap-3 px-4 py-3.5 hover:bg-slate-50/70 dark:hover:bg-teal-900/10 transition-colors"
+                      >
                         {/* Left: category color bar */}
-                        <div className={`mt-1 h-9 w-1 shrink-0 rounded-full ${cat.bg.replace('/10', '/60').replace('/20', '')}`} />
+                        <div
+                          className={`mt-1 h-9 w-1 shrink-0 rounded-full ${cat.bg.replace('/10', '/60').replace('/20', '')}`}
+                        />
 
                         {/* Main content */}
                         <div className="flex-1 min-w-0 space-y-1.5">
@@ -1136,8 +1239,12 @@ export function AssetRegistry() {
                             <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-600 dark:text-slate-300 tracking-wide">
                               {asset.tag}
                             </span>
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${conditionBadge[getConditionStatus(asset)] || conditionBadge.Unknown}`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${statusDot[getConditionStatus(asset)] || 'bg-slate-400'}`} />
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${conditionBadge[getConditionStatus(asset)] || conditionBadge.Unknown}`}
+                            >
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${statusDot[getConditionStatus(asset)] || 'bg-slate-400'}`}
+                              />
                               {getConditionStatus(asset)}
                             </span>
                           </div>
@@ -1148,23 +1255,34 @@ export function AssetRegistry() {
                               {asset.assetName}
                             </p>
                             {asset.serialNumber && (
-                              <p className="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">{asset.serialNumber}</p>
+                              <p className="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">
+                                {asset.serialNumber}
+                              </p>
                             )}
                           </div>
 
                           {/* Row 3: Category + Location */}
                           <div className="flex items-center gap-3 flex-wrap">
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${cat.bg} ${cat.text}`}>
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${cat.bg} ${cat.text}`}
+                            >
                               {cat.icon}
                               {displayCategory}
                             </span>
                             {(asset.roomRel?.name || asset.floorRel?.name) && (
                               <span className="inline-flex items-center gap-1 text-[10.5px] text-slate-500 dark:text-slate-400">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3 w-3 shrink-0">
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={1.8}
+                                  className="h-3 w-3 shrink-0"
+                                >
                                   <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
                                   <circle cx="12" cy="10" r="3" />
                                 </svg>
-                                {asset.roomRel?.name}{asset.floorRel ? ` – ${asset.floorRel.name}` : ''}
+                                {asset.roomRel?.name}
+                                {asset.floorRel ? ` – ${asset.floorRel.name}` : ''}
                               </span>
                             )}
                           </div>
@@ -1177,10 +1295,19 @@ export function AssetRegistry() {
                             variant="ghost"
                             size="icon-xs"
                             title="View"
-                            onClick={() => { setSelectedViewAsset(asset); setViewOpen(true); }}
+                            onClick={() => {
+                              setSelectedViewAsset(asset);
+                              setViewOpen(true);
+                            }}
                             className="h-8 w-8 text-primary hover:bg-primary/10 transition-colors"
                           >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={1.8}
+                              className="h-4 w-4"
+                            >
                               <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                               <circle cx="12" cy="12" r="3" />
                             </svg>
@@ -1191,12 +1318,23 @@ export function AssetRegistry() {
                             size="icon-xs"
                             title="Edit"
                             onClick={() => {
-                              setEditImageFiles([]); setEditImagePreviews([]); setIsAddingType(false);
-                              setNewType(''); setGallerySource(null); setEditModal(true); setSelectedEditAsset(asset);
+                              setEditImageFiles([]);
+                              setEditImagePreviews([]);
+                              setIsAddingType(false);
+                              setNewType('');
+                              setGallerySource(null);
+                              setEditModal(true);
+                              setSelectedEditAsset(asset);
                             }}
                             className="h-8 w-8 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                           >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={1.8}
+                              className="h-4 w-4"
+                            >
                               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                             </svg>
@@ -1206,10 +1344,19 @@ export function AssetRegistry() {
                             variant="ghost"
                             size="icon-xs"
                             title="Delete"
-                            onClick={() => { setDeleteModal(true); setSelectedDeleteAsset(asset); }}
+                            onClick={() => {
+                              setDeleteModal(true);
+                              setSelectedDeleteAsset(asset);
+                            }}
                             className="h-8 w-8 text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 transition-colors"
                           >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={1.8}
+                              className="h-4 w-4"
+                            >
                               <polyline points="3 6 5 6 21 6" />
                               <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
                               <path d="M10 11v6M14 11v6" />
@@ -1226,219 +1373,219 @@ export function AssetRegistry() {
 
             {/* ── Desktop Table View (hidden on mobile/tablet) ── */}
             <div className="hidden lg:block overflow-x-auto">
-            <Table className="table-auto w-full min-w-[1000px]">
-              <colgroup>
-                <col style={{ width: '12%' }} />
-                {/* Asset Tag */}
-                <col style={{ width: '26%' }} />
-                {/* Asset */}
-                <col style={{ width: '16%' }} />
-                {/* Category */}
-                <col style={{ width: '14%' }} />
-                {/* Condition Status */}
-                <col style={{ width: '20%' }} />
-                {/* Location */}
-                <col style={{ width: '12%' }} />
-                {/* Actions */}
-              </colgroup>
-              <TableHeader>
-                <tr className="bg-slate-50/80 dark:bg-teal-950/50">
-                  {[
-                    { label: 'Asset Tag', cls: 'pl-5' },
-                    { label: 'Asset', cls: 'pl-4' },
-                    { label: 'Category', cls: 'pl-4' },
-                    { label: 'Condition Status', cls: 'pl-4' },
-                    { label: 'Location', cls: 'pl-4' },
-                    { label: 'Actions', cls: 'pl-4 pr-4 text-left' },
-                  ].map(({ label, cls }) => (
-                    <TableHead
-                      key={label}
-                      className={`py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 ${cls ?? ''}`}
-                    >
-                      {label}
-                    </TableHead>
-                  ))}
-                </tr>
-              </TableHeader>
-
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={1.5}
-                          className="h-8 w-8 text-slate-300"
-                        >
-                          <circle cx="11" cy="11" r="8" />
-                          <path d="m21 21-4.35-4.35" />
-                        </svg>
-                        <p className="text-xs text-slate-400">No assets match your search.</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((asset) => {
-                    const categoryName = asset.assetTypeRel?.name;
-                    const found = categoryName
-                      ? Object.entries(categoryMeta).find(
-                        ([k]) => k.toLowerCase() === categoryName.toLowerCase(),
-                      )
-                      : undefined;
-                    const cat = found ? found[1] : categoryMeta.Default;
-                    const displayCategory = categoryName || 'Uncategorized';
-                    return (
-                      <TableRow
-                        key={asset.tag}
-                        className="group border-b border-slate-100 dark:border-teal-800/20 transition-colors hover:bg-primary/3 dark:hover:bg-teal-900/20 align-middle"
+              <Table className="table-auto w-full min-w-[1000px]">
+                <colgroup>
+                  <col style={{ width: '12%' }} />
+                  {/* Asset Tag */}
+                  <col style={{ width: '26%' }} />
+                  {/* Asset */}
+                  <col style={{ width: '16%' }} />
+                  {/* Category */}
+                  <col style={{ width: '14%' }} />
+                  {/* Condition Status */}
+                  <col style={{ width: '20%' }} />
+                  {/* Location */}
+                  <col style={{ width: '12%' }} />
+                  {/* Actions */}
+                </colgroup>
+                <TableHeader>
+                  <tr className="bg-slate-50/80 dark:bg-teal-950/50">
+                    {[
+                      { label: 'Asset Tag', cls: 'pl-5' },
+                      { label: 'Asset', cls: 'pl-4' },
+                      { label: 'Category', cls: 'pl-4' },
+                      { label: 'Condition Status', cls: 'pl-4' },
+                      { label: 'Location', cls: 'pl-4' },
+                      { label: 'Actions', cls: 'pl-4 pr-4 text-left' },
+                    ].map(({ label, cls }) => (
+                      <TableHead
+                        key={label}
+                        className={`py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 ${cls ?? ''}`}
                       >
-                        {/* Asset Tag */}
-                        <TableCell className="pl-5 py-3 whitespace-nowrap">
-                          <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-300 tracking-wide">
-                            {asset.tag}
-                          </span>
-                        </TableCell>
+                        {label}
+                      </TableHead>
+                    ))}
+                  </tr>
+                </TableHeader>
 
-                        {/* Asset name + brand */}
-                        <TableCell className="pl-4 py-3">
-                          <div>
-                            <p className="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 leading-tight truncate">
-                              {asset.assetName}
-                            </p>
-                            <p className="mt-0.5 text-[10.5px] text-slate-400 dark:text-slate-500">
-                              {asset.serialNumber}
-                            </p>
-                          </div>
-                        </TableCell>
-
-                        {/* Category chip */}
-                        <TableCell className="pl-4 py-3 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${cat.bg} ${cat.text}`}
+                <TableBody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-16 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                            className="h-8 w-8 text-slate-300"
                           >
-                            {cat.icon}
-                            {displayCategory}
-                          </span>
-                        </TableCell>
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                          </svg>
+                          <p className="text-xs text-slate-400">No assets match your search.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((asset) => {
+                      const categoryName = asset.assetTypeRel?.name;
+                      const found = categoryName
+                        ? Object.entries(categoryMeta).find(
+                            ([k]) => k.toLowerCase() === categoryName.toLowerCase(),
+                          )
+                        : undefined;
+                      const cat = found ? found[1] : categoryMeta.Default;
+                      const displayCategory = categoryName || 'Uncategorized';
+                      return (
+                        <TableRow
+                          key={asset.tag}
+                          className="group border-b border-slate-100 dark:border-teal-800/20 transition-colors hover:bg-primary/3 dark:hover:bg-teal-900/20 align-middle"
+                        >
+                          {/* Asset Tag */}
+                          <TableCell className="pl-5 py-3 whitespace-nowrap">
+                            <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-300 tracking-wide">
+                              {asset.tag}
+                            </span>
+                          </TableCell>
 
-                        {/* Condition status */}
-                        <TableCell className="pl-4 py-3 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${conditionBadge[getConditionStatus(asset)] || conditionBadge.Unknown}`}
-                          >
+                          {/* Asset name + brand */}
+                          <TableCell className="pl-4 py-3">
+                            <div>
+                              <p className="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 leading-tight truncate">
+                                {asset.assetName}
+                              </p>
+                              <p className="mt-0.5 text-[10.5px] text-slate-400 dark:text-slate-500">
+                                {asset.serialNumber}
+                              </p>
+                            </div>
+                          </TableCell>
+
+                          {/* Category chip */}
+                          <TableCell className="pl-4 py-3 whitespace-nowrap">
                             <span
-                              className={`h-2 w-2 rounded-full ${statusDot[getConditionStatus(asset)] || 'bg-slate-400'}`}
-                            ></span>
-                            {getConditionStatus(asset)}
-                          </span>
-                        </TableCell>
+                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${cat.bg} ${cat.text}`}
+                            >
+                              {cat.icon}
+                              {displayCategory}
+                            </span>
+                          </TableCell>
 
-                        {/* Location */}
-                        <TableCell className="pl-4 py-3 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400">
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth={1.8}
-                              className="h-3 w-3 text-slate-400 shrink-0"
+                          {/* Condition status */}
+                          <TableCell className="pl-4 py-3 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${conditionBadge[getConditionStatus(asset)] || conditionBadge.Unknown}`}
                             >
-                              <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
-                              <circle cx="12" cy="10" r="3" />
-                            </svg>
-                            {asset.roomRel?.name} {asset.floorRel ? `– ${asset.floorRel.name}` : ''}
-                          </span>
-                        </TableCell>
+                              <span
+                                className={`h-2 w-2 rounded-full ${statusDot[getConditionStatus(asset)] || 'bg-slate-400'}`}
+                              ></span>
+                              {getConditionStatus(asset)}
+                            </span>
+                          </TableCell>
 
-                        {/* Actions */}
-                        <TableCell className="pl-4 py-3 pr-4">
-                          <div className="flex justify-start items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {/* View */}
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              title="View"
-                              onClick={() => {
-                                setSelectedViewAsset(asset);
-                                setViewOpen(true);
-                              }}
-                              className="text-primary hover:bg-primary/10 transition-colors"
-                            >
+                          {/* Location */}
+                          <TableCell className="pl-4 py-3 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400">
                               <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth={1.8}
-                                className="h-4 w-4"
+                                className="h-3 w-3 text-slate-400 shrink-0"
                               >
-                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                <circle cx="12" cy="12" r="3" />
+                                <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+                                <circle cx="12" cy="10" r="3" />
                               </svg>
-                            </Button>
-                            {/* Edit */}
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              title="Edit"
-                              onClick={() => {
-                                setEditImageFiles([]);
-                                setEditImagePreviews([]);
-                                setIsAddingType(false);
-                                setNewType('');
-                                setGallerySource(null);
-                                setEditModal(true);
-                                setSelectedEditAsset(asset);
-                              }}
-                              className="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                            >
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={1.8}
-                                className="h-4 w-4"
+                              {asset.roomRel?.name}{' '}
+                              {asset.floorRel ? `– ${asset.floorRel.name}` : ''}
+                            </span>
+                          </TableCell>
+
+                          {/* Actions */}
+                          <TableCell className="pl-4 py-3 pr-4">
+                            <div className="flex justify-start items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {/* View */}
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                title="View"
+                                onClick={() => {
+                                  setSelectedViewAsset(asset);
+                                  setViewOpen(true);
+                                }}
+                                className="text-primary hover:bg-primary/10 transition-colors"
                               >
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                              </svg>
-                            </Button>
-                            {/* Delete */}
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              title="Delete"
-                              onClick={() => {
-                                setDeleteModal(true);
-                                setSelectedDeleteAsset(asset);
-                              }}
-                              className="text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 transition-colors"
-                            >
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={1.8}
-                                className="h-4 w-4"
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={1.8}
+                                  className="h-4 w-4"
+                                >
+                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
+                              </Button>
+                              {/* Edit */}
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                title="Edit"
+                                onClick={() => {
+                                  setEditImageFiles([]);
+                                  setEditImagePreviews([]);
+                                  setIsAddingType(false);
+                                  setNewType('');
+                                  setGallerySource(null);
+                                  setEditModal(true);
+                                  setSelectedEditAsset(asset);
+                                }}
+                                className="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                               >
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                <path d="M10 11v6M14 11v6" />
-                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                              </svg>
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={1.8}
+                                  className="h-4 w-4"
+                                >
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </Button>
+                              {/* Delete */}
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                title="Delete"
+                                onClick={() => {
+                                  setDeleteModal(true);
+                                  setSelectedDeleteAsset(asset);
+                                }}
+                                className="text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 transition-colors"
+                              >
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={1.8}
+                                  className="h-4 w-4"
+                                >
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                  <path d="M10 11v6M14 11v6" />
+                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
             </div>
-
 
             {/* Pagination footer */}
             <div className="flex items-center justify-between border-t border-slate-100 dark:border-teal-800/25 bg-white dark:bg-[#09090b] px-5 py-3">
@@ -1745,10 +1892,11 @@ export function AssetRegistry() {
             </div>
 
             <div
-              className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${isDragging
+              className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${
+                isDragging
                   ? 'border-primary bg-primary/5 dark:bg-teal-900/10'
                   : 'border-slate-200 dark:border-teal-800/30'
-                }`}
+              }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -1766,10 +1914,11 @@ export function AssetRegistry() {
                 /* Empty state */
                 <div className="flex flex-col items-center justify-center p-6 text-center">
                   <div
-                    className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${isDragging
+                    className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${
+                      isDragging
                         ? 'bg-primary/20 text-primary'
                         : 'bg-white dark:bg-slate-800 text-slate-400 shadow-sm'
-                      }`}
+                    }`}
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -2301,9 +2450,9 @@ export function AssetRegistry() {
                         setSelectedEditAsset((p) =>
                           p
                             ? {
-                              ...p,
-                              assetTypeRel: { id: 0, name: e.target.value, createdAt: '' },
-                            }
+                                ...p,
+                                assetTypeRel: { id: 0, name: e.target.value, createdAt: '' },
+                              }
                             : p,
                         );
                       }
@@ -2344,9 +2493,9 @@ export function AssetRegistry() {
                           setSelectedEditAsset((p) =>
                             p
                               ? {
-                                ...p,
-                                assetTypeRel: { id: 0, name: newType.trim(), createdAt: '' },
-                              }
+                                  ...p,
+                                  assetTypeRel: { id: 0, name: newType.trim(), createdAt: '' },
+                                }
                               : p,
                           );
                         }
@@ -2417,10 +2566,10 @@ export function AssetRegistry() {
                     setSelectedEditAsset((p) =>
                       p
                         ? {
-                          ...p,
-                          roomRel: { id: 0, name: roomName, createdAt: '' },
-                          floorRel: { id: 0, name: floorName, createdAt: '' },
-                        }
+                            ...p,
+                            roomRel: { id: 0, name: roomName, createdAt: '' },
+                            floorRel: { id: 0, name: floorName, createdAt: '' },
+                          }
                         : p,
                     )
                   }
@@ -2469,10 +2618,11 @@ export function AssetRegistry() {
               </div>
 
               <div
-                className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${isDragging
+                className={`relative rounded-xl border-2 border-dashed transition-colors overflow-hidden group ${
+                  isDragging
                     ? 'border-primary bg-primary/5 dark:bg-teal-900/10'
                     : 'border-slate-200 dark:border-teal-800/30'
-                  }`}
+                }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -2492,10 +2642,11 @@ export function AssetRegistry() {
                   /* Empty state */
                   <div className="flex flex-col items-center justify-center p-6 text-center">
                     <div
-                      className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${isDragging
+                      className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${
+                        isDragging
                           ? 'bg-primary/20 text-primary'
                           : 'bg-white dark:bg-slate-800 text-slate-400 shadow-sm'
-                        }`}
+                      }`}
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -2807,10 +2958,11 @@ export function AssetRegistry() {
                     key={idx}
                     variant="ghost"
                     onClick={() => setGalleryIndex(idx)}
-                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition-all p-0 ${idx === galleryIndex
+                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition-all p-0 ${
+                      idx === galleryIndex
                         ? 'border-primary scale-110'
                         : 'border-transparent opacity-60 hover:opacity-100'
-                      }`}
+                    }`}
                   >
                     <Image
                       src={url}
@@ -2878,9 +3030,7 @@ export function AssetRegistry() {
           <div className="flex flex-col items-center">
             <QRCodeSVG value={`mira-asset:${selectedViewAsset.id}`} size={320} level="H" />
             <div className="mt-8 text-center text-black">
-              <p className="text-4xl font-black leading-tight">
-                {selectedViewAsset.assetName}
-              </p>
+              <p className="text-4xl font-black leading-tight">{selectedViewAsset.assetName}</p>
               <p className="text-2xl font-mono mt-3 border-t-2 border-slate-100 pt-3">
                 {selectedViewAsset.tag}
               </p>

@@ -622,10 +622,13 @@ export function useAssets() {
           acc.assigned += 1;
         } else if (status === 'Unassigned') {
           acc.unassigned += 1;
+        } else {
+          // 'Unavailable' — assets flagged as unavailable but not actively assigned
+          acc.unavailable += 1;
         }
         return acc;
       },
-      { assigned: 0, unassigned: 0 },
+      { assigned: 0, unassigned: 0, unavailable: 0 },
     );
   }, [assets]);
 
@@ -688,8 +691,8 @@ export function useAssets() {
     // Stats and Filters
     assigned: assignmentStats.assigned,
     unassigned: assignmentStats.unassigned,
+    unavailable: assignmentStats.unavailable,
     total: assets.length,
-    unavailable: availabilityStats.unavailable,
     available: availabilityStats.available,
     underMaintenance: conditionStats.underMaintenance,
     goodCondition: conditionStats.good,

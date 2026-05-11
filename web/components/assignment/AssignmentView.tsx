@@ -359,9 +359,7 @@ export function AssignmentView() {
   const getAssigneeAvatar = (name: string) => users.find((u) => u.fullName === name)?.avatarUrl;
 
   const totalCount = assignments.length;
-  const assignedCount = assignments.filter(
-    (a) => a.status !== 'RETURNED' && a.status !== 'REJECTED',
-  ).length;
+  const assignedCount = assignments.filter((a) => a.status === 'CONFIRMED').length;
   const returnedCount = assignments.filter((a) => a.status === 'RETURNED').length;
   const pendingCount = assignments.filter((a) => a.status === 'PENDING').length;
 
