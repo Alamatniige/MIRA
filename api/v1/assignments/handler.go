@@ -858,7 +858,8 @@ func ConfirmAssignment(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	if err := db.DB.Model(&asset.Asset{}).Where("id = ?", assignment.AssetID).Update("assignmentStatus", "Unavailable").Error; err != nil {
+	// Confirmed assignment: actively assigned, not issue/reported unavailable.
+	if err := db.DB.Model(&asset.Asset{}).Where("id = ?", assignment.AssetID).Update("assignmentStatus", "Approved").Error; err != nil {
 		log.Printf("assignment %s confirmed but failed to update asset assignmentStatus: %v", assignment.ID, err)
 	}
 

@@ -23,7 +23,6 @@ import {
   ChevronRight,
   Search,
   CalendarDays,
-  SlidersHorizontal,
   Check,
   Eye,
   X,
@@ -215,7 +214,6 @@ export function AssignmentView() {
     assignee: string;
   } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
-  const [isRejectReasonOpen, setIsRejectReasonOpen] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [viewingAssignment, setViewingAssignment] = useState<{
@@ -626,7 +624,7 @@ export function AssignmentView() {
             {stats.map((s) => (
               <div
                 key={s.label}
-                className={`flex flex-col gap-2 rounded-xl border bg-linear-to-br p-4 min-w-[150px] sm:min-w-0 flex-shrink-0 sm:flex-shrink transition-shadow hover:shadow-md ${s.color}`}
+                className={`flex flex-col gap-2 rounded-xl border bg-linear-to-br p-4 min-w-[150px] sm:min-w-0 shrink-0 sm:shrink transition-shadow hover:shadow-md ${s.color}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium opacity-80">{s.label}</span>

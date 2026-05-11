@@ -638,6 +638,37 @@ export function AssetRegistry() {
     }
   };
 
+  const handleExportCSV = () => {
+    const rows = [
+      ['Tag', 'Asset Name', 'Category', 'Serial Number', 'Condition', 'Assignment Status', 'Room', 'Floor', 'Specification'],
+      ...filtered.map((a) => [
+        a.tag ?? '',
+        a.assetName ?? '',
+        a.assetTypeRel?.name ?? '',
+        a.serialNumber ?? '',
+        getConditionStatus(a),
+        getAssignmentStatus(a),
+        a.roomRel?.name ?? '',
+        a.floorRel?.name ?? '',
+        a.specification ?? '',
+      ]),
+    ];
+
+    const csv = rows
+      .map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+      )
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `asset-registry-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const safeTotal = total || 0;
   const safeAssigned = assigned || 0;
   const safeUnassigned = unassigned || 0;
@@ -966,7 +997,7 @@ export function AssetRegistry() {
                 type="button"
                 onClick={() => handleStatCardClick(card.label)}
                 title={card.label === 'Total Assets' ? 'Show all assets' : `Filter by: ${card.label}`}
-                className={`flex flex-col gap-2 rounded-xl border bg-linear-to-br p-4 transition-all text-left min-w-[150px] sm:min-w-0 flex-shrink-0 sm:flex-shrink dark:bg-[#09090b] cursor-pointer active:scale-[0.97] ${
+                className={`flex flex-col gap-2 rounded-xl border bg-linear-to-br p-4 transition-all text-left min-w-[150px] sm:min-w-0 shrink-0 sm:shrink dark:bg-[#09090b] cursor-pointer active:scale-[0.97] ${
                   isActive
                     ? `${card.color} ring-2 ring-inset ring-current shadow-md`
                     : `${card.color} hover:shadow-md dark:hover:shadow-teal-900/30`
@@ -1200,6 +1231,8 @@ export function AssetRegistry() {
                   variant="outline"
                   size="sm"
                   className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 dark:border-teal-800/30 bg-white dark:bg-[#09090b] px-3 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-teal-900/20 transition-all active:scale-95 shadow-sm"
+                  onClick={handleExportCSV}
+                  title={`Export ${filtered.length} asset(s) to CSV`}
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -2295,41 +2328,76 @@ export function AssetRegistry() {
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
                     Assignment Details
                   </h4>
-                  {selectedViewAsset.assignedTo ? (
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-bold ${getAvatarColor(selectedViewAsset.assignedTo.slice(0, 2).toUpperCase())} shadow-sm`}
-                      >
-                        {selectedViewAsset.assignedTo.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-[14px] font-bold text-slate-800 dark:text-slate-200">
-                          {selectedViewAsset.assignedTo}
+                  {(() => {
+                    const assignStatus = getAssignmentStatus(selectedViewAsset);
+                    const rawStatus = (selectedViewAsset.assignmentStatus || '').trim();
+                    const assigneeName = selectedViewAsset.assignedTo;
+
+                    if (assignStatus === 'Assigned') {
+                      const displayName = assigneeName || rawStatus || 'Assigned User';
+                      const initials = displayName.slice(0, 2).toUpperCase();
+                      return (
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-bold ${getAvatarColor(initials)} shadow-sm`}
+                          >
+                            {initials}
+                          </div>
+                          <div>
+                            <p className="text-[14px] font-bold text-slate-800 dark:text-slate-200">
+                              {displayName}
+                            </p>
+                            <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                              Current Assignee
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    if (assignStatus === 'Unavailable') {
+                      return (
+                        <div className="flex items-center gap-3 py-1">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-500">
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                              className="h-5 w-5"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                            </svg>
+                          </div>
+                          <p className="text-[12px] font-medium text-rose-600 dark:text-rose-400">
+                            This asset is marked as unavailable.
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    // Unassigned
+                    return (
+                      <div className="flex items-center gap-3 py-1">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            className="h-5 w-5"
+                          >
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                          </svg>
+                        </div>
+                        <p className="text-[12px] font-medium text-slate-500 italic">
+                          This asset is not currently assigned to anyone.
                         </p>
-                        <p className="text-[11px] font-medium text-slate-500 mt-0.5">
-                          Current Assignee
-                        </p>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3 py-1">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          className="h-5 w-5"
-                        >
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                          <circle cx="12" cy="7" r="4" />
-                        </svg>
-                      </div>
-                      <p className="text-[12px] font-medium text-slate-500 italic">
-                        This asset is not currently assigned to anyone.
-                      </p>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
 
                 {/* Right Column: Asset Specs */}
@@ -3049,7 +3117,7 @@ export function AssetRegistry() {
           }
         }
       `}</style>
-      <div className="hidden print:flex fixed inset-0 items-center justify-center bg-white z-[99999]">
+      <div className="hidden print:flex fixed inset-0 items-center justify-center bg-white z-99999">
         {selectedViewAsset && (
           <div className="flex flex-col items-center">
             <QRCodeSVG value={`mira-asset:${selectedViewAsset.id}`} size={320} level="H" />

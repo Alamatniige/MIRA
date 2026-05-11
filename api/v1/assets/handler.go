@@ -51,8 +51,7 @@ func canonicalizeCurrentStatus(value string) string {
 }
 
 // canonicalizeAssignmentStatus maps any stored assignmentStatus to one of the
-// canonical values: "Available", "Pending", or "Unavailable".
-// The legacy value "Approved" (written by old code) is treated as "Unavailable".
+// canonical values: "Available", "Pending", "Approved", or "Unavailable".
 func canonicalizeAssignmentStatus(value string) string {
 	token := strings.TrimSpace(strings.ToLower(value))
 	switch token {
@@ -60,7 +59,9 @@ func canonicalizeAssignmentStatus(value string) string {
 		return "Available"
 	case "pending":
 		return "Pending"
-	case "unavailable", "approved":
+	case "approved":
+		return "Approved"
+	case "unavailable":
 		return "Unavailable"
 	}
 	return strings.TrimSpace(value)
