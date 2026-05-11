@@ -599,12 +599,12 @@ export function AssignmentView() {
             </div>
           </div>
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {/* Stats Row - Scrollable horizontal carousel on mobile, grid on tablets/desktop */}
+          <div className="flex w-full overflow-x-auto pb-4 gap-3 no-scrollbar sm:grid sm:grid-cols-4 sm:pb-0 sm:overflow-x-visible">
             {stats.map((s) => (
               <div
                 key={s.label}
-                className={`flex flex-col gap-2 rounded-xl border bg-linear-to-br p-4 transition-shadow hover:shadow-md ${s.color}`}
+                className={`flex flex-col gap-2 rounded-xl border bg-linear-to-br p-4 min-w-[150px] sm:min-w-0 flex-shrink-0 sm:flex-shrink transition-shadow hover:shadow-md ${s.color}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium opacity-80">{s.label}</span>

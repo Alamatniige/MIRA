@@ -226,12 +226,12 @@ export function ReportAnalytics() {
         <BuildingFloorMap />
       </div>
 
-      {/* KPI Section */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4 md:mt-0 mt-2">
+      {/* KPI Section - Scrollable horizontal carousel on mobile, grid on desktop */}
+      <div className="flex w-full overflow-x-auto pb-4 gap-3 no-scrollbar sm:grid sm:grid-cols-4 lg:grid-cols-4 md:mt-0 mt-2 sm:pb-0 sm:overflow-x-visible">
         {reportKpis.map((kpi) => (
           <div
             key={kpi.label}
-            className={`flex flex-col gap-2 rounded-2xl border bg-linear-to-br p-4 transition-all hover:shadow-lg hover:-translate-y-0.5 dark:hover:shadow-teal-900/10 dark:bg-[#09090b] ${kpi.color}`}
+            className={`flex flex-col gap-2 rounded-2xl border bg-linear-to-br p-4 transition-all hover:shadow-lg hover:-translate-y-0.5 dark:hover:shadow-teal-900/10 dark:bg-[#09090b] min-w-[200px] sm:min-w-0 flex-shrink-0 sm:flex-shrink ${kpi.color}`}
           >
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider opacity-75 dark:opacity-90">

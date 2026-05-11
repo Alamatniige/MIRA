@@ -121,12 +121,12 @@ export function DashboardContent() {
         </div>
       </div>
 
-      {/* KPI Section */}
-      <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+      {/* KPI Section - Scrollable horizontal carousel on mobile, grid on desktop */}
+      <div className="flex w-full overflow-x-auto pb-4 gap-3 no-scrollbar md:grid md:grid-cols-3 lg:grid-cols-5 md:pb-0 md:overflow-x-visible">
         {kpis.map((kpi) => (
           <div
             key={kpi.label}
-            className={`flex flex-col gap-2 rounded-xl border bg-gradient-to-br p-3 sm:p-4 transition-all hover:shadow-md dark:hover:shadow-teal-900/30 dark:bg-[#09090b] ${kpi.color}`}
+            className={`flex flex-col gap-2 rounded-xl border bg-gradient-to-br p-3 sm:p-4 transition-all hover:shadow-md dark:hover:shadow-teal-900/30 dark:bg-[#09090b] min-w-[160px] md:min-w-0 flex-shrink-0 md:flex-shrink ${kpi.color}`}
           >
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold opacity-75 dark:opacity-90">{kpi.label}</span>

@@ -169,9 +169,9 @@ export function SettingsPanel() {
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Card className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b]">
+      {/* KPIs - Scrollable horizontal carousel on mobile, grid on desktop */}
+      <div className="flex w-full overflow-x-auto pb-4 gap-3 no-scrollbar sm:grid sm:grid-cols-3 sm:pb-0 sm:overflow-x-visible">
+        <Card className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b] min-w-[200px] sm:min-w-0 flex-shrink-0 sm:flex-shrink">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div className="rounded-xl p-2.5 text-white shadow-sm transition-transform group-hover:scale-110 bg-teal-600">
@@ -191,7 +191,7 @@ export function SettingsPanel() {
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b]">
+        <Card className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b] min-w-[200px] sm:min-w-0 flex-shrink-0 sm:flex-shrink">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div className="rounded-xl p-2.5 text-white shadow-sm transition-transform group-hover:scale-110 bg-blue-600">
@@ -211,7 +211,7 @@ export function SettingsPanel() {
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b]">
+        <Card className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b] min-w-[200px] sm:min-w-0 flex-shrink-0 sm:flex-shrink">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div className="rounded-xl p-2.5 text-white shadow-sm transition-transform group-hover:scale-110 bg-violet-600">

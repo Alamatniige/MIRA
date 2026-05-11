@@ -402,13 +402,13 @@ export function UsersContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+      <div className="flex w-full overflow-x-auto pb-4 gap-3 no-scrollbar sm:grid sm:grid-cols-4 lg:grid-cols-5 sm:pb-0 sm:overflow-x-visible">
         {kpis.map((kpi) => {
           const Icon = kpi.icon;
           return (
             <Card
               key={kpi.label}
-              className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b]"
+              className="group relative overflow-hidden border-slate-200/60 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#09090b] min-w-[150px] sm:min-w-0 flex-shrink-0 sm:flex-shrink"
             >
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
@@ -431,10 +431,10 @@ export function UsersContent() {
                       {kpi.value}
                     </span>
                   </div>
-                  <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400">
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 truncate">
                     {kpi.label}
                   </p>
-                  <p className="mt-1 text-[10px] text-slate-400 dark:text-zinc-500">{kpi.sub}</p>
+                  <p className="mt-1 text-[10px] text-slate-400 dark:text-zinc-500 truncate">{kpi.sub}</p>
                 </div>
               </CardContent>
             </Card>
