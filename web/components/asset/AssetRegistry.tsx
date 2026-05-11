@@ -2853,15 +2853,35 @@ export function AssetRegistry() {
       )}
 
       {/* ── Print-only QR Code Section ── */}
-      <div className="hidden print:flex fixed inset-0 items-center justify-center bg-white z-99999">
+      <style>{`
+        @media print {
+          * {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          html {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          @page {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+        }
+      `}</style>
+      <div className="hidden print:flex fixed inset-0 items-center justify-center bg-white z-[99999]">
         {selectedViewAsset && (
           <div className="flex flex-col items-center">
             <QRCodeSVG value={`mira-asset:${selectedViewAsset.id}`} size={320} level="H" />
-            <div className="mt-8 text-center">
-              <p className="text-4xl font-black text-black leading-tight">
+            <div className="mt-8 text-center text-black">
+              <p className="text-4xl font-black leading-tight">
                 {selectedViewAsset.assetName}
               </p>
-              <p className="text-2xl font-mono text-slate-800 mt-3 border-t-2 border-slate-100 pt-3">
+              <p className="text-2xl font-mono mt-3 border-t-2 border-slate-100 pt-3">
                 {selectedViewAsset.tag}
               </p>
             </div>
