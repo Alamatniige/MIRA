@@ -64,3 +64,6 @@ mira/
 build/
 *.md
 *.ps1
+
+#Environment variables
+.env.local
