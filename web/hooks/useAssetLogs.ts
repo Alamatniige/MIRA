@@ -13,18 +13,18 @@ export function useAssetLogs() {
       const token = localStorage.getItem('mira_token');
       const response = await fetch('/api/history/assets/all', {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch asset logs');
       }
-      
+
       const data = await response.json();
       setLogs(data || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err as { message: string }).message || 'An unexpected error occurred.');
     } finally {
       setIsLoading(false);
     }

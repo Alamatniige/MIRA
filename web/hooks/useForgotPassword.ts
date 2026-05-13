@@ -70,10 +70,11 @@ export function useForgotPassword() {
         expirySeconds: MAX_EXPIRY,
         isLoading: false,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setState((prev) => ({
         ...prev,
-        error: err.message || 'An unexpected error occurred. Please try again.',
+        error:
+          (err as { message: string }).message || 'An unexpected error occurred. Please try again.',
         isLoading: false,
       }));
     }
@@ -100,10 +101,11 @@ export function useForgotPassword() {
         step: ForgotPasswordStep.NewPassword,
         isLoading: false,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setState((prev) => ({
         ...prev,
-        error: err.message || 'An unexpected error occurred. Please try again.',
+        error:
+          (err as { message: string }).message || 'An unexpected error occurred. Please try again.',
         isLoading: false,
       }));
     }
@@ -136,10 +138,11 @@ export function useForgotPassword() {
         step: ForgotPasswordStep.Success,
         isLoading: false,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setState((prev) => ({
         ...prev,
-        error: err.message || 'An unexpected error occurred. Please try again.',
+        error:
+          (err as { message: string }).message || 'An unexpected error occurred. Please try again.',
         isLoading: false,
       }));
     }

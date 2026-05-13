@@ -82,7 +82,7 @@ export function useNotifications() {
                   return [newNotif, ...prev];
                 });
               } catch (e) {
-                // Ignore parse errors from heartbeat or malformed chunks
+                console.error('Failed to parse notification:', e);
               }
             }
           }

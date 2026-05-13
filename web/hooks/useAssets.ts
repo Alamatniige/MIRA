@@ -623,7 +623,6 @@ export function useAssets() {
         } else if (status === 'Unassigned') {
           acc.unassigned += 1;
         } else {
-          // 'Unavailable' — assets flagged as unavailable but not actively assigned
           acc.unavailable += 1;
         }
         return acc;

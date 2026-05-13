@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 type DashboardResponse<T> = {
   data: T;
@@ -55,8 +55,8 @@ export function useDashboardStats() {
         throw new Error(result.error || 'Failed to fetch dashboard stats');
       }
       setStats(result.data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err as { message: string }).message || 'An unexpected error occurred.');
     } finally {
       setIsLoading(false);
     }
@@ -83,8 +83,8 @@ export function useDashboardRooms() {
         throw new Error(result.error || 'Failed to fetch dashboard rooms');
       }
       setRooms(result.data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err as { message: string }).message || 'An unexpected error occurred.');
     } finally {
       setIsLoading(false);
     }
@@ -111,8 +111,8 @@ export function useDashboardActivity() {
         throw new Error(result.error || 'Failed to fetch activity');
       }
       setActivities(result.data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err as { message: string }).message || 'An unexpected error occurred.');
     } finally {
       setIsLoading(false);
     }
