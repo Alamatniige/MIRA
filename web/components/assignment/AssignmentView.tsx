@@ -237,6 +237,8 @@ export function AssignmentView() {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('ALL');
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -274,14 +276,21 @@ export function AssignmentView() {
 
   const { user: currentUser } = useAuth();
 
+  const departmentOptions = Array.from(
+    new Set(assignments.map((a) => a.department).filter(Boolean)),
+  ).sort((a, b) => a.localeCompare(b));
+
   const filteredAssignments = assignments.filter((a) => {
     const q = searchQuery.toLowerCase();
-    return (
+    const matchesSearch =
       a.assetTag.toLowerCase().includes(q) ||
       a.assetName.toLowerCase().includes(q) ||
       a.assignee.toLowerCase().includes(q) ||
-      a.department.toLowerCase().includes(q)
-    );
+      a.department.toLowerCase().includes(q);
+    const matchesDepartment = selectedDepartment === 'ALL' || a.department === selectedDepartment;
+    const matchesStatus = selectedStatus === 'ALL' || a.status === selectedStatus;
+
+    return matchesSearch && matchesDepartment && matchesStatus;
   });
 
   const allEvents = filteredAssignments
@@ -640,38 +649,71 @@ export function AssignmentView() {
           <div className="w-full">
             {/* Assignment History */}
             <Card className="w-full overflow-hidden border-slate-200/60 bg-white/50 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#09090b]">
-              <CardHeader className="relative border-b border-slate-100 pb-4 dark:border-white/5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:pr-32">
+              <CardHeader className="border-b border-slate-100 pb-4 dark:border-white/5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div>
                     <CardTitle className="text-base">Assignment History</CardTitle>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       Track historical movements of key assets.
                     </p>
                   </div>
-                  <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Search history..."
-                      className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-9 pr-3 text-[11px] outline-none transition-all focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                      value={searchQuery}
+                  <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:w-auto lg:justify-end">
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Search history..."
+                        className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-9 pr-3 text-[11px] outline-none transition-all focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                      />
+                    </div>
+                    <select
+                      value={selectedDepartment}
                       onChange={(e) => {
-                        setSearchQuery(e.target.value);
+                        setSelectedDepartment(e.target.value);
                         setCurrentPage(1);
                       }}
-                    />
+                      className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 text-[11px] text-slate-700 outline-none transition-all focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 sm:w-44"
+                      aria-label="Filter by department"
+                    >
+                      <option value="ALL">All Departments</option>
+                      {departmentOptions.map((department) => (
+                        <option key={department} value={department}>
+                          {department}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => {
+                        setSelectedStatus(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 text-[11px] text-slate-700 outline-none transition-all focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 sm:w-36"
+                      aria-label="Filter by status"
+                    >
+                      <option value="ALL">All Statuses</option>
+                      <option value="PENDING">Pending</option>
+                      <option value="CONFIRMED">Confirmed</option>
+                      <option value="RETURNED">Returned</option>
+                      <option value="REJECTED">Rejected</option>
+                    </select>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      type="button"
+                      onClick={() => setViewTimeline((v) => !v)}
+                      className="h-9 self-start px-0 text-xs font-semibold text-[#0F766E] transition-colors hover:text-[#0E7490] dark:text-teal-400 dark:hover:text-teal-300 sm:h-auto sm:self-auto"
+                    >
+                      {viewTimeline ? 'View as table' : 'View as timeline'}
+                      <ChevronRight className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
-                <Button
-                  variant="link"
-                  size="sm"
-                  type="button"
-                  onClick={() => setViewTimeline((v) => !v)}
-                  className="mt-2 sm:mt-0 sm:absolute sm:right-6 sm:top-5 flex items-center gap-1 text-xs font-semibold text-[#0F766E] transition-colors hover:text-[#0E7490] dark:text-teal-400 dark:hover:text-teal-300 h-auto p-0"
-                >
-                  {viewTimeline ? 'View as table' : 'View as timeline'}
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
               </CardHeader>
 
               <CardContent className="p-0">
